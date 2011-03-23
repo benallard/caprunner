@@ -169,6 +169,32 @@ class Directory(Component):
             self.custom_component_info
             )
 
+class Applet(Component):
+    @cached_property
+    def count(self):
+        return u1(self.data[3:4])
+
+    @cached_property
+    def applets(self):
+        res = []
+        shift = 4
+        for i in xrange(self.count):
+            data = self.data[shift:]
+            aid_length = u1(data[:1])
+            res.append({'aid_length': aid_length,
+                        'aid': u1a(aid_length, data[1:]),
+                        'install_method_offset': u2(data[aid_length+1:])
+                        }
+                       )
+            shift += aid_length + 3
+        return res
+
+    def __str__(self):
+        return "< Applet:\n%s\n>" % '\n'.join([
+            "\tAID: %s\n\tInstall_Offset: %d" % (
+                a2s(applet['aid']),
+                applet['install_method_offset']) for applet in self.applets])
+
 class CAPFile(object):
     def __init__(self, path):
         self.path = path
@@ -191,9 +217,16 @@ class CAPFile(object):
     def Directory(self):
         return Directory(self.zipfile.read(self._getFileName('Directory')), self.version)
 
+    @cached_property
+    def Applet(self):
+        return Applet(self.zipfile.read(self._getFileName('Applet')), self.version)
+
 if __name__ == "__main__":
     import sys
     cap = CAPFile(sys.argv[1])
+    print cap.zipfile.namelist()
     print cap.Header
     print Component(cap.Directory.data)
     print cap.Directory
+    print Component(cap.Applet.data)
+    print cap.Applet
