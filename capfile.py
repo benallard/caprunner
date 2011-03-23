@@ -90,6 +90,11 @@ class Component(object):
             stringify(self.info)
             )
 
+class ComponentWithCount(Component):
+    @cached_property
+    def count(self):
+        return u1(self.data[3:4])
+
 class Header(Component):
     @cached_property
     def magic(self):
@@ -194,11 +199,7 @@ class Directory(Component):
             self.custom_component_info
             )
 
-class Applet(Component):
-    @cached_property
-    def count(self):
-        return u1(self.data[3:4])
-
+class Applet(ComponentWithCount):
     @cached_property
     def applets(self):
         res = []
@@ -220,11 +221,7 @@ class Applet(Component):
                 a2s(applet['aid']),
                 applet['install_method_offset']) for applet in self.applets])
 
-class Import(Component):
-    @cached_property
-    def count(self):
-        return u1(self.data[3:4])
-
+class Import(ComponentWithCount):
     @cached_property
     def packages(self):
         res = []
@@ -267,7 +264,6 @@ class CAPFile(object):
     @cached_property
     def Import(self):
         return Import(self.zipfile.read(self._getFileName('Import')), self.version)
-    
 
 if __name__ == "__main__":
     import sys
