@@ -58,6 +58,10 @@ class PackageInfo(object):
     def aid(self):
         return u1a(self.aid_length, self.data[3:])
 
+    @cached_property
+    def size(self):
+        return self.aid_length + 3
+
     def __str__(self):
         return "AID: %s %s" % (a2s(self.aid), self.version)
 
@@ -216,6 +220,24 @@ class Applet(Component):
                 a2s(applet['aid']),
                 applet['install_method_offset']) for applet in self.applets])
 
+class Import(Component):
+    @cached_property
+    def count(self):
+        return u1(self.data[3:4])
+
+    @cached_property
+    def packages(self):
+        res = []
+        shift = 4
+        for i in xrange(self.count):
+            pkg_info = PackageInfo(self.data[shift:])
+            res.append(pkg_info)
+            shift += pkg_info.size
+        return res
+
+    def __str__(self):
+        return "< Import:\n\t%s\n>" % '\n\t'.join([str(pkg_info) for pkg_info in self.packages])
+
 class CAPFile(object):
     def __init__(self, path):
         self.path = path
@@ -242,6 +264,11 @@ class CAPFile(object):
     def Applet(self):
         return Applet(self.zipfile.read(self._getFileName('Applet')), self.version)
 
+    @cached_property
+    def Import(self):
+        return Import(self.zipfile.read(self._getFileName('Import')), self.version)
+    
+
 if __name__ == "__main__":
     import sys
     cap = CAPFile(sys.argv[1])
@@ -251,3 +278,4 @@ if __name__ == "__main__":
     print cap.Directory
     print Component(cap.Applet.data)
     print cap.Applet
+    print cap.Import
