@@ -90,10 +90,15 @@ class Component(object):
             stringify(self.info)
             )
 
-class ComponentWithCount(Component):
+class ComponentWithCountU1(Component):
     @cached_property
     def count(self):
         return u1(self.data[3:4])
+
+class ComponentWithCountU2(Component):
+    @cached_property
+    def count(self):
+        return u2(self.data[3:5])
 
 class Header(Component):
     @cached_property
@@ -199,7 +204,7 @@ class Directory(Component):
             self.custom_component_info
             )
 
-class Applet(ComponentWithCount):
+class Applet(ComponentWithCountU1):
     @cached_property
     def applets(self):
         res = []
@@ -221,7 +226,7 @@ class Applet(ComponentWithCount):
                 a2s(applet['aid']),
                 applet['install_method_offset']) for applet in self.applets])
 
-class Import(ComponentWithCount):
+class Import(ComponentWithCountU1):
     @cached_property
     def packages(self):
         res = []
@@ -234,6 +239,29 @@ class Import(ComponentWithCount):
 
     def __str__(self):
         return "< Import:\n\t%s\n>" % '\n\t'.join([str(pkg_info) for pkg_info in self.packages])
+
+class CPInfo(object):
+    def __init__(self, data):
+        self.data = data
+        self.tag = u1(data[:1])
+        self.info = u1a(3, data[1:4])
+        self.size = 4
+    def __str__(self):
+        return "%d (%s)" % (self.tag, a2s(self.info))
+
+class ConstantPool(ComponentWithCountU2):
+    @cached_property
+    def constant_pool(self):
+        res = []
+        shift = 5
+        for i in xrange(self.count):
+            cp_info = CPInfo(self.data[shift:])
+            res.append(cp_info)
+            shift += cp_info.size
+        return res
+
+    def __str__(self):
+        return "< ConstantPool: \n\t%s\n>" % '\n\t'.join([str(cp_info) for cp_info in self.constant_pool])
 
 class CAPFile(object):
     def __init__(self, path):
@@ -265,6 +293,10 @@ class CAPFile(object):
     def Import(self):
         return Import(self.zipfile.read(self._getFileName('Import')), self.version)
 
+    @cached_property
+    def ConstantPool(self):
+        return ConstantPool(self.zipfile.read(self._getFileName('ConstantPool')), self.version)
+
 if __name__ == "__main__":
     import sys
     cap = CAPFile(sys.argv[1])
@@ -275,3 +307,4 @@ if __name__ == "__main__":
     print Component(cap.Applet.data)
     print cap.Applet
     print cap.Import
+    print cap.ConstantPool
