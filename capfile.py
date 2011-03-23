@@ -23,12 +23,22 @@ def u1a(size, data):
     """ u1 array """
     return [u1(data[i:i+1]) for i in xrange(size)]
 
+def u2a(size, data):
+    """ u2 array """
+    return [u2(data[i*2:i*2+2]) for i in xrange(size)]
+
+def a2s(a):
+    """ array to string """
+    return ' '.join(["%02X" % i for i in a])
+
 def stringify(s):
-    return ' '.join(["%02X" % c for c in s])
+    return ' '.join(["%02X" % ord(c) for c in s])
 
 class Component(object):
-    def __init__(self, data):
+    def __init__(self, data, version=None):
         self.data = data
+        if version:
+            self.version = version
 
     @cached_property
     def tag(self):
@@ -43,8 +53,11 @@ class Component(object):
         return self.data[3:3+self.size]
 
     def __str__(self):
-        return "< Component:\n\tTag:%d\n\tSize:%d\n>" % (self.tag, self.size)
-        
+        return "< Component:\n\tTag:%d\n\tSize:%d\nInfo: %s\n>" % (
+            self.tag,
+            self.size,
+            stringify(self.info)
+            )
 
 class Header(Component):
     @cached_property
@@ -58,6 +71,10 @@ class Header(Component):
     @cached_property
     def major_version(self):
         return u1(self.data[8:9])
+
+    @cached_property
+    def version(self):
+        return (self.major_version, self.minor_version)
 
     @cached_property
     def flags(self):
@@ -75,29 +92,91 @@ class Header(Component):
 
     @cached_property
     def package_name_info(self):
-        try:
+        if self.version >= (2, 2):
             data = self.data[self.package_info['aid_length']+13:]
             name_length = u1(data[:1])
             return {'name_length': name_length,
                     'name': u1a(name_length, data[1:])
                     }
-        except IndexError:
-            # field is optionnal
-            return {'name_length': 0,
-                    'name': ""
-                    }
+        else:
+            return None
 
     def __str__(self):
-        return "< Header:\n\tMagic: %08X\n\tVersion: %d.%d\n\tAID: %s\n>" % (
+        return "< Header:\n\tMagic: %08X\n\tVersion: %s\n\tAID: %s\n>" % (
             self.magic,
-            self.major_version, self.minor_version,
-            stringify(self.package_info['aid'])
+            self.version,
+            a2s(self.package_info['aid'])
+            )
+
+class Directory(Component):
+
+    @cached_property
+    def num_components(self):
+        if self.version == (2, 1):
+            return 11
+        elif self.version == (2,2):
+            return 12
+
+    @cached_property
+    def component_sizes(self):
+        return u2a(self.num_components, self.data[3:])
+
+    @cached_property
+    def static_field_size_info(self):
+        data = self.data[self.num_components*2+3:]
+        return {'image_size': u2(data[:2]),
+                'array_init_count': u2(data[2:4]),
+                'array_init_size': u2(data[4:6])
+                }
+
+    @cached_property
+    def import_count(self):
+        return u1(self.data[self.num_components*2+9:])
+
+    @cached_property
+    def applet_count(self):
+        return u1(self.data[self.num_components*2+10:])
+
+    @cached_property
+    def custom_count(self):
+        try:
+            return u1(self.data[self.num_components*2+11:])
+        except IndexError:
+            return 0
+
+    @cached_property
+    def custom_component_info(self):
+        res = []
+        shift = self.num_components*2+12
+        for i in xrange(self.custom_count):
+            data = self.data[shift:]
+            aid_length = u1(data[3:4])
+            res.append({'component_tag': u1(data[:1]),
+                        'size': u2(data[1:2]),
+                        'aid_length': aid_length,
+                        'aid': u1a(aid_length, data[4:])
+                        }
+                       )
+            shift += aid_length + 4
+        return res
+
+    def __str__(self):
+        return "< Directory:\n\tSizes: %s\n\tStatic: %s\n\tImports: %d\n\tApplets: %d\n\tCustoms: %s\n>" % (
+            self.component_sizes,
+            self.static_field_size_info,
+            self.import_count,
+            self.applet_count,
+            self.custom_component_info
             )
 
 class CAPFile(object):
     def __init__(self, path):
         self.path = path
         self.zipfile = zipfile.ZipFile(self.path, 'r')
+
+    @cached_property
+    def version(self):
+        return self.Header.version
 
     def _getFileName(self, component):
         for name in self.zipfile.namelist():
@@ -108,8 +187,13 @@ class CAPFile(object):
     def Header(self):
         return Header(self.zipfile.read(self._getFileName('Header')))
 
+    @cached_property
+    def Directory(self):
+        return Directory(self.zipfile.read(self._getFileName('Directory')), self.version)
 
 if __name__ == "__main__":
     import sys
     cap = CAPFile(sys.argv[1])
     print cap.Header
+    print Component(cap.Directory.data)
+    print cap.Directory
