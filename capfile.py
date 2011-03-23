@@ -122,13 +122,13 @@ class Header(Component):
         return u1(self.data[9:10])
 
     @cached_property
-    def package_info(self):
+    def package(self):
         return PackageInfo(self.data[10:])
 
     @cached_property
-    def package_name_info(self):
+    def package_name(self):
         if self.version >= (2, 2):
-            data = self.data[self.package_info.aid_length+13:]
+            data = self.data[self.package.aid_length+13:]
             name_length = u1(data[:1])
             return {'name_length': name_length,
                     'name': u1a(name_length, data[1:])
@@ -140,7 +140,7 @@ class Header(Component):
         return "< Header:\n\tMagic: %08X\n\tVersion: %s\n\t%s\n>" % (
             self.magic,
             self.version,
-            self.package_info
+            self.package
             )
 
 class Directory(Component):
@@ -157,7 +157,7 @@ class Directory(Component):
         return u2a(self.num_components, self.data[3:])
 
     @cached_property
-    def static_field_size_info(self):
+    def static_field_size(self):
         data = self.data[self.num_components*2+3:]
         return {'image_size': u2(data[:2]),
                 'array_init_count': u2(data[2:4]),
@@ -180,7 +180,7 @@ class Directory(Component):
             return 0
 
     @cached_property
-    def custom_component_info(self):
+    def custom_components(self):
         res = []
         shift = self.num_components*2+12
         for i in xrange(self.custom_count):
@@ -198,10 +198,10 @@ class Directory(Component):
     def __str__(self):
         return "< Directory:\n\tSizes: %s\n\tStatic: %s\n\tImports: %d\n\tApplets: %d\n\tCustoms: %s\n>" % (
             self.component_sizes,
-            self.static_field_size_info,
+            self.static_field_size,
             self.import_count,
             self.applet_count,
-            self.custom_component_info
+            self.custom_components
             )
 
 class Applet(ComponentWithCountU1):
@@ -249,13 +249,81 @@ class CPInfo(object):
     def __str__(self):
         return "%d (%s)" % (self.tag, a2s(self.info))
 
+    @staticmethod
+    def get(data):
+        return {1: CPInfoClassref,
+                2: CPInfoInstanceFieldref,
+                3: CPInfoVirtualMethodref,
+                4: CPInfoSuperMethodref,
+                5: CPInfoStaticFieldref,
+                6: CPInfoStaticMethodref}[u1(data[:1])](data)
+
+class Classref(object):
+    class Externalref(object):
+        def __init__(self, data):
+            self.package_token = u1(data[:1])
+            self.class_token = u1(data[1:2])
+        def __str__(self):
+            return "pkg: %d, cls: %d" % (self.package_token, self.class_token)
+    def __init__(self, data):
+        self.internal_class_ref = u2(data[:2])
+        self.external_class_ref = self.Externalref(data[:2])
+    def __str__(self):
+        return "%d / %s" % (self.internal_class_ref, self.external_class_ref)
+
+class CPInfoClassref(CPInfo, Classref):
+    def __init__(self, data):
+        CPInfo.__init__(self, data)
+        Classref.__init__(self, data[1:])
+        self.padding = u1(data[3:4])
+    def __str__(self):
+        return "<CPInfoClassRef %s>" % Classref.__str__(self)
+
+class CPInfoInstanceFieldref(CPInfo, Classref):
+    def __init__(self, data):
+        CPInfo.__init__(self, data)
+        Classref.__init__(self, data[1:])
+        self.token = u1(data[3:4])
+    def __str__(self):
+        return "<%s %s, token: %d>" % (self.__class__.__name__, Classref.__str__(self), self.token)
+
+CPInfoVirtualMethodref = CPInfoInstanceFieldref
+CPInfoSuperMethodref = CPInfoInstanceFieldref
+
+class CPInfoStaticFieldref(CPInfo):
+
+    class Internalref(object):
+        def __init__(self, data):
+            self.padding = u1(data[:1])
+            self.offset = u2(data[1:3])
+        def __str__(self):
+            return "%d" % (self.offset)
+
+    class Externalref(object):
+        def __init__(self, data):
+            self.package_token = u1(data[:1])
+            self.class_token = u1(data[1:2])
+            self.token = u1(data[2:3])
+        def __str__(self):
+            return "pkg: %d, cls: %d, token: %d" % (self.package_token, self.class_token, self.token)
+
+    def __init__(self, data):
+        CPInfo.__init__(self, data)
+        self.internal_ref = self.Internalref(data[1:])
+        self.external_ref = self.Externalref(data[1:])
+
+    def __str__(self):
+        return "<%s %s / %s>" % (self.__class__.__name__, self.internal_ref, self.external_ref)
+
+CPInfoStaticMethodref = CPInfoStaticFieldref
+
 class ConstantPool(ComponentWithCountU2):
     @cached_property
     def constant_pool(self):
         res = []
         shift = 5
         for i in xrange(self.count):
-            cp_info = CPInfo(self.data[shift:])
+            cp_info = CPInfo.get(self.data[shift:])
             res.append(cp_info)
             shift += cp_info.size
         return res
