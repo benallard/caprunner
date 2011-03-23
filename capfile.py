@@ -34,6 +34,33 @@ def a2s(a):
 def stringify(s):
     return ' '.join(["%02X" % ord(c) for c in s])
 
+class PackageInfo(object):
+    def __init__(self, data):
+        self.data = data
+
+    @cached_property
+    def minor_version(self):
+        return u1(self.data[:1])
+
+    @cached_property
+    def major_version(self):
+        return u1(self.data[1:2])
+
+    @cached_property
+    def version(self):
+        return (self.major_version, self.minor_version)
+
+    @cached_property
+    def aid_length(self):
+        return u1(self.data[2:3])
+
+    @cached_property
+    def aid(self):
+        return u1a(self.aid_length, self.data[3:])
+
+    def __str__(self):
+        return "AID: %s %s" % (a2s(self.aid), self.version)
+
 class Component(object):
     def __init__(self, data, version=None):
         self.data = data
@@ -82,18 +109,12 @@ class Header(Component):
 
     @cached_property
     def package_info(self):
-        data = self.data[10:]
-        aid_length = u1(data[2:3])
-        return {'minor_version': u1(data[:1]),
-                'major_version': u1(data[1:2]),
-                'aid_length': aid_length,
-                'aid': u1a(aid_length, data[3:])
-                }
+        return PackageInfo(self.data[10:])
 
     @cached_property
     def package_name_info(self):
         if self.version >= (2, 2):
-            data = self.data[self.package_info['aid_length']+13:]
+            data = self.data[self.package_info.aid_length+13:]
             name_length = u1(data[:1])
             return {'name_length': name_length,
                     'name': u1a(name_length, data[1:])
@@ -102,10 +123,10 @@ class Header(Component):
             return None
 
     def __str__(self):
-        return "< Header:\n\tMagic: %08X\n\tVersion: %s\n\tAID: %s\n>" % (
+        return "< Header:\n\tMagic: %08X\n\tVersion: %s\n\t%s\n>" % (
             self.magic,
             self.version,
-            a2s(self.package_info['aid'])
+            self.package_info
             )
 
 class Directory(Component):
