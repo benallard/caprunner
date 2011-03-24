@@ -1,6 +1,32 @@
 import zipfile
 
-from classfile import u1, u2, u4
+import struct # for general decoding of class files
+
+# Utility functions.
+
+def u1(data):
+    return struct.unpack(">B", data[0:1])[0]
+
+def u2(data):
+    return struct.unpack(">H", data[0:2])[0]
+
+def u4(data):
+    return struct.unpack(">L", data[0:4])[0]
+
+def s2(data):
+    return struct.unpack(">h", data[0:2])[0]
+
+def s4(data):
+    return struct.unpack(">l", data[0:4])[0]
+
+def s8(data):
+    return struct.unpack(">q", data[0:8])[0]
+
+def f4(data):
+    return struct.unpack(">f", data[0:4])[0]
+
+def f8(data):
+    return struct.unpack(">d", data[0:8])[0]
 
 ## {{{ http://code.activestate.com/recipes/576563/ (r1)
 def cached_property(f):
