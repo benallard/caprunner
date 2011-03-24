@@ -26,23 +26,6 @@ def f4(data):
 def f8(data):
     return struct.unpack(">d", data[0:8])[0]
 
-## {{{ http://code.activestate.com/recipes/576563/ (r1)
-def cached_property(f):
-    """returns a cached property that is calculated by function f"""
-    def get(self):
-        try:
-            return self._property_cache[f]
-        except AttributeError:
-            self._property_cache = {}
-            x = self._property_cache[f] = f(self)
-            return x
-        except KeyError:
-            x = self._property_cache[f] = f(self)
-            return x
-        
-    return property(get)
-## end of http://code.activestate.com/recipes/576563/ }}}
-
 def u1a(size, data):
     """ u1 array """
     return [u1(data[i:i+1]) for i in xrange(size)]
