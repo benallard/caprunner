@@ -26,19 +26,20 @@ class ExportFile(object):
             return ''.join([chr(c) for c in self.bytes])
 
     class CPInfoInteger(CPInfo):
+        size = 5
         def __init__(self, data):
-            CPInfo.__init__(self, data)
+            ExportFile.CPInfo.__init__(self, data)
             self.bytes = u4(data[1:5])
-            self.size = 5
+        def __str__(self):
+            return "%d" % self.bytes
 
     class CPInfoClassref(CPInfo):
+        size = 3
         def __init__(self, data):
-            CPInfo.__init__(self, data)
+            ExportFile.CPInfo.__init__(self, data)
             self.name_index = u2(data[1:3])
-            self.size = 3
-            
-        def getName(self, pool):
-            return str(pool[self.name_index])
+        def __str__(self):
+            return "Classref: name @%d" % self.name_index
 
     class CPInfoPackage(CPInfo):
         def __init__(self, data):
@@ -57,8 +58,83 @@ class ExportFile(object):
             return "Package: %s %s Name @%d" % (a2s(self.aid), self.version, self.name_index)
 
     class ClassInfo(object):
+
+        class FieldInfo(object):
+
+            class AttributeInfo(object):
+                def __init__(self, data):
+                    self.data = data
+                    self.attribute_name_index = u2(self.data[:2])
+                    self.attribute_length = u4(self.data[2:6])
+                    self.info = u1a(self.attribute_length, self.data[6:])
+
+            class ConstantValueAttribute(AttributeInfo):
+                size = 8
+                def __init__(self, data):
+                    ExportFile.ClassInfo.FieldInfo.AttributeInfo.__init__(self, data)
+                    self.constant_value_index = u2(self.data[6:8])
+
+            def __init__(self, data):
+                self.data = data
+                self.token = u1(self.data[:1])
+                self.access_flags = u2(self.data[1:3])
+                self.name_index = u2(self.data[3:5])
+                self.descriptor_index = u2(self.data[5:7])
+                self.attributes_count = u2(self.data[7:9])
+                shift = 9
+                self.attributes = []
+                for i in xrange(self.attributes_count):
+                    data = self.data[shift:]
+                    attr = self.ConstantValueAttribute(data)
+                    self.attributes.append(attr)
+                    shift += attr.size
+                self.size = shift
+
+        class MethodInfo(object):
+            size = 7
+            def __init__(self, data):
+                self.data = data
+                self.token = u1(self.data[:1])
+                self.access_flags = u2(self.data[1:3])
+                self.name_index = u2(self.data[3:5])
+                self.descriptor_index = u2(self.data[5:7])
+
         def __init__(self, data):
-            self.size = len(data)
+            self.data = data
+            self.token = u1(self.data[:1])
+            self.access_flags = u2(self.data[1:3])
+            self.name_index = u2(self.data[3:5])
+            self.export_supers_count = u2(self.data[5:7])
+            self.supers = u2a(self.export_supers_count, self.data[7:])
+            shift = 7 + self.export_supers_count*2
+            self.export_interfaces_count = u1(self.data[shift:shift+1])
+            shift += 1
+            self.interfaces = u2a(self.export_interfaces_count, self.data[shift:])
+            shift += self.export_interfaces_count*2
+            self.export_fields_count = u2(self.data[shift:shift+2])
+            self.fields = []
+            shift += 2
+            for i in xrange(self.export_fields_count):
+                data = self.data[shift:]
+                field = self.FieldInfo(data)
+                self.fields.append(field)
+                shift += field.size
+            self.export_methods_count = u2(self.data[shift:shift+2])
+            self.methods = []
+            shift += 2
+            for i in xrange(self.export_methods_count):
+                data = self.data[shift:]
+                method = self.MethodInfo(data)
+                self.methods.append(method)
+                shift += method.size
+            self.size = shift
+        def __str__(self):
+            return "ClassInfo: name @%d, %d supers, %d interfaces, %d fields, %d methods" % (
+                self.name_index,
+                self.export_supers_count,
+                self.export_interfaces_count,
+                self.export_fields_count,
+                self.export_methods_count)
 
     def __init__(self, data):
         self.data = data
@@ -80,7 +156,7 @@ class ExportFile(object):
         self.classes = []
         for i in xrange(self.export_class_count):
             data = self.data[shift:]
-            cls = ClassInfo(data)
+            cls = self.ClassInfo(data)
             self.classes.append(cls)
             shift += cls.size
             
@@ -89,7 +165,7 @@ class ExportFile(object):
         return (self.major_version, self.minor_version)
 
     def __str__(self):
-        return "<ExportFile:\n\tMagic: %08X\n\tVersion: %s\n\tCstPool:\n\t\t%s\n\tThis:%s\n\tExports:%s\n>" % (
+        return "<ExportFile:\n\tMagic: %08X\n\tVersion: %s\n\tCstPool:\n\t\t%s\n\tThis:%s\n\tExports:\n\t\t%s\n>" % (
             self.magic,
             self.version,
             '\n\t\t'.join([str(cp_info) for cp_info in self.constant_pool]),
