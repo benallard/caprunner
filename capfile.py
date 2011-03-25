@@ -326,7 +326,7 @@ class Class(Component):
             self.size = shift
         def __str__(self):
             return "InterfaceInfo: Super: %s %s" % (
-                ', '.join(self.superinterfaces),
+                ', '.join([str(int) for int in self.superinterfaces]),
                 self.isRemote and self.interface or ""
                 )
                 
