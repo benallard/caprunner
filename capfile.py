@@ -1,6 +1,7 @@
 import zipfile
 
 from utils import *
+from bytecode import disassemble, getChunkLength
 
 class PackageInfo(object):
     def __init__(self, data):
@@ -500,9 +501,18 @@ class Method(Component):
                 False: self.MethodHeaderInfo, 
                 True: self.ExtendedMethodHeaderInfo
                 }[self.BaseHeaderInfo.isExtended(u1(data[:1]))](data)
-            print stringify(data[self.method_info.size:])
+            self.size = self.method_info.size
             if not self.method_info.isAbstract:
-                self.bytecodes = u1a(tadaaa , data[self.method_info.size:])
+                try:
+                    for mnemonic in disassemble(data[self.method_info.size:]):
+                        print mnemonic
+                except KeyError:
+                    print stringify(data)
+                print "----"
+                self.bytecodes = u1a(getChunkLength(data[self.method_info.size:]) , data[self.method_info.size:])
+                self.size += len(self.bytecodes)
+        def __str__(self):
+            return "Methode: (%s)" % (not self.method_info.isAbstract and ', '.join(disassemble(self.bytecodes, False)) or "")
 
     def __init__(self, data, version):
         Component.__init__(self, data, version)
@@ -519,6 +529,12 @@ class Method(Component):
             mtd = self.MethodInfo(self.data[shift:])
             self.methods.append(mtd)
             shift += mtd.size
+    def __str__(self):
+        return "< Method:\n\tExceptionHandlers:\n\t\t%s\n\tMethods:\n\t\t%s\n>" %(
+            '\n\t\t'.join([str(excp) for excp in self.exception_handlers]),
+            '\n\t\t'.join([str(mtd) for mtd in self.methods])
+            )
+        
 
 class CAPFile(object):
     def __init__(self, path):
@@ -534,6 +550,7 @@ class CAPFile(object):
         self.Import = Import(self.zipfile.read(self._getFileName('Import')), self.version)
         self.ConstantPool = ConstantPool(self.zipfile.read(self._getFileName('ConstantPool')), self.version)
         self.Class = Class(self.zipfile.read(self._getFileName('Class')), self.version)
+        self.Method = Method(self.zipfile.read(self._getFileName('Method')), self.version)
 
     @property
     def version(self):
@@ -557,3 +574,4 @@ if __name__ == "__main__":
     print cap.Import
     print cap.ConstantPool
     print cap.Class
+    print cap.Method
