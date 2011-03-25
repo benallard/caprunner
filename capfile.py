@@ -444,6 +444,82 @@ class Class(Component):
             '\n\t\t'.join([str(cls) for cls in self.classes])
             )
 
+class Method(Component):
+
+    class ExceptionHandlerInfo(object):
+        size = 8
+        def __init__(self, data):
+            self.start_offset = u2(data[:2])
+            bitfield = u2(data[2:4])
+            self.stop_bit = bool(bitfield & 0x8000)
+            self.active_length = bitfield & 0x07FF
+            self.handler_offset = u2(data[4:6])
+            self.catch_type_index = u2(data[6:8])
+        def __str__(self):
+            return "range: [%d-%d] handler: %d" % (
+                self.start_offset, 
+                self.active_length, 
+                self.handler_offset
+                )
+    
+    class MethodInfo(object):
+
+        class BaseHeaderInfo(object):
+            ACC_EXTENDED = 0x8
+            ACC_ABSTRACT = 0x4
+            def __init__(self, data):
+                bitfield = u1(data[:1])
+                self.flags = (bitfield & 0xF0) >> 4
+                self.isExtended = bool(self.flags & self.ACC_EXTENDED)
+                self.isAbstract = bool(self.flags & self.ACC_ABSTRACT)
+            @classmethod
+            def isExtended(cls, bitfield):
+                flags = (bitfield & 0xF0) >> 4
+                return bool(flags & cls.ACC_EXTENDED)
+                
+        class MethodHeaderInfo(BaseHeaderInfo):
+            size = 2
+            def __init__(self, data):
+                Method.MethodInfo.BaseHeaderInfo.__init__(self, data)
+                bitfield = u1(data[:1])
+                self.max_stack = bitfield & 0x0F
+                bitfield = u1(data[1:2])
+                self.nargs = (bitfield & 0xF0) >> 4
+                self.max_locals = bitfield & 0x0F
+
+        class ExtendedMethodHeaderInfo(BaseHeaderInfo):
+            size = 4
+            def __init__(self, data):
+                Method.MethodInfo.BaseHeaderInfo.__init__(self, data)
+                self.max_stack = u1(data[1:2])
+                self.nargs = u1(data[2:3])
+                self.max_locals = u1(data[3:4])
+
+        def __init__(self, data):
+            self.method_info = {
+                False: self.MethodHeaderInfo, 
+                True: self.ExtendedMethodHeaderInfo
+                }[self.BaseHeaderInfo.isExtended(u1(data[:1]))](data)
+            print stringify(data[self.method_info.size:])
+            if not self.method_info.isAbstract:
+                self.bytecodes = u1a(tadaaa , data[self.method_info.size:])
+
+    def __init__(self, data, version):
+        Component.__init__(self, data, version)
+        self.handler_count = u1(self.data[3:4])
+        shift = 4
+        self.exception_handlers = []
+        for i in xrange(self.handler_count):
+            self.exception_handlers.append(self.ExceptionHandlerInfo(self.data[shift:]))
+            shift += self.ExceptionHandlerInfo.size
+        self.methods = []
+        print self.size
+        # Quite weird we don't know beforehand how much methods we'll get ...
+        while shift < self.size:
+            mtd = self.MethodInfo(self.data[shift:])
+            self.methods.append(mtd)
+            shift += mtd.size
+
 class CAPFile(object):
     def __init__(self, path):
         self.path = path
