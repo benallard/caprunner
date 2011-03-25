@@ -19,6 +19,15 @@ class PackageInfo(object):
         return "AID: %s %s" % (a2s(self.aid), self.version)
 
 class Component(object):
+    COMPONENT_Header = 1
+    COMPONENT_Directory = 2
+    COMPONENT_Applet = 3
+    COMPONENT_Import = 4
+    COMPONENT_ConstantPool = 5
+    COMPONENT_Class = 6
+    COMPONENT_Method = 7
+    COMPONENT_StaticField = 8
+    COMPONENT_ReferenceLocation = 9
     def __init__(self, data, version=None):
         self.data = data
         if version is not None:
@@ -441,10 +450,11 @@ class CAPFile(object):
         self.zipfile = zipfile.ZipFile(self.path, 'r')
         self.Header = Header(self.zipfile.read(self._getFileName('Header')))
         self.Directory = Directory(self.zipfile.read(self._getFileName('Directory')), self.version)
-        name = self._getFileName('Applet')
-        if name is not None:
+        if self.Directory.component_sizes[Component.COMPONENT_Applet - 1] != 0:
             # Applet is optionnal
-            self.Applet = Applet(self.zipfile.read(name), self.version)
+            self.Applet = Applet(self.zipfile.read(self._getFileName('Applet')), self.version)
+        else:
+            self.Applet = None
         self.Import = Import(self.zipfile.read(self._getFileName('Import')), self.version)
         self.ConstantPool = ConstantPool(self.zipfile.read(self._getFileName('ConstantPool')), self.version)
         self.Class = Class(self.zipfile.read(self._getFileName('Class')), self.version)
@@ -465,8 +475,9 @@ if __name__ == "__main__":
     print cap.Header
     print Component(cap.Directory.data)
     print cap.Directory
-    print Component(cap.Applet.data)
-    print cap.Applet
+    if cap.Applet is not None:
+        print Component(cap.Applet.data)
+        print cap.Applet
     print cap.Import
     print cap.ConstantPool
     print cap.Class
