@@ -174,6 +174,7 @@ class CPInfo(object):
                 6: CPInfoStaticMethodref}[u1(data[:1])](data)
 
 class Classref(object):
+    size = 2
     class Externalref(object):
         def __init__(self, data):
             self.package_token = u1(data[:1])
@@ -246,6 +247,162 @@ class ConstantPool(Component):
     def __str__(self):
         return "< ConstantPool: \n\t%s\n>" % '\n\t'.join([str(cp_info) for cp_info in self.constant_pool])
 
+class Class(Component):
+
+    class TypeDescriptor(object):
+        def __init__(self, data):
+            self.nibble_count = u1(data[:1])
+            self.type = u1a((self.nibble_count+1)/2, data[1:])
+            self.size = 1 + (self.nibble_count+1)/2
+
+        def getTypeNib(self, i):
+            if i % 2 == 0:
+                return self.type[i / 2] & 0xF0 >> 4
+            else:
+                return self.type[i/2] & 0x0F
+
+        def __str__(self):
+            "That one can be pretty funny"
+            typeDescr = {1: "void", 2:"boolean", 3: "byte", 4: "short", 5: "int", 6: "ref", 10: "array of bool", 11: "array of byte", 12: "array of short", 13: "array of int", 14: "array of ref"}
+            i = 0
+            while i < self.nibble_count:
+                nibble = self.getTypeNib(i)
+                print typeDescr[nibble]
+                if nibble in [6, 14]:
+                    p = self.getTypeNib(i+1) << 4 + self.getTypeNib(i+2)
+                    c = self.getTypeNib(i+3) << 4 + self.getTypeNib(i+4)
+                    print "%d.%d" % (p, c)
+                    i += 4
+
+    class BaseInfo(object):
+        ACC_INTERFACE = 0x8
+        ACC_SHAREABLE = 0x4
+        ACC_REMOTE = 0x2
+        def __init__(self, data):
+            self.data = data
+            bitfield = u1(self.data[:1])
+            self.flags = (bitfield & 0xF0) >> 4
+            self.interface_count = bitfield & 0x0F
+
+        @classmethod
+        def isInterface(cls, bitfield):
+            flags = (bitfield & 0xF0) >> 4
+            return flags & cls.ACC_INTERFACE == cls.ACC_INTERFACE
+
+    class InterfaceInfo(BaseInfo):
+
+        class InterfaceNameInfo(object):
+            def __init__(self, data):
+                self.interface_name_length = u1(data[:1])
+                self.interface_name = u1a(self.interface_name_length, data[1:])
+
+        def __init__(self, data):
+            Class.BaseInfo.__init__(self, data)
+            self.superinterfaces = []
+            shift = 1
+            for i in xrange(self.interface_count):
+                self.superinterfaces.append(Classref(self.data[shift:]))
+                shift += Classref.size
+            if self.flags & self.ACC_REMOTE == self.ACC_REMOTE:
+                # and only starting from (2, 2)
+                self.interface_name = self.InterfaceNameInfo(data[shift:])
+                shift += self.interface_name.interface_name_length + 1
+            self.size = shift
+
+    class ClassInfo(BaseInfo):
+
+        class ImplementedInterfaceInfo(object):
+            def __init__(self, data):
+                self.interface = Classref(data[:2])
+                self.count = u1(data[2:3])
+                self.index = u1a(self.count, data[3:])
+                self.size =  self.count + 3
+
+        class RemoteInterfaceInfo(object):
+
+            class RemoteMethodInfo(object):
+                size = 5
+                def __init__(self, data):
+                    self.remote_method_hash = u2(data[:2])
+                    self.signature_offset = u2(data[:2])
+                    self.virtual_method_token = u1(data[:1])
+
+            def __init__(self, data):
+                self.remote_method_count = u1(data[:1])
+                self.remote_methods = []
+                shift = 1
+                for i in xrange(self.remote_methode_count):
+                    self.remote_methods.append(self.RemoteMethodInfo(data[shift:]))
+                    shift += self.RemoteMethodInfo.size
+                self.hash_modifier_length = u1(data[shift:])
+                self.hash_modifier = u1a(self.hash_modifier_length, data[shift+1:])
+                shift += self.hash_modifier_length + 1
+                self.class_name_length = u1(data[shift:])
+                self.class_name = u1a(self.class_name_length, data[shift+1:])
+                shift += self.class_name_length + 1
+                self.remote_interfaces_count = u1(data[shift:])
+                self.remote_interfaces = []
+                shift += 1
+                for i in xrange(self.remote_interfaces_count):
+                    self.remote_interfaces.append(Classref(data[shift:]))
+                    shift += Classref.size
+                self.size = shift
+
+        def __init__(self, data):
+            Class.BaseInfo.__init__(self, data)
+            self.super_class_ref = Classref(data[1:3])
+            self.declared_instance_size = u1(data[3:4])
+            self.first_reference_token = u1(data[4:5])
+            self.reference_count = u1(data[5:6])
+            self.public_method_table_base = u1(data[6:7])
+            self.public_method_table_count = u1(data[7:8])
+            self.package_method_table_base = u1(data[8:9])
+            self.package_method_table_count = u1(data[9:10])
+            shift = 10
+            print self.public_method_table_count, self.package_method_table_count, self.interface_count
+            print stringify(data[shift:])
+            self.public_virtual_method_table = u2a(self.public_method_table_count, data[shift:])
+            shift += self.public_method_table_count*2
+            print len(data[shift:])," - ", stringify(data[shift:])
+            self.package_virtual_method_table = u2a(self.package_method_table_count, data[shift:])
+            shift += self.package_method_table_count*2
+            self.interfaces = []
+            for i in xrange(self.interface_count):
+                cls = self.ImplementedInterfaceInfo(data[shift:])
+                self.interfaces.append(cls)
+                shift += cls.size
+            if self.flags & self.ACC_REMOTE == self.ACC_REMOTE:
+                self.remote_interface = self.RemoteInterfaceInfo(data[shift:])
+                shift += self.remote_interface.size
+            self.size = shift
+
+    def __init__(self, data, version):
+        Component.__init__(self, data, version)
+        shift = 3
+        if self.version >= (2, 2):
+            self.signature_pool_length = u2(self.data[3:5])
+            shift += 2
+            self.signature_pool = []
+            for i in xrange(signature_pool_length):
+                typ_descr = self.TypeDescriptor(self.data[shift:])
+                self.signature_pool.append(typ_descr)
+                shift += typ_descr.size
+        self.interfaces = []
+        self.classes = []
+        # this is actually weird that we don't know beforehand how much class there will be
+        while shift < self.size:
+            data = self.data[shift:]
+            if self.BaseInfo.isInterface(u1(self.data[shift:])):
+                print "Interface"
+                cls = self.InterfaceInfo(data)
+                self.interfaces.append(cls)
+                shift += cls.size
+            else:
+                print "Class: ", stringify(data)
+                cls = self.ClassInfo(data)
+                self.classes.append(cls)
+                shift += cls.size
+
 class CAPFile(object):
     def __init__(self, path):
         self.path = path
@@ -255,6 +412,7 @@ class CAPFile(object):
         self.Applet = Applet(self.zipfile.read(self._getFileName('Applet')), self.version)
         self.Import = Import(self.zipfile.read(self._getFileName('Import')), self.version)
         self.ConstantPool = ConstantPool(self.zipfile.read(self._getFileName('ConstantPool')), self.version)
+        self.Class = Class(self.zipfile.read(self._getFileName('Class')), self.version)
 
     @property
     def version(self):
