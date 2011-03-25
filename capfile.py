@@ -441,7 +441,10 @@ class CAPFile(object):
         self.zipfile = zipfile.ZipFile(self.path, 'r')
         self.Header = Header(self.zipfile.read(self._getFileName('Header')))
         self.Directory = Directory(self.zipfile.read(self._getFileName('Directory')), self.version)
-        self.Applet = Applet(self.zipfile.read(self._getFileName('Applet')), self.version)
+        name = self._getFileName('Applet')
+        if name is not None:
+            # Applet is optionnal
+            self.Applet = Applet(self.zipfile.read(name), self.version)
         self.Import = Import(self.zipfile.read(self._getFileName('Import')), self.version)
         self.ConstantPool = ConstantPool(self.zipfile.read(self._getFileName('ConstantPool')), self.version)
         self.Class = Class(self.zipfile.read(self._getFileName('Class')), self.version)
