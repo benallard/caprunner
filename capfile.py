@@ -205,7 +205,7 @@ class CPInfoClassref(CPInfo, Classref):
     def __str__(self):
         return "<CPInfoClassRef %s>" % Classref.__str__(self)
 
-class CPInfoInstanceFieldref(CPInfo, Classref):
+class CPInfoClassTokenref(CPInfo, Classref):
     def __init__(self, data):
         CPInfo.__init__(self, data)
         Classref.__init__(self, data[1:])
@@ -213,10 +213,11 @@ class CPInfoInstanceFieldref(CPInfo, Classref):
     def __str__(self):
         return "<%s %s, token: %d>" % (self.__class__.__name__, Classref.__str__(self), self.token)
 
-CPInfoVirtualMethodref = CPInfoInstanceFieldref
-CPInfoSuperMethodref = CPInfoInstanceFieldref
+class CPInfoInstanceFieldref(CPInfoClassTokenref): pass
+class CPInfoVirtualMethodref(CPInfoClassTokenref): pass
+class CPInfoSuperMethodref(CPInfoClassTokenref): pass
 
-class CPInfoStaticFieldref(CPInfo):
+class CPInfoStaticBaseref(CPInfo):
 
     class Internalref(object):
         def __init__(self, data):
@@ -241,7 +242,8 @@ class CPInfoStaticFieldref(CPInfo):
     def __str__(self):
         return "<%s %s / %s>" % (self.__class__.__name__, self.internal_ref, self.external_ref)
 
-CPInfoStaticMethodref = CPInfoStaticFieldref
+class CPInfoStaticFieldref(CPInfoStaticBaseref): pass
+class CPInfoStaticMethodref(CPInfoStaticBaseref): pass
 
 class ConstantPool(Component):
     def __init__(self, data, version):
