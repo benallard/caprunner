@@ -73,6 +73,8 @@ class ExportFile(object):
                 def __init__(self, data):
                     ExportFile.ClassInfo.FieldInfo.AttributeInfo.__init__(self, data)
                     self.constant_value_index = u2(self.data[6:8])
+                def __str__(self):
+                    return "Constant, value @%d" % self.constant_value_index
 
             def __init__(self, data):
                 self.data = data
@@ -173,8 +175,32 @@ class ExportFile(object):
             '\n\t\t'.join([str(exp) for exp in self.classes])
             )
 
+    def pprint(self):
+        CP = self.constant_pool
+        print "I am: ", CP[CP[self.this_package].name_index], " with version ", CP[self.this_package].version, " and AID ", a2s(CP[self.this_package].aid)
+        print "I export ", len(self.classes), " classes (including interfaces). Those are:"
+        for cls in self.classes:
+            print " - ", CP[CP[cls.name_index].name_index], "TK:", cls.token
+            print "\tinherits from ",cls.export_supers_count, "classes, those are:"
+            for sp in cls.supers:
+                print "\t - ", CP[CP[sp].name_index]
+            if cls.export_interfaces_count:
+                print "\timplements the following ", cls.export_interfaces_count, "interfaces:"
+                for int in cls.interfaces:
+                    print "\t - ", CP[CP[int].name_index]
+            if cls.export_fields_count:
+                print "\thas the following ", cls.export_fields_count, "fields:"
+                for fld in cls.fields:
+                    assert len(fld.attributes) == 1
+                    print "\t - ", CP[fld.name_index], "of type", CP[fld.descriptor_index], "TK:", fld.token, "(",CP[fld.attributes[0].constant_value_index], ")"
+            if cls.export_methods_count:
+                print "\thas the following", cls.export_methods_count, "methods:"
+                for mtd in cls.methods:
+                    print "\t - ", CP[mtd.name_index], "TK:", mtd.token, "(", CP[mtd.descriptor_index], ")"
+
 if __name__ == "__main__":
     import sys
     f = open(sys.argv[1])
     exp = ExportFile(f.read())
     print exp
+    exp.pprint()
