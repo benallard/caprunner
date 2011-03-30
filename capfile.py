@@ -500,21 +500,15 @@ class Method(Component):
                 self.nargs = u1(data[2:3])
                 self.max_locals = u1(data[3:4])
 
-        def __init__(self, data):
+        def __init__(self, data, bytecodelen):
             self.method_info = {
                 False: self.MethodHeaderInfo, 
                 True: self.ExtendedMethodHeaderInfo
                 }[self.BaseHeaderInfo.isExtended(u1(data[:1]))](data)
             self.size = self.method_info.size
             if not self.method_info.isAbstract:
-                try:
-                    for mnemonic in disassemble(data[self.method_info.size:]):
-                        print mnemonic
-                except KeyError:
-                    print stringify(data)
-                print "----"
-                self.bytecodes = u1a(getChunkLength(data[self.method_info.size:]) , data[self.method_info.size:])
-                self.size += len(self.bytecodes)
+                self.bytecodes = u1a(bytecodelen, data[self.method_info.size:])
+                self.size += bytecodelen
         def __str__(self):
             return "Methode: (%s)" % (not self.method_info.isAbstract and ', '.join(disassemble(self.bytecodes, False)) or "")
 
