@@ -29,6 +29,9 @@ class Component(object):
     COMPONENT_Method = 7
     COMPONENT_StaticField = 8
     COMPONENT_ReferenceLocation = 9
+    COMPONENT_Export = 10
+    COMPONENT_Descriptor = 11
+    COMPONENT_Debug = 12
     def __init__(self, data, version=None):
         self.data = data
         if version is not None:
