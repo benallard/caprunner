@@ -208,11 +208,15 @@ class CPInfoClassref(CPInfo, Classref):
     def __str__(self):
         return "<CPInfoClassRef %s>" % Classref.__str__(self)
 
-class CPInfoClassTokenref(CPInfo, Classref):
+class ClassTokenref(Classref):
+    def __init__(self, data):
+        Classref.__init__(self, data)
+        self.token = u1(data[2:3])
+
+class CPInfoClassTokenref(CPInfo, ClassTokenref):
     def __init__(self, data):
         CPInfo.__init__(self, data)
-        Classref.__init__(self, data[1:])
-        self.token = u1(data[3:4])
+        ClassTokenref.__init__(self, data[1:])
     def __str__(self):
         return "<%s %s, token: %d>" % (self.__class__.__name__, Classref.__str__(self), self.token)
 
@@ -220,8 +224,8 @@ class CPInfoInstanceFieldref(CPInfoClassTokenref): pass
 class CPInfoVirtualMethodref(CPInfoClassTokenref): pass
 class CPInfoSuperMethodref(CPInfoClassTokenref): pass
 
-class CPInfoStaticBaseref(CPInfo):
-
+class StaticBaseref(object):
+    
     class Internalref(object):
         def __init__(self, data):
             self.padding = u1(data[:1])
@@ -238,12 +242,17 @@ class CPInfoStaticBaseref(CPInfo):
             return "pkg: %d, cls: %d, token: %d" % (self.package_token, self.class_token, self.token)
 
     def __init__(self, data):
-        CPInfo.__init__(self, data)
-        self.internal_ref = self.Internalref(data[1:])
-        self.external_ref = self.Externalref(data[1:])
-
+        self.internal_ref = self.Internalref(data)
+        self.external_ref = self.Externalref(data)
     def __str__(self):
-        return "<%s %s / %s>" % (self.__class__.__name__, self.internal_ref, self.external_ref)
+        return "%s / %s" % (self.internal_ref, self.external_ref)
+
+class CPInfoStaticBaseref(CPInfo, StaticBaseref):
+    def __init__(self, data):
+        CPInfo.__init__(self, data)
+        StaticBaseref.__init__(self, data[1:])
+    def __str__(self):
+        return "<%s %s>" % (self.__class__.__name__, StaticBaseref.__str__(self))
 
 class CPInfoStaticFieldref(CPInfoStaticBaseref): pass
 class CPInfoStaticMethodref(CPInfoStaticBaseref): pass
@@ -429,7 +438,7 @@ class Class(Component):
             shift += 2
             self.signature_pool = []
             for i in xrange(signature_pool_length):
-                typ_descr = self.TypeDescriptor(self.data[shift:])
+                typ_descr = TypeDescriptor(self.data[shift:])
                 self.signature_pool.append(typ_descr)
                 shift += typ_descr.size
         self.interfaces = []
