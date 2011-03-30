@@ -570,6 +570,27 @@ class StaticField(Component):
             a2s(self.non_default_values)
             )
 
+class RefLocation(Component):
+    def __init__(self, data, version):
+        Component.__init__(self, data, version)
+        self.byte_index_count = u2(data[3:5])
+        self.offsets_to_byte_indices = u1a(self.byte_index_count, self.data[5:])
+        shift = self.byte_index_count + 5
+        self.byte2_index_count = u2(data[shift:])
+        self.offsets_to_byte2_indices = u1a(self.byte2_index_count, self.data[shift+2:])
+        shift += self.byte2_index_count + 2
+    def offsets(self, a):
+        offs = 0
+        for v in a:
+            offs += v
+            if v != 0xff:
+                yield offs
+    def __str__(self):
+        return "< RefLocation:\n\t%s\n\t%s\n>" % (
+            ', '.join([str(offs) for offs in self.offsets(self.offsets_to_byte_indices)]),
+            ', '.join([str(offs) for offs in self.offsets(self.offsets_to_byte2_indices)])
+            )
+
 class CAPFile(object):
     def __init__(self, path):
         self.path = path
@@ -586,6 +607,7 @@ class CAPFile(object):
         self.Class = Class(self.zipfile.read(self._getFileName('Class')), self.version)
         self.Method = Method(self.zipfile.read(self._getFileName('Method')), self.version)
         self.StaticField = StaticField(self.zipfile.read(self._getFileName('StaticField')), self.version)
+        self.RefLocation = RefLocation(self.zipfile.read(self._getFileName('RefLocation')), self.version)
 
     @property
     def version(self):
@@ -611,3 +633,4 @@ if __name__ == "__main__":
     print cap.Class
     print cap.Method
     print cap.StaticField
+    print cap.RefLocation
