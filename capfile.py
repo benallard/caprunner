@@ -605,6 +605,164 @@ class RefLocation(Component):
             ', '.join([str(offs) for offs in self.offsets(self.offsets_to_byte2_indices)])
             )
 
+class Export(Component):
+
+    class ClassExportInfo(object):
+        def __init__(self, data):
+            self.class_offset = u2(data[:2])
+            self.static_field_count = u1(data[2:3])
+            self.static_method_count = u1(data[3:4])
+            shift = 4
+            self.static_field_offsets = u2a(self.static_field_count, data[shift:])
+            shift += self.static_field_count * 2
+            self.static_method_offsets = u2a(self.static_method_count, data[shift:])
+            self.size = shift + self.static_method_count * 2
+        def __str__(self):
+            return "Class @%d, static fields @ %s, static methods @ %s" % (
+                self.class_offset,
+                ', '.join([str(offs) for offs in self.static_field_offsets]),
+                ', '.join([str(offs) for offs in self.static_method_offsets])
+                )
+    
+    def __init__(self, data, version):
+        Component.__init__(self, data, version)
+        self.class_count = u1(self.data[3:4])
+        shift = 4
+        self.class_exports = []
+        for i in xrange(self.class_count):
+            clsexp = self.ClassExportInfo(self.data[shift:])
+            self.class_exports.append(clsexp)
+            shift += clsexp.size
+    def __str__(self):
+        return "< Export:\n\t - %s\n>" % (
+            '\n\t - '.join([str(clsexp) for clsexp in self.class_exports]))
+
+class Descriptor(Component):
+
+    class ClassDescriptorInfo(object):
+        ACC_PUBLIC = 0x01
+        ACC_FINAL = 0x10
+        ACC_INTERFACE = 0x40
+        ACC_ABSTRACT = 0x80
+        class FieldDescriptorInfo(object):
+            size = 7
+            ACC_PUBLIC = 0x01
+            ACC_PRIVATE = 0x02
+            ACC_PROTECTED = 0x04
+            ACC_STATIC = 0x08
+            ACC_FINAL = 0x10
+            def __init__(self, data):
+                self.token = u1(data[:1])
+                self.access_flags = u1(data[1:2])
+                self.isStatic = bool(self.access_flags & self.ACC_STATIC)
+                self.static_field = StaticBaseref(data[2:])
+                self.instance_field = ClassTokenref(data[2:])
+                if self.isStatic:
+                    self.field = self.static_field
+                else:
+                    self.field = self.instance_field
+                shift = 5
+                type = u2(data[shift:])
+                self.primitive_type = type & 0x000F
+                self.reference_type = type & 0x7FFF
+                if bool(type & 0x8000):
+                    self.type = self.primitive_type
+                else:
+                    self.type = self.reference_type
+            def __str__(self):
+                return "Field: %s of type %d" % (self.field, self.type)
+
+        class MethodDescriptorInfo(object):
+            size = 12
+            ACC_PUBLIC = 0x01
+            ACC_PRIVATE = 0x02
+            ACC_PROTECTED = 0x04
+            ACC_STATIC = 0x08
+            ACC_FINAL = 0x10
+            ACC_ABSTRACT = 0x40
+            ACC_INIT = 0x80
+            def __init__(self, data):
+                self.token = u1(data[:1])
+                self.access_flags = u1(data[1:2])
+                self.method_offset = u2(data[2:4])
+                self.type_offset = u2(data[4:6])
+                self.bytecode_count = u2(data[6:8])
+                self.exception_handler_count = u2(data[8:10])
+                self.exception_handler_index = u2(data[10:12])
+            def __str__(self):
+                return "Method: [%d:+%d],type: @%d excpt: %d @%d" % (
+                    self.method_offset,
+                    self.bytecode_count,
+                    self.type_offset,
+                    self.exception_handler_count,
+                    self.exception_handler_index
+                    )
+
+        def __init__(self, data):
+            self.token = u1(data[:1])
+            self.access_flags = u1(data[1:2])
+            self.this_class_ref = Classref(data[2:])
+            shift = Classref.size + 2
+            self.interface_count = u1(data[shift:])
+            self.field_count = u2(data[shift+1:])
+            self.method_count = u2(data[shift+3:])
+            shift += 5
+            self.interfaces = []
+            for i in xrange(self.interface_count):
+                self.interfaces.append(Classref(data[shift:]))
+                shift += Classref.size
+            self.fields = []
+            for i in xrange(self.field_count):
+                fld = self.FieldDescriptorInfo(data[shift:])
+                self.fields.append(fld)
+                shift += fld.size
+            self.methods = []
+            for i in xrange(self.method_count):
+                mtd = self.MethodDescriptorInfo(data[shift:])
+                self.methods.append(mtd)
+                shift += mtd.size
+            self.size = shift
+        def __str__(self):
+            return "Class: %s, Interfaces: (%s), Fields: (%s), Methods: (%s)" % (
+                self.this_class_ref,
+                ', '.join([str(int) for int in self.interfaces]),
+                ', '.join([str(int) for int in self.fields]),
+                ', '.join([str(int) for int in self.methods]),
+                )
+
+    class TypeDescriptorInfo(object):
+        def __init__(self, data, size):
+            self.constant_pool_count = u2(data[:2])
+            self.constant_pool_types = u2a(self.constant_pool_count, data[2:])
+            shift = self.constant_pool_count * 2 + 2
+            self.type_desc = []
+            while shift < size:
+                type = TypeDescriptor(data[shift:])
+                self.type_desc.append(type)
+                shift += type.size
+            self.size = shift
+        def __str__(self):
+            return "TypeDescr: CstPool: (%s), types: (%s)" % (
+                ', '.join([str(cst) for cst in self.constant_pool_types]),
+                ', '.join([str(typ) for typ in self.type_desc])
+                )
+
+    def __init__(self, data, version):
+        Component.__init__(self, data, version)
+        self.class_count = u1(self.data[3:4])
+        shift = 4
+        self.classes = []
+        for i in xrange(self.class_count):
+            cls = self.ClassDescriptorInfo(data[shift:])
+            self.classes.append(cls)
+            shift += cls.size
+        self.types = self.TypeDescriptorInfo(data[shift:], self.size - shift)
+    def __str__(self):
+        return "< Descriptor:\n\tClasses:\n\t\t - %s\n\tTypes: %s\n>" % (
+            '\n\t\t - '.join([str(cls) for cls in self.classes]),
+            self.types
+            )
+
 class CAPFile(object):
     def __init__(self, path):
         self.path = path
@@ -622,6 +780,11 @@ class CAPFile(object):
         self.Method = Method(self.zipfile.read(self._getFileName('Method')), self.version)
         self.StaticField = StaticField(self.zipfile.read(self._getFileName('StaticField')), self.version)
         self.RefLocation = RefLocation(self.zipfile.read(self._getFileName('RefLocation')), self.version)
+        if self.Directory.component_sizes[Component.COMPONENT_Export - 1] != 0:
+            self.Export = Export(self.zipfile.read(self._getFileName('Export')), self.version)
+        else:
+            self.Export = None
+        self.Descriptor = Descriptor(self.zipfile.read(self._getFileName('Descriptor')), self.version)
 
     @property
     def version(self):
@@ -648,3 +811,6 @@ if __name__ == "__main__":
     print cap.Method
     print cap.StaticField
     print cap.RefLocation
+    if cap.Export is not None:
+        print cap.Export
+    print cap.Descriptor
