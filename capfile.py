@@ -291,13 +291,12 @@ class TypeDescriptor(object):
         while i < self.nibble_count:
             nibble = self.getTypeNib(i)
             res.append(typeDescr[nibble])
+            i += 1
             if nibble in [6, 14]:
-                p = self.getTypeNib(i+1) << 4 + self.getTypeNib(i+2)
-                c = self.getTypeNib(i+3) << 4 + self.getTypeNib(i+4)
+                p = self.getTypeNib(i) << 4 + self.getTypeNib(i+1)
+                c = self.getTypeNib(i+2) << 4 + self.getTypeNib(i+3)
                 res.append("%d.%d" % (p, c))
                 i += 4
-            else:
-                i += 1
         return ' '.join(res)
 
 class Class(Component):
