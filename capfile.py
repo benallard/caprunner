@@ -259,34 +259,36 @@ class ConstantPool(Component):
     def __str__(self):
         return "< ConstantPool: \n\t%s\n>" % '\n\t'.join([str(cp_info) for cp_info in self.constant_pool])
 
-class Class(Component):
+class TypeDescriptor(object):
+    def __init__(self, data):
+        self.nibble_count = u1(data[:1])
+        self.type = u1a((self.nibble_count+1)/2, data[1:])
+        self.size = 1 + (self.nibble_count+1)/2
 
-    class TypeDescriptor(object):
-        def __init__(self, data):
-            self.nibble_count = u1(data[:1])
-            self.type = u1a((self.nibble_count+1)/2, data[1:])
-            self.size = 1 + (self.nibble_count+1)/2
+    def getTypeNib(self, i):
+        if i % 2 == 0:
+            return (self.type[i / 2] & 0xF0) >> 4
+        else:
+            return self.type[i / 2] & 0x0F
 
-        def getTypeNib(self, i):
-            if i % 2 == 0:
-                return self.type[i / 2] & 0xF0 >> 4
+    def __str__(self):
+        "That one can be pretty funny"
+        typeDescr = {1: "void", 2:"boolean", 3: "byte", 4: "short", 5: "int", 6: "ref", 10: "array of bool", 11: "array of byte", 12: "array of short", 13: "array of int", 14: "array of ref"}
+        res = []
+        i = 0
+        while i < self.nibble_count:
+            nibble = self.getTypeNib(i)
+            res.append(typeDescr[nibble])
+            if nibble in [6, 14]:
+                p = self.getTypeNib(i+1) << 4 + self.getTypeNib(i+2)
+                c = self.getTypeNib(i+3) << 4 + self.getTypeNib(i+4)
+                res.append("%d.%d" % (p, c))
+                i += 4
             else:
-                return self.type[i/2] & 0x0F
+                i += 1
+        return ' '.join(res)
 
-        def __str__(self):
-            "That one can be pretty funny"
-            typeDescr = {1: "void", 2:"boolean", 3: "byte", 4: "short", 5: "int", 6: "ref", 10: "array of bool", 11: "array of byte", 12: "array of short", 13: "array of int", 14: "array of ref"}
-            res = []
-            i = 0
-            while i < self.nibble_count:
-                nibble = self.getTypeNib(i)
-                res += typeDescr[nibble]
-                if nibble in [6, 14]:
-                    p = self.getTypeNib(i+1) << 4 + self.getTypeNib(i+2)
-                    c = self.getTypeNib(i+3) << 4 + self.getTypeNib(i+4)
-                    res += "%d.%d" % (p, c)
-                    i += 4
-            return ' '.join(res)
+class Class(Component):
 
     class BaseInfo(object):
         ACC_INTERFACE = 0x8
