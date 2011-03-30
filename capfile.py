@@ -459,10 +459,12 @@ class Method(Component):
             self.handler_offset = u2(data[4:6])
             self.catch_type_index = u2(data[6:8])
         def __str__(self):
-            return "range: [%d-%d] handler: %d" % (
+            return "range: [%d:+%d] handler: %d%s, catch @ %d" % (
                 self.start_offset, 
                 self.active_length, 
-                self.handler_offset
+                self.handler_offset,
+                self.stop_bit and " STOP" or "",
+                self.catch_type_index
                 )
     
     class MethodInfo(object):
@@ -525,18 +527,15 @@ class Method(Component):
             self.exception_handlers.append(self.ExceptionHandlerInfo(self.data[shift:]))
             shift += self.ExceptionHandlerInfo.size
         self.methods = []
-        print self.size
         # Quite weird we don't know beforehand how much methods we'll get ...
-        while shift < self.size:
-            mtd = self.MethodInfo(self.data[shift:])
-            self.methods.append(mtd)
-            shift += mtd.size
+        # So we need to postpone the initialisation of that array
+
     def __str__(self):
         return "< Method:\n\tExceptionHandlers:\n\t\t%s\n\tMethods:\n\t\t%s\n>" %(
             '\n\t\t'.join([str(excp) for excp in self.exception_handlers]),
             '\n\t\t'.join([str(mtd) for mtd in self.methods])
             )
-        
+
 
 class CAPFile(object):
     def __init__(self, path):
