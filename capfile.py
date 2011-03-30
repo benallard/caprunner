@@ -530,6 +530,45 @@ class Method(Component):
             '\n\t\t'.join([str(mtd) for mtd in self.methods])
             )
 
+class StaticField(Component):
+
+    class ArrayInitInfo(object):
+        type_boolean = 2
+        type_byte = 3
+        type_short = 4
+        type_int = 5
+        def __init__(self, data):
+            self.type = u1(data[:1])
+            self.count = u2(data[1:3])
+            self.values = u1a(self.count, data[3:])
+            self.size = self.count + 3
+        def __str__(self):
+            return "%s [] = %s" % (
+                {2: "boolean", 3: "byte", 4: "short", 5: "int"}[self.type],
+                a2s(self.values))
+
+    def __init__(self, data, version):
+        Component.__init__(self, data, version)
+        self.image_size = u2(self.data[3:5])
+        self.reference_count = u2(self.data[5:7])
+        self.array_init_count = u2(self.data[7:9])
+        shift = 9
+        self.array_init = []
+        for i in xrange(self.array_init_count):
+            aii = self.ArrayInitInfo(self.data[shift:])
+            self.array_init.append(aii)
+            shift += aii.size
+        self.default_value_count = u2(self.data[shift:])
+        self.non_default_value_count = u2(self.data[shift+2:])
+        self.non_default_values = u1a(self.non_default_value_count, self.data[shift+4:])
+    def __str__(self):
+        return "< StaticField:\n\tImage size: %d\n\tRef Count: %d\n\tArray Init:\n\t\t%s\n\tDefault values: %d\n\tNon default Values: %s\n>" % (
+            self.image_size,
+            self.reference_count,
+            '\n\t\t'.join([str(aii) for aii in self.array_init]),
+            self.default_value_count,
+            a2s(self.non_default_values)
+            )
 
 class CAPFile(object):
     def __init__(self, path):
@@ -546,6 +585,7 @@ class CAPFile(object):
         self.ConstantPool = ConstantPool(self.zipfile.read(self._getFileName('ConstantPool')), self.version)
         self.Class = Class(self.zipfile.read(self._getFileName('Class')), self.version)
         self.Method = Method(self.zipfile.read(self._getFileName('Method')), self.version)
+        self.StaticField = StaticField(self.zipfile.read(self._getFileName('StaticField')), self.version)
 
     @property
     def version(self):
@@ -570,3 +610,4 @@ if __name__ == "__main__":
     print cap.ConstantPool
     print cap.Class
     print cap.Method
+    print cap.StaticField
