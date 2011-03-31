@@ -766,24 +766,41 @@ class CAPFile(object):
     def __init__(self, path):
         self.path = path
         self.zipfile = zipfile.ZipFile(self.path, 'r')
-        self.Header = Header(self.zipfile.read(self._getFileName('Header')))
-        self.Directory = Directory(self.zipfile.read(self._getFileName('Directory')), self.version)
+        getComp = lambda name: self.zipfile.read(self._getFileName(name))
+        self.Header = Header(getComp('Header'))
+        self.Directory = Directory(getComp('Directory'), self.version)
         if self.Directory.component_sizes[Component.COMPONENT_Applet - 1] != 0:
             # Applet is optionnal
-            self.Applet = Applet(self.zipfile.read(self._getFileName('Applet')), self.version)
+            self.Applet = Applet(getComp('Applet'), self.version)
         else:
             self.Applet = None
-        self.Import = Import(self.zipfile.read(self._getFileName('Import')), self.version)
-        self.ConstantPool = ConstantPool(self.zipfile.read(self._getFileName('ConstantPool')), self.version)
-        self.Class = Class(self.zipfile.read(self._getFileName('Class')), self.version)
-        self.Method = Method(self.zipfile.read(self._getFileName('Method')), self.version)
-        self.StaticField = StaticField(self.zipfile.read(self._getFileName('StaticField')), self.version)
-        self.RefLocation = RefLocation(self.zipfile.read(self._getFileName('RefLocation')), self.version)
+        self.Import = Import(getComp('Import'), self.version)
+        self.ConstantPool = ConstantPool(getComp('ConstantPool'), self.version)
+        self.Class = Class(getComp('Class'), self.version)
+        self.Method = Method(getComp('Method'), self.version)
+        self.StaticField = StaticField(getComp('StaticField'), self.version)
+        self.RefLocation = RefLocation(getComp('RefLocation'), self.version)
         if self.Directory.component_sizes[Component.COMPONENT_Export - 1] != 0:
-            self.Export = Export(self.zipfile.read(self._getFileName('Export')), self.version)
+            self.Export = Export(getComp('Export'), self.version)
         else:
             self.Export = None
-        self.Descriptor = Descriptor(self.zipfile.read(self._getFileName('Descriptor')), self.version)
+        self.Descriptor = Descriptor(getComp('Descriptor'), self.version)
+        
+        self.postInit()
+
+    def postInit(self):
+        # We need to fiil the methods here.
+        data = self.Method.data[3:]
+        print len(data)
+        for cls in self.Descriptor.classes:
+            for mtd in cls.methods:
+                if mtd.method_offset == 0:
+                    continue
+                print mtd.method_offset, mtd.bytecode_count
+                print data[mtd.method_offset:mtd.method_offset + mtd.bytecode_count]
+                method = Method.MethodInfo(data[mtd.method_offset:], mtd.bytecode_count)
+                self.Method.methods.append(method)
+                
 
     @property
     def version(self):
