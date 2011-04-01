@@ -762,6 +762,127 @@ class Descriptor(Component):
             self.types
             )
 
+class Debug(Component):
+
+    class Utf8Info(object):
+        def __init__(self, data):
+            self.length = u2(data[:2])
+            self.bytes = u1a(self.length, data[2:])
+            self.size = self.length + 2
+        def __str__(self):
+            return ''.join([chr(b) for b in self.bytes])
+
+    class ClassDebugInfo(object):
+        ACC_PUBLIC = 0x0001
+        ACC_FINAL = 0x0010
+        ACC_REMOTE = 0x0020
+        ACC_INTERFACE = 0x0200
+        ACC_ABSTRACT = 0x0400
+        ACC_SHAREABLE = 0x0800
+        class FieldDebugInfo(object):
+            size = 10
+            ACC_PUBLIC = 0x0001
+            ACC_PRIVATE = 0x0002
+            ACC_PROTECTED = 0x0004
+            ACC_STATIC = 0x0008
+            ACC_FINAL = 0x0010
+            def __init__(self, data):
+                self.name_index = u2(data[:2])
+                self.descriptor_index = u2(data[2:4])
+                self.access_flags = u2(data[4:6])
+                self.token = u1(data[9:10])
+                self.location = u2(data[8:10])
+                self.constant_value = u4(data[6:10])
+                if bool(self.access_flags & self.ACC_STATIC):
+                    self.contents = self.location
+                elif bool(self.access_flags & self.ACC_FINAL):
+                    self.contents = self.constant_value
+                else:
+                    self.contents = self.token
+
+        class MethodDebugInfo(object):
+            ACC_PUBLIC = 0x0001
+            ACC_PRIVATE = 0x0002
+            ACC_PROTECTED = 0x0004
+            ACC_STATIC = 0x0008
+            ACC_FINAL = 0x0010
+            ACC_NATIVE = 0x0100
+            ACC_ABSTRACT = 0x0400
+            class VariableInfo(object):
+                size = 9
+                def __init__(self, data):
+                    self.index = u1(data[:1])
+                    self.name_index = u2(data[1:3])
+                    self.descriptor_index = u2(data[3:5])
+                    self.start_pc = u2(data[5:7])
+                    self.length = u2(data[7:9])
+
+            class LineInfo(object):
+                size = 6
+                def __init__(self, data):
+                    self.start_pc = u2(data[:2])
+                    self.end_pc = u2(data[2:4])
+                    self.source_line = u2(data[4:6])
+
+            def __init__(self, data):
+                self.name_index = u2(data[:2])
+                self.descriptor_index = u2(data[2:4])
+                self.access_flags = u2(data[4:6])
+                self.location = u2(data[6:8])
+                self.header_size = u1(data[8:9])
+                self.body_size = u2(data[9:11])
+                self.variable_count = u2(data[11:13])
+                self.line_count = u2(data[13:15])
+                shift = 15
+                self.variable_table = []
+                for i in xrange(self.variable_count):
+                    self.variable_table.append(self.VariableInfo(data[shift:]))
+                    shift += self.VariableInfo.size
+                self.line_table = []
+                for i in xrange(self.line_count):
+                    self.line_table.append(self.LineInfo(data[shift:]))
+                    shift += self.LineInfo.size
+
+        def __init__(self, data):
+            self.name_index = u2(data[:2])
+            self.access_flags = u2(data[2:4])
+            self.location = u2(data[4:6])
+            self.superclass_name_index = u2(data[6:8])
+            self.source_file_index = u2(data[8:10])
+            self.interface_count = u1(data[10:11])
+            self.field_count = u2(data[11:13])
+            self.method_count = u2(data[13:15])
+            self.interface_name_indexes = u2a(self.interface_count, data[15:])
+            shift = 15 + self.interface_count * 2
+            self.fields = []
+            for i in xrange(self.field_count):
+                fld = self.FieldDebugInfo(data[shift:])
+                self.fields.append(fld)
+                shift += fld.size
+            self.methods = []
+            for i in xrange(self.method_count):
+                mtd = self.MethodDebugInfo(data[shift:])
+                self.methods.append(mtd)
+                shift += mtd.size
+
+    def __init__(self, data, version):
+        Component.__init__(self, data, version)
+        self.string_count = u2(self.data[3:5])
+        shift = 5
+        self.strings_table = []
+        for i in xrange(self.string_count):
+            string = self.Utf8Info(self.data[shift:])
+            self.strings_table.append(string)
+            shift += string.size
+        self.package_name_index = u2(data[shift:])
+        self.class_count = u2(data[shift + 2:])
+        shift += 4
+        self.classes = []
+        for i in xrange(self.class_count):
+            cls = self.ClassDebugInfo(data[shift:])
+            self.classes.append(cls)
+            shift += cls.size
+
 class CAPFile(object):
     def __init__(self, path):
         self.path = path
@@ -785,6 +906,11 @@ class CAPFile(object):
         else:
             self.Export = None
         self.Descriptor = Descriptor(getComp('Descriptor'), self.version)
+        if ((self.version > (2,1)) and
+            (self.Directory.component_sizes[Component.COMPONENT_Debug - 1] != 0)):
+            self.Debug = Debug(getComp('Debug'), self.version)
+        else:
+            self.Debug = None
         
         self.postInit()
 
