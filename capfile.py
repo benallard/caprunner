@@ -791,13 +791,10 @@ class CAPFile(object):
     def postInit(self):
         # We need to fiil the methods here.
         data = self.Method.data[3:]
-        print len(data)
         for cls in self.Descriptor.classes:
             for mtd in cls.methods:
                 if mtd.method_offset == 0:
                     continue
-                print mtd.method_offset, mtd.bytecode_count
-                print data[mtd.method_offset:mtd.method_offset + mtd.bytecode_count]
                 method = Method.MethodInfo(data[mtd.method_offset:], mtd.bytecode_count)
                 self.Method.methods.append(method)
                 
