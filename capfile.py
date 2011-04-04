@@ -440,24 +440,24 @@ class Class(Component):
                 typ_descr = TypeDescriptor(self.data[shift:])
                 self.signature_pool.append(typ_descr)
                 shift += typ_descr.size
-        self.interfaces = []
-        self.classes = []
+        self.interfaces = {}
+        self.classes = {}
         # this is actually weird that we don't know beforehand how much class there will be
         while shift < self.size:
             data = self.data[shift:]
             if self.BaseInfo.isInterface(u1(self.data[shift:])):
                 cls = self.InterfaceInfo(data)
-                self.interfaces.append(cls)
+                self.interfaces[shift] = cls
                 shift += cls.size
             else:
                 cls = self.ClassInfo(data)
-                self.classes.append(cls)
+                self.classes[shift] = cls
                 shift += cls.size
 
     def __str__(self):
         return "< Class:\n\tInterfaces:\n\t\t%s\n\tClasses:\n\t\t%s\n>" % (
-            '\n\t\t'.join([str(int) for int in self.interfaces]),
-            '\n\t\t'.join([str(cls) for cls in self.classes])
+            '\n\t\t'.join(["%d: %s" % (idx, int) for (idx, int) in self.interfaces.iteritems()]),
+            '\n\t\t'.join(["%d: %s" % (idx, cls) for (idx, cls) in self.classes.iteritems()])
             )
 
 class Method(Component):

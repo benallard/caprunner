@@ -1,5 +1,3 @@
-from utils import *
-
 opnamepar = {
     # code: (mnemonic, parameters)
     36: ("aaload", 0),
@@ -197,22 +195,31 @@ for code, field in opnamepar.iteritems():
     opname[code] = field[0]
     oppar[code] = field[1]
 
+def u1(data):
+    return data[0]
+
+def u2(data):
+    return data[0] << 8 + data[1]
+
+def u4(data):
+    return (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3]
+
 def getPar(data):
 
     code = data[0]
     if code == opcode["ilookupswitch"]:
-        npairs = data[3] << 8 + data[4]
+        npairs = u2(data[3:5])
         return npairs*6 + 4
     elif code == opcode["itableswitch"]:
         lowbytes = u4(data[3:7])
         highbytes = u4(data[7:11])
         return (highbytes - lowbytes + 1)*2 + 10
     elif code == opcode["slookupswitch"]:
-        npairs = (data[3] << 8) + data[4]
+        npairs = u2(data[3:5])
         return npairs*4 + 4
     elif code == opcode["stableswitch"]:
-        lowbytes = (data[3] << 8) + data[4]
-        highbytes = (data[5] << 8) + data[6]
+        lowbytes = u2(data[3:5])
+        highbytes = u2(data[5:7])
         return (highbytes - lowbytes + 1)*2 + 6
     else:
         return oppar[code]
