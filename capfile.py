@@ -1,7 +1,7 @@
 import zipfile
 
 from utils import *
-from bytecode import disassemble, getChunkLength
+from bytecode import disassemble
 
 class PackageInfo(object):
     def __init__(self, data):
@@ -523,7 +523,7 @@ class Method(Component):
                 self.bytecodes = u1a(bytecodelen, data[self.method_info.size:])
                 self.size += bytecodelen
         def __str__(self):
-            return "Methode: (%s)" % (not self.method_info.isAbstract and ', '.join(disassemble(self.bytecodes, False)) or "")
+            return "Methode: (%s)" % (not self.method_info.isAbstract and ', '.join(disassemble(self.bytecodes)) or "")
 
     def __init__(self, data, version):
         Component.__init__(self, data, version)
@@ -540,7 +540,7 @@ class Method(Component):
     def __str__(self):
         return "< Method:\n\tExceptionHandlers:\n\t\t%s\n\tMethods:\n\t\t%s\n>" %(
             '\n\t\t'.join([str(excp) for excp in self.exception_handlers]),
-            '\n\t\t'.join(["%d: %s" % (idx, mtd) for (idx, mtd) in self.methods.items()])
+            '\n\t\t'.join(["%d: %s" % (idx, mtd) for (idx, mtd) in self.methods.iteritems()])
             )
 
 class StaticField(Component):
@@ -937,12 +937,9 @@ class CAPFile(object):
 if __name__ == "__main__":
     import sys
     cap = CAPFile(sys.argv[1])
-    print cap.zipfile.namelist()
     print cap.Header
-    print Component(cap.Directory.data)
     print cap.Directory
     if cap.Applet is not None:
-        print Component(cap.Applet.data)
         print cap.Applet
     print cap.Import
     print cap.ConstantPool
@@ -953,3 +950,5 @@ if __name__ == "__main__":
     if cap.Export is not None:
         print cap.Export
     print cap.Descriptor
+    if cap.Debug is not None:
+        print cap.Debug

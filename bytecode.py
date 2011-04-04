@@ -197,50 +197,31 @@ for code, field in opnamepar.iteritems():
     opname[code] = field[0]
     oppar[code] = field[1]
 
-def getPar(data, isString=True):
+def getPar(data):
 
-    if isString:
-        code = u1(data[:1])
-    else:
-        code = data[0]
+    code = data[0]
     if code == opcode["ilookupswitch"]:
-        #defaultbytes = u2(data[1:3])
-        npairs = isString and u2(data[3:5]) or data[3] << 8 + data[4]
+        npairs = data[3] << 8 + data[4]
         return npairs*6 + 4
     elif code == opcode["itableswitch"]:
-        #defaultbytes = u2(data[1:3])
         lowbytes = u4(data[3:7])
         highbytes = u4(data[7:11])
         return (highbytes - lowbytes + 1)*2 + 10
     elif code == opcode["slookupswitch"]:
-        #defaultbytes = u2(data[1:3])
-        npairs = isString and u2(data[3:5]) or (data[3] << 8) + data[4]
+        npairs = (data[3] << 8) + data[4]
         return npairs*4 + 4
     elif code == opcode["stableswitch"]:
-        #defaultbytes = u2(data[1:3])
-        lowbytes = isString and u2(data[3:5]) or (data[3] << 8) + data[4]
-        highbytes = isString and u2(data[5:7]) or (data[5] << 8) + data[6]
+        lowbytes = (data[3] << 8) + data[4]
+        highbytes = (data[5] << 8) + data[6]
         return (highbytes - lowbytes + 1)*2 + 6
     else:
         return oppar[code]
 
-def disassemble(data, isString = True):
+def disassemble(data):
     code = 0
-    while data and (code not in [opcode[mnemonic] for mnemonic in ["return", "sreturn", "ireturn", "areturn"]]):
-        if isString:
-            code = u1(data[:1])
-        else:
-            code = data[:1][0]
-        par = getPar(data, isString)
+    while data:
+        code = data[0]
+        par = getPar(data)
         yield opname[code]
         data = data[par+1:]
 
-def getChunkLength(data):
-    length = 0
-    code = 0
-    while data and (code != opcode["return"]):
-        code = u1(data[:1])
-        par = getPar(data)
-        length += par+1
-        data = data[par+1:]
-    return length
