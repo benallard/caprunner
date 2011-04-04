@@ -533,14 +533,14 @@ class Method(Component):
         for i in xrange(self.handler_count):
             self.exception_handlers.append(self.ExceptionHandlerInfo(self.data[shift:]))
             shift += self.ExceptionHandlerInfo.size
-        self.methods = []
+        self.methods = {}
         # Quite weird we don't know beforehand how much methods we'll get ...
         # So we need to postpone the initialisation of that array
 
     def __str__(self):
         return "< Method:\n\tExceptionHandlers:\n\t\t%s\n\tMethods:\n\t\t%s\n>" %(
             '\n\t\t'.join([str(excp) for excp in self.exception_handlers]),
-            '\n\t\t'.join([str(mtd) for mtd in self.methods])
+            '\n\t\t'.join(["%d: %s" % (idx, mtd) for (idx, mtd) in self.methods.items()])
             )
 
 class StaticField(Component):
@@ -922,7 +922,7 @@ class CAPFile(object):
                 if mtd.method_offset == 0:
                     continue
                 method = Method.MethodInfo(data[mtd.method_offset:], mtd.bytecode_count)
-                self.Method.methods.append(method)
+                self.Method.methods[mtd.method_offset] = method
                 
 
     @property
