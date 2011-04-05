@@ -190,15 +190,19 @@ class Classref(object):
     size = 2
     class Externalref(object):
         def __init__(self, data):
-            self.package_token = u1(data[:1])
+            self.package_token = u1(data[:1]) & 0x7F
             self.class_token = u1(data[1:2])
         def __str__(self):
-            return "pkg: %d, cls: %d" % (self.package_token, self.class_token)
+            return "Ext: pkg: %d, cls: %d" % (self.package_token, self.class_token)
     def __init__(self, data):
         self.internal_class_ref = u2(data[:2])
         self.external_class_ref = self.Externalref(data[:2])
+        if bool(u1(data[:1]) & 0x80):
+            self.class_ref = self.external_class_ref
+        else:
+            self.class_ref = self.internal_class_ref
     def __str__(self):
-        return "%d / %s" % (self.internal_class_ref, self.external_class_ref)
+        return "%s" % self.class_ref
 
 class CPInfoClassref(CPInfo, Classref):
     def __init__(self, data):
@@ -225,27 +229,31 @@ class CPInfoVirtualMethodref(CPInfoClassTokenref): pass
 class CPInfoSuperMethodref(CPInfoClassTokenref): pass
 
 class StaticBaseref(object):
-    
+    size = 3
     class Internalref(object):
         def __init__(self, data):
             self.padding = u1(data[:1])
             self.offset = u2(data[1:3])
         def __str__(self):
-            return "%d" % (self.offset)
+            return "Int: %d" % (self.offset)
 
     class Externalref(object):
         def __init__(self, data):
-            self.package_token = u1(data[:1])
+            self.package_token = u1(data[:1]) & 0x7F
             self.class_token = u1(data[1:2])
             self.token = u1(data[2:3])
         def __str__(self):
-            return "pkg: %d, cls: %d, token: %d" % (self.package_token, self.class_token, self.token)
+            return "Ext: pkg: %d, cls: %d, token: %d" % (self.package_token, self.class_token, self.token)
 
     def __init__(self, data):
         self.internal_ref = self.Internalref(data)
         self.external_ref = self.Externalref(data)
+        if bool(u1(data[:1]) & 0x80):
+            self._ref = self.external_ref
+        else:
+            self._ref = self.internal_ref
     def __str__(self):
-        return "%s / %s" % (self.internal_ref, self.external_ref)
+        return "%s" % self._ref
 
 class CPInfoStaticBaseref(CPInfo, StaticBaseref):
     def __init__(self, data):
@@ -254,8 +262,14 @@ class CPInfoStaticBaseref(CPInfo, StaticBaseref):
     def __str__(self):
         return "<%s %s>" % (self.__class__.__name__, StaticBaseref.__str__(self))
 
-class CPInfoStaticFieldref(CPInfoStaticBaseref): pass
-class CPInfoStaticMethodref(CPInfoStaticBaseref): pass
+class CPInfoStaticFieldref(CPInfoStaticBaseref):
+    def __init__(self, data):
+        CPInfoStaticBaseref.__init__(self, data)
+        self.static_field_ref = self._ref
+class CPInfoStaticMethodref(CPInfoStaticBaseref):
+    def __init__(self, data):
+        CPInfoStaticBaseref.__init__(self, data)
+        self.static_method_ref = self._ref
 
 class ConstantPool(Component):
     def __init__(self, data, version):
@@ -293,7 +307,7 @@ class TypeDescriptor(object):
             res.append(typeDescr[nibble])
             i += 1
             if nibble in [6, 14]:
-                p = self.getTypeNib(i) << 4 + self.getTypeNib(i+1)
+                p = (self.getTypeNib(i) << 4 + self.getTypeNib(i+1)) & 0x7F
                 c = self.getTypeNib(i+2) << 4 + self.getTypeNib(i+3)
                 res.append("%d.%d" % (p, c))
                 i += 4
