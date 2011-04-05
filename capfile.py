@@ -748,16 +748,16 @@ class Descriptor(Component):
             self.constant_pool_count = u2(data[:2])
             self.constant_pool_types = u2a(self.constant_pool_count, data[2:])
             shift = self.constant_pool_count * 2 + 2
-            self.type_desc = []
+            self.type_desc = {}
             while shift < size:
                 type = TypeDescriptor(data[shift:])
-                self.type_desc.append(type)
+                self.type_desc[shift] = type
                 shift += type.size
             self.size = shift
         def __str__(self):
             return "TypeDescr: CstPool: (%s), types: (%s)" % (
                 ', '.join([str(cst) for cst in self.constant_pool_types]),
-                ', '.join([str(typ) for typ in self.type_desc])
+                ', '.join(["%d: %s" % (idx, typ) for (idx, typ) in self.type_desc.iteritems()])
                 )
 
     def __init__(self, data, version):
