@@ -199,7 +199,7 @@ def u1(data):
     return data[0]
 
 def u2(data):
-    return data[0] << 8 + data[1]
+    return (data[0] << 8) + data[1]
 
 def u4(data):
     return (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3]
