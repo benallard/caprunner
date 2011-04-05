@@ -1,3 +1,4 @@
+import os
 from utils import *
 
 class ExportFile(object):
@@ -198,9 +199,43 @@ class ExportFile(object):
                 for mtd in cls.methods:
                     print "\t - ", CP[mtd.name_index], "TK:", mtd.token, "(", CP[mtd.descriptor_index], ")"
 
+    @property
+    def AID(self):
+        return self.constant_pool[self.this_package].aid
+
+    def collectrefs(self, alsoprint = False):
+        CP = self.constant_pool
+        refs = {}
+        for cls in self.classes:
+            clsname = str(CP[CP[cls.name_index].name_index])
+            clsname = clsname.replace('/','.')
+            for fld in cls.fields:
+                refs[(cls.token, fld.token)] = clsname + "." + str(CP[fld.name_index])
+            for mtd in cls.methods:
+                refs[(cls.token, mtd.token)] = clsname + "." + str(CP[mtd.name_index])
+        if alsoprint:
+            print a2s(CP[self.this_package].aid)
+            for (tk, val) in self.refs.iteritems():
+                print tk,":" , val
+        return refs
+
+def browse(paths):
+    collections = {}
+    for path in paths:
+        for dirname, dirnames, filenames in os.walk(path):
+            for filename in filenames:
+                if filename.endswith('.exp'):
+                    # Good to go !
+                    f = open(os.path.join(dirname, filename))
+                    exp = ExportFile(f.read())
+                    collections[a2s(exp.AID)] = exp.collectrefs()
+    return collections
+
 if __name__ == "__main__":
     import sys
-    f = open(sys.argv[1])
-    exp = ExportFile(f.read())
-    print exp
-    exp.pprint()
+    #f = open(sys.argv[1])
+    #exp = ExportFile(f.read())
+    #print exp
+    #exp.pprint()
+    #exp.analyse(True)
+    print browse(sys.argv[1:])
