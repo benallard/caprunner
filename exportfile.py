@@ -1,5 +1,12 @@
-import os
+import os, pickle
 from utils import *
+
+def a2d(array):
+    """
+    >>> a2d([160, 0, 0, 0, 98, 0, 3])
+    '\xa0\x00\x00\x00b\x00\x03'
+    """
+    return ''.join([chr(i) for i in array])
 
 class ExportFile(object):
 
@@ -95,6 +102,11 @@ class ExportFile(object):
 
         class MethodInfo(object):
             size = 7
+            ACC_PUBLIC = 0x0001
+            ACC_PROTECTED = 0x0004
+            ACC_STATIC = 0x0008
+            ACC_FINAL = 0x0010
+            ACC_ABSTRACT = 0x0400
             def __init__(self, data):
                 self.data = data
                 self.token = u1(self.data[:1])
@@ -209,27 +221,68 @@ class ExportFile(object):
         for cls in self.classes:
             clsname = str(CP[CP[cls.name_index].name_index])
             clsname = clsname.replace('/','.')
+            refs[(cls.token,)] = clsname
             for fld in cls.fields:
+                if fld.token == 0xFF:
+                    # compile time constant field
+                    continue
+                if (cls.token, fld.token) in refs:
+                    print "Overwritting ...",cls.token, fld.token,  refs[(cls.token, fld.token)], "with", clsname + "." + str(CP[fld.name_index])
                 refs[(cls.token, fld.token)] = clsname + "." + str(CP[fld.name_index])
             for mtd in cls.methods:
+                if (cls.token, mtd.token) in refs:
+                    print "Overwritting ...",cls.token, mtd.token, refs[(cls.token, mtd.token)], "with", clsname + "." + str(CP[mtd.name_index])
                 refs[(cls.token, mtd.token)] = clsname + "." + str(CP[mtd.name_index])
         if alsoprint:
             print a2s(CP[self.this_package].aid)
-            for (tk, val) in self.refs.iteritems():
+            for (tk, val) in refs.iteritems():
                 print tk,":" , val
         return refs
 
-def browse(paths):
+def browse(path):
     collections = {}
-    for path in paths:
-        for dirname, dirnames, filenames in os.walk(path):
-            for filename in filenames:
-                if filename.endswith('.exp'):
-                    # Good to go !
-                    f = open(os.path.join(dirname, filename))
-                    exp = ExportFile(f.read())
-                    collections[a2s(exp.AID)] = exp.collectrefs()
+    for dirname, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            if filename.endswith('.exp'):
+                # Good to go !
+                f = open(os.path.join(dirname, filename))
+                exp = ExportFile(f.read())
+                collections[a2d(exp.AID)] = exp.collectrefs()
     return collections
+
+def dump(path, filename):
+    f = open(filename, 'wb')
+    pickle.dump(browse(path), f)
+
+class linkResolver(object):
+    def __init__(self, version=(3,0,1)):
+        self.version = version
+        # load preprocessed pickle from all the exp files
+
+    def addExportFile(self, exp):
+        """
+        Add a non-standard (not javacard) export file references
+        """
+        pass
+        
+
+    def resolvePackage(self, aid):
+        """ return a python package corresponding to the aid """
+        pass
+
+    def resolveClass(self, aid, token):
+        """ return a python class corresponding to the token """
+        pass
+
+    def resolvemethod(self, aid, cls, token):
+        """ return a python method corrsponding to the tokens """
+        pass
+
+    def resolvefield(self, aid, cls, token):
+        """ return a python field corresponding to the tokens """
+        pass
+        
+
 
 if __name__ == "__main__":
     import sys
@@ -237,5 +290,4 @@ if __name__ == "__main__":
     #exp = ExportFile(f.read())
     #print exp
     #exp.pprint()
-    #exp.analyse(True)
-    print browse(sys.argv[1:])
+    dump(sys.argv[1], sys.argv[2])
