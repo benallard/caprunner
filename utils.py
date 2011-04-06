@@ -38,5 +38,12 @@ def a2s(a):
     """ array to string """
     return ' '.join(["%02X" % i for i in a])
 
+def a2d(array):
+    """
+    >>> a2d([160, 0, 0, 0, 98, 0, 3])
+    '\xa0\x00\x00\x00b\x00\x03'
+    """
+    return ''.join([chr(i) for i in array])
+
 def stringify(s):
     return ' '.join(["%02X" % ord(c) for c in s])

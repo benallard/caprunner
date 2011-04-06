@@ -1,13 +1,6 @@
 import os, pickle
 from utils import *
 
-def a2d(array):
-    """
-    >>> a2d([160, 0, 0, 0, 98, 0, 3])
-    '\xa0\x00\x00\x00b\x00\x03'
-    """
-    return ''.join([chr(i) for i in array])
-
 class ExportFile(object):
 
     class CPInfo(object):
