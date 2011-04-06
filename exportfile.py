@@ -231,16 +231,22 @@ class ExportFile(object):
                     # not interesting
                     continue
                 fldname = clsname + "." + str(CP[fld.name_index])
-                if fldname in refs:
-                    print "Overwritting ...", fldname, refs[fldname], "with", (cls.token, fld.token)
-                refs[fldname] = (cls.token, fld.token)
+                if fldname in names:
+                    # name alread taken, so take extra steps
+                    if fldname in refs:
+                        # save previous under another name
+                        clstk, fldtk = refs[mtdname]
+                        del refs[mtdname]
+                        refs['$' + mtdname + '$' + str(CP[tmp[fldtk].descriptor_index])] = (cls.token, fldtk)
+                    refs['$' + mtdname + '$' + str(CP[mtd.descriptor_index])] = (cls.token, fld.token)
+                else:
+                    refs[fldname] = (cls.token, fld.token)
                 name.append(fldname)
             names = []
             for mtd in cls.methods:
                 tmp[mtd.token] = mtd
                 mtdname = clsname + "." + str(CP[mtd.name_index])
                 if mtdname in names:
-                    print "Special treatment for", mtdname
                     # name alread taken, so take extra steps
                     if mtdname in refs:
                         # put it under another name (+$descriptor)
@@ -301,8 +307,6 @@ If a directory all the export file found in the directory will be processed.
     if options.dump is not None:
         f = open(options.dump, 'wb')
         pickle.dump(res, f)
-
-    print options
 
 if __name__ == "__main__":
     main()
