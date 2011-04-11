@@ -59,9 +59,17 @@ class ExportFile(object):
             return "Package: %s %s Name @%d" % (a2s(self.aid), self.version, self.name_index)
 
     class ClassInfo(object):
-
+        ACC_PUBLIC  = 0x0001
+        ACC_FINAL = 0x0010
+        ACC_INTERFACE = 0x0200
+        ACC_ABSTRACT = 0x0400
+        ACC_SHAREABLE = 0x0800
+        ACC_REMOTE = 0x1000
         class FieldInfo(object):
-
+            ACC_PUBLIC = 0x0001
+            ACC_PROTECTED = 0x0004
+            ACC_STATIC = 0x0008
+            ACC_FINAL = 0x0010
             class AttributeInfo(object):
                 def __init__(self, data):
                     self.data = data
@@ -106,6 +114,11 @@ class ExportFile(object):
                 self.access_flags = u2(self.data[1:3])
                 self.name_index = u2(self.data[3:5])
                 self.descriptor_index = u2(self.data[5:7])
+                self.isStatic = bool(self.access_flag & self.ACC_STATIC)
+                self.isVirtual = not self.isStatic
+                # for interface information, look at the enclosing class infos
+            def __str__(self):
+                return "MethodInfo, name@%d, TK:%d" % (self.name_index, self.token)
 
         def __init__(self, data):
             self.data = data
@@ -137,12 +150,13 @@ class ExportFile(object):
                 shift += method.size
             self.size = shift
         def __str__(self):
-            return "ClassInfo: name @%d, %d supers, %d interfaces, %d fields, %d methods" % (
+            return "ClassInfo: name @%d, %d supers, %d interfaces, %d fields, %d methods (%s)" % (
                 self.name_index,
                 self.export_supers_count,
                 self.export_interfaces_count,
                 self.export_fields_count,
-                self.export_methods_count)
+                self.export_methods_count,
+                ', '.join([str(mtd) for mtd in self.methods]))
 
     def __init__(self, data):
         self.data = data
