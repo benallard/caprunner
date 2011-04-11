@@ -1,5 +1,32 @@
 from utils import a2s
 
+class refCollection(object):
+    """
+    This is a processed version of the Export File for it to be easier 
+    processed by python
+    """
+
+    class classRefCollection(object):
+        """
+        Those are the reference for a class
+        """
+        def __init__(self, token, name):
+            self.token = token
+            self.name = name
+            # three kinds of methods:
+            # - virtual
+            # - static
+            # - interface
+            self.methods = None
+            # two kinds of fields:
+            # - static
+            # - instance
+            self.fields = None
+
+    def __init__(self, export_file):
+        self.export_file = export_file
+        self.classes = []
+
 class ProcessedCAPFile(object):
     def __init__(self, cap_file, resolver):
         self.cap_file = cap_file
