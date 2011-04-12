@@ -518,6 +518,12 @@ class Method(Component):
                 bitfield = u1(data[1:2])
                 self.nargs = (bitfield & 0xF0) >> 4
                 self.max_locals = bitfield & 0x0F
+            def __str__(self):
+                return "Mtdinfo: %d max stack, %d nargs, %d max locals" % (
+                    self.max_stack,
+                    self.nargs,
+                    self.max_locals
+                    )
 
         class ExtendedMethodHeaderInfo(BaseHeaderInfo):
             size = 4
@@ -526,6 +532,12 @@ class Method(Component):
                 self.max_stack = u1(data[1:2])
                 self.nargs = u1(data[2:3])
                 self.max_locals = u1(data[3:4])
+            def __str__(self):
+                return "Mtdinfo: %d max stack, %d nargs, %d max locals" % (
+                    self.max_stack,
+                    self.nargs,
+                    self.max_locals
+                    )
 
         def __init__(self, data, bytecodelen):
             self.method_info = {
@@ -537,7 +549,10 @@ class Method(Component):
                 self.bytecodes = u1a(bytecodelen, data[self.method_info.size:])
                 self.size += bytecodelen
         def __str__(self):
-            return "Methode: (%s)" % (not self.method_info.isAbstract and ', '.join(disassemble(self.bytecodes)) or "")
+            return "Methode: %s, (%s)" % (
+                self.method_info,
+                not self.method_info.isAbstract and ', '.join(disassemble(self.bytecodes)) or ""
+                )
 
     def __init__(self, data, version):
         Component.__init__(self, data, version)
