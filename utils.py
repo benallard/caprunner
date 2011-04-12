@@ -84,3 +84,42 @@ def d2s(s):
     'A0 00 00 00 62 00 03'
     """
     return ' '.join(["%02X" % ord(c) for c in s])
+
+def signed(value, depth):
+    """
+    return the signed value of the number on the specified depth
+    """
+    mask = (1 << (depth*8)) - 1
+    if value > ((1 << (depth*8)-1) - 1):
+        return -(~(value-1) & mask)
+    else:
+        return value
+
+def signed1(value):
+    """
+    >>> signed1(0x7f)
+    127
+    >>> signed1(0x7e)
+    126
+    >>> signed1(0x02)
+    2
+    >>> signed1(0x01)
+    1
+    >>> signed1(0x00)
+    0
+    >>> signed1(0xff)
+    -1
+    >>> signed1(0xfe)
+    -2
+    >>> signed1(0x81)
+    -127
+    >>> signed1(0x80)
+    -128
+    """
+    return signed(value, 1)
+
+def signed2(value):
+    return signed(value, 2)
+
+def signed4(value):
+    return signed(value, 4)
