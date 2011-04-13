@@ -123,6 +123,7 @@ class ExportFile(object):
             self.data = data
             self.token = u1(self.data[:1])
             self.access_flags = u2(self.data[1:3])
+            self.isInterface = bool(self.access_flags & self.ACC_INTERFACE)
             self.name_index = u2(self.data[3:5])
             self.export_supers_count = u2(self.data[5:7])
             self.supers = u2a(self.export_supers_count, self.data[7:])
@@ -159,7 +160,6 @@ class ExportFile(object):
 
     def __init__(self, data):
         self.data = data
-        
         self.magic = u4(self.data[:4])
         self.minor_version = u1(self.data[4:5])
         self.major_version = u1(self.data[5:6])
@@ -215,7 +215,7 @@ class ExportFile(object):
             if cls.export_methods_count:
                 print "\thas the following", cls.export_methods_count, "methods:"
                 for mtd in cls.methods:
-                    print "\t - ", CP[mtd.name_index], "TK:", mtd.token, "(", CP[mtd.descriptor_index], ")"
+                    print "\t - ", CP[mtd.name_index], mtd.access_flags, mtd.isStatic and "STATIC" or "", "TK:", mtd.token, "(", CP[mtd.descriptor_index], ")"
 
     @property
     def AID(self):

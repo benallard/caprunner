@@ -45,5 +45,11 @@ def a2d(array):
     """
     return ''.join([chr(i) for i in array])
 
+def d2a(data):
+    """
+    data to array
+    """
+    return [ord(c) for c in data]
+
 def stringify(s):
     return ' '.join(["%02X" % ord(c) for c in s])
