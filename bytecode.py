@@ -19,8 +19,8 @@ opnamepar = {
     147: ("athrow", 0, ()),
     37: ("baload", 0, ()),
     56: ("bastore", 0, ()),
-    18: ("bipush", 1, ()),
-    16: ("bspush", 1, ()),
+    18: ("bipush", 1, (1,)),
+    16: ("bspush", 1, (1,)),
     148: ("checkcast", 3, (1, 2,)),
     61:("dup", 0, ()),
     63:("dup_x", 1, (1,)),
@@ -58,22 +58,22 @@ opnamepar = {
     15: ("iconst_5", 0, ()),
     9: ("iconst_m1", 0, ()),
     72: ("idiv", 0, ()),
-    104: ("ifacmpeq", 1, (1,)),
-    160: ("ifacmpeq_w", 2, (2,)),
-    105: ("ifacmpne", 1, (1,)),
-    161: ("ifacmpne_w", 2, (2,)),
-    106: ("ifscmpeq", 1, (1,)),
-    162: ("ifscmpeq_w", 2, (2,)),
-    109: ("ifscmpge", 1, (1,)),
-    165: ("ifscmpge_w", 2, (2,)),
-    110: ("ifscmpgt", 1, (1,)),
-    166: ("ifscmpgt_w", 2, (2,)),
-    111: ("ifscmple", 1, (1,)),
-    167: ("ifscmple_w", 2, (2,)),
-    108: ("ifscmplt", 1, (1,)),
-    164: ("ifscmplt_w", 2, (2,)),
-    107: ("ifscmpne", 1, (1,)),
-    163: ("ifscmpne_w", 2, (2,)),
+    104: ("if_acmpeq", 1, (1,)),
+    160: ("if_acmpeq_w", 2, (2,)),
+    105: ("if_acmpne", 1, (1,)),
+    161: ("if_acmpne_w", 2, (2,)),
+    106: ("if_scmpeq", 1, (1,)),
+    162: ("if_scmpeq_w", 2, (2,)),
+    109: ("if_scmpge", 1, (1,)),
+    165: ("if_scmpge_w", 2, (2,)),
+    110: ("if_scmpgt", 1, (1,)),
+    166: ("if_scmpgt_w", 2, (2,)),
+    111: ("if_scmple", 1, (1,)),
+    167: ("if_scmple_w", 2, (2,)),
+    108: ("if_scmplt", 1, (1,)),
+    164: ("if_scmplt_w", 2, (2,)),
+    107: ("if_scmpne", 1, (1,)),
+    163: ("if_scmpne_w", 2, (2,)),
     96: ("ifeq", 1, (1,)),
     152: ("ifeq_w", 2, (2,)),
     99: ("ifge", 1, (1,)),
@@ -206,8 +206,39 @@ def u2(data):
 def u4(data):
     return (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3]
 
-def getPar(data):
+def getParams(data):
+    code = data[0]
+    params = []
+    ofs = 1
+    for p in opparams[code]:
+        params.append({1: u1, 2: u2, 4: u4}[p](data[ofs:]))
+        ofs += p
 
+    if code == opcode["ilookupswitch"]:
+        npairs = params[1]
+        for i in xrange(npairs):
+            params.append((u4(data[ofs:]), u2(data[ofs+4:]), ))
+            ofs += 6
+    elif code == opcode["itableswitch"]:
+        lowbytes = params[1]
+        highbytes = prams[2]
+        for i in xrange(highbytes - lowbytes):
+            params.append(u2(data[ofs:]))
+            ofs += 2
+    elif code == opcode["slookupswitch"]:
+        npairs = params[1]
+        for i in xrange(npairs):
+            params.append((u2(data[ofs:]), u2(data[ofs+4:]), ))
+            ofs += 4
+    elif code == opcode["stableswitch"]:
+        lowbytes = params[1]
+        highbytes = prams[2]
+        for i in xrange(highbytes - lowbytes):
+            params.append(u2(data[ofs:]))
+            ofs += 2
+    return ofs, params
+
+def getPar(data):
     code = data[0]
     if code == opcode["ilookupswitch"]:
         npairs = u2(data[3:5])
