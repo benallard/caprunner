@@ -77,6 +77,14 @@ def a2d(array):
     """
     return ''.join([chr(i) for i in array])
 
+def d2a(data):
+    """
+    data to array
+    >>> d2a('\xa0\x00\x00\x00b\x00\x03')
+    [160, 0, 0, 0, 98, 0, 3]
+    """
+    return [ord(c) for c in data]
+
 def d2s(s):
     r"""
     data to string
