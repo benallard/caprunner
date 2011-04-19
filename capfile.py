@@ -169,11 +169,11 @@ class Import(Component):
         return "< Import:\n\t%s\n>" % '\n\t'.join([str(pkg_info) for pkg_info in self.packages])
 
 class CPInfo(object):
+    size = 4
     def __init__(self, data):
         self.data = data
         self.tag = u1(data[:1])
         self.info = u1a(3, data[1:4])
-        self.size = 4
     def __str__(self):
         return "%d (%s)" % (self.tag, a2s(self.info))
 
@@ -225,8 +225,12 @@ class CPInfoClassTokenref(CPInfo, ClassTokenref):
         return "<%s %s, token: %d>" % (self.__class__.__name__, Classref.__str__(self), self.token)
 
 class CPInfoInstanceFieldref(CPInfoClassTokenref): pass
-class CPInfoVirtualMethodref(CPInfoClassTokenref): pass
-class CPInfoSuperMethodref(CPInfoClassTokenref): pass
+class CPInfoVirtualMethodref(CPInfoClassTokenref):
+    def __init__(self, data):
+        CPInfoClassTokenref.__init__(self, data)
+        self.isPrivate = bool(self.token & 0x80)
+        self.token = self.token & 0x7f
+class CPInfoSuperMethodref(CPInfoVirtualMethodref): pass
 
 class StaticBaseref(object):
     size = 3
@@ -266,7 +270,12 @@ class CPInfoStaticFieldref(CPInfoStaticBaseref):
     def __init__(self, data):
         CPInfoStaticBaseref.__init__(self, data)
         self.static_field_ref = self._ref
+
 class CPInfoStaticMethodref(CPInfoStaticBaseref):
+    """
+    Static method references include references to static methods, 
+    constructors, and private virtual methods.
+    """
     def __init__(self, data):
         CPInfoStaticBaseref.__init__(self, data)
         self.static_method_ref = self._ref
@@ -280,7 +289,7 @@ class ConstantPool(Component):
         for i in xrange(self.count):
             cp_info = CPInfo.get(self.data[shift:])
             self.constant_pool.append(cp_info)
-            shift += cp_info.size
+            shift += CPInfo.size
 
     def __str__(self):
         return "< ConstantPool: \n\t%s\n>" % '\n\t'.join([str(cp_info) for cp_info in self.constant_pool])

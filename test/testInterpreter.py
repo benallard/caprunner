@@ -20,7 +20,7 @@ class TestInterpreter(unittest.TestCase):
 
     def testSomeIf(self):
         intr = JavaCardVM(None)
-        intr.frames.append(JavaCardFrame([None, 7], [29, 5, 73, 97, 6, 29, 6, 69, 120, 3, 49, 30, 29, 109, 13, 30, 8, 65, 48, 30, 4, 65, 91, 49, 112, 243, 29, 120]))
+        intr.frames.append(JavaCardFrame([None, 6], [29, 5, 73, 97, 6, 29, 6, 69, 120, 3, 49, 30, 29, 109, 13, 30, 8, 65, 48, 30, 4, 65, 91, 49, 112, 243, 29, 120]))
         while True:
             intr.step()
             print intr.frame.ip

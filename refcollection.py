@@ -31,6 +31,10 @@ class refCollection(object):
             assert not token in self.staticmethods
             self.staticmethods[token] = name
 
+        def getStaticMethod(self, token):
+            print self.staticmethods.keys()
+            return self.staticmethods[token]
+
         def addVirtualMethod(self, token, name):
             if "<init>" in name:
                 assert self.token not in self.constructors
@@ -38,6 +42,9 @@ class refCollection(object):
             else:
                 assert not token in self.virtualmethods, self.virtualmethods[token]
                 self.virtualmethods[token] = name
+
+        def getVirtualMethod(self, token):
+            return self.virtualmethods[token]
 
         def addInterfaceMethod(self, token, name):
             assert not token in self.interfacemethods
@@ -55,15 +62,21 @@ class refCollection(object):
             struct['instancefields'] = self.instancefields
             return struct
 
+        def deroll(self, struct, name):
+            dct = getattr(self, name)
+            for token, name in struct[name].iteritems():
+                dct[int(token)] = name
+
         @classmethod
         def impoort(cls, struct):
             slf = cls(struct['token'], struct['name'])
-            slf.virtualmethods = struct['virtualmethods']
-            slf.staticmethods = struct['staticmethods']
-            slf.interfacemethods = struct['interfacemethods']
-            slf.constructors = struct['constructors']
-            slf.staticfields = struct['staticfields']
-            slf.instancefields = struct['instancefields']
+            
+            slf.deroll(struct, 'virtualmethods')
+            slf.deroll(struct, 'staticmethods')
+            slf.deroll(struct, 'interfacemethods')
+            slf.deroll(struct, 'constructors')
+            slf.deroll(struct, 'staticfields')
+            slf.deroll(struct, 'instancefields')
             return slf
 
     def __init__(self, AID, name):
@@ -74,7 +87,7 @@ class refCollection(object):
     def addClass(self, cls, CP):
         assert not cls.token in self.classes
         clsname = str(CP[CP[cls.name_index].name_index])
-        clsname = clsname.split('/')[-1:]
+        clsname = clsname.split('/')[-1]
         self.classes[cls.token] = self.classRefCollection(cls.token, clsname)
         self.addclassFields(cls, CP)
         self.addclassMethods(cls, CP)
@@ -129,6 +142,10 @@ class refCollection(object):
     def addStaticMethod(self, clstoken, token, name):
         self.classes[clstoken].addStaticMethod(token, name)
 
+    def getStaticMethod(self, clstoken, token):
+        cls = self.classes[clstoken]
+        return cls.name, cls.getStaticMethod(token)
+
     def addVirtualMethod(self, clstoken, token, name):
         self.classes[clstoken].addVirtualMethod(token, name)
 
@@ -154,7 +171,7 @@ class refCollection(object):
         """ return a cls type with the content of the JSON string """
         slf = cls(a2d(struct['AID']), struct['name'])
         for token, claass in struct['classes'].iteritems():
-            slf.classes[token] = cls.classRefCollection.impoort(claass)
+            slf.classes[int(token)] = cls.classRefCollection.impoort(claass)
         return slf
         
     @classmethod
