@@ -46,6 +46,32 @@ public class Test extends Applet{
 	short [] b = new short[25];
     }
 
+    public void testCallAnotherFunction(){
+	accessField(blah);
+    }
+
+    static public short gcdIteratif(short u, short v){
+	while (true) {
+	    if (v == 0) {
+		return u;
+	    }
+	    else {
+		short r = (short)(u % v);
+		u = v;
+		v = r;
+	    }
+	}
+    }
+
+    static public short gcdRecursif(short u, short v){
+	if (v == 0) {
+	    return u;
+	}
+	else {
+	    return gcdRecursif(v, (short)(u % v));
+	}
+    }
+
     public static void testStatic(){
 	short a = 3;
     }

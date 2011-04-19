@@ -18,13 +18,27 @@ class TestInterpreter(unittest.TestCase):
         #intr.sreturn()
         self.assertEquals(62, intr.frame.pop())
 
-    def testSomeIf(self):
+    def oldtestSomeIf(self):
         intr = JavaCardVM(None)
         intr.frames.append(JavaCardFrame([None, 6], [29, 5, 73, 97, 6, 29, 6, 69, 120, 3, 49, 30, 29, 109, 13, 30, 8, 65, 48, 30, 4, 65, 91, 49, 112, 243, 29, 120]))
         while True:
             intr.step()
             print intr.frame.ip
-        
+
+    def tiestgcdRecursif(self):
+        intr = JavaCardVM(None)
+        intr.frames.append(JavaCardFrame([3,7], [29, 97, 4, 28, 120, 29, 28, 29, 73, 141, 0, 7, 120]))
+        while True:
+            print intr.frame.ip
+            intr.step()
+
+    def test_gcdIteratif(self):
+        intr = JavaCardVM(None)
+        intr.frames.append(JavaCardFrame([3,7], [29, 97, 4, 28, 120, 28, 29, 73, 49, 29, 47, 30, 48, 112, 243]))
+        while True:
+            print intr.frame.ip
+            print intr.frame.stack
+            intr.step()
 
 class TestLocals(unittest.TestCase):
     def test_init(self):

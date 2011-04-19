@@ -17,6 +17,19 @@ class linkResolver(object):
         for pkg in struct:
             self.refs[a2d(pkg['AID'])] = refCollection.impoort(pkg)
 
+    def _getModule(self, name):
+        if name.startswith('java'):
+            try:
+                # pythoncard begins with python ...
+                mod = __import__('python'+name[4:])
+            except ImportError:
+                mod = __import__(name)
+        else:
+            mod = __import__(name)
+        for comp in name.split('.')[1:]:
+            mod = getattr(mod, comp)
+        return mod
+
     def addExportFile(self, exp):
         """
         Add a non-standard (not javacard) export file references
@@ -29,24 +42,25 @@ class linkResolver(object):
 
     def resolveClass(self, aid, token):
         """ return a python class corresponding to the token """
-        pass
+        pkg = self.refs[aid]
+        clsname = pkg.getClassName(token)
+        # get the module
+        mod = self._getModule(pkg.name.replace('/', '.'))
+        # get the class
+        return getattr(mod, clsname)
 
     def resolveStaticMethod(self, aid, cls, token):
         """ return a python method corrsponding to the tokens """
-        if not self.hasPackage(aid):
-            return
-        return self.refs[aid].getStaticMethod(cls, token)
-        
+        pkg = self.refs[aid]
+        (clsname, mtdname) = pkg.getStaticMethod(cls, token)
+        # get the module
+        mod = self._getModule(pkg.name.replace('/', '.'))
+        # get the class
+        cls = getattr(mod, clsname)
+        # get the method
+        return getattr(cls, mtdname)
 
     def resolvefield(self, aid, cls, token):
         """ return a python field corresponding to the tokens """
         pass
-
-if __name__ == "__main__":
-    import sys
-    from exportfile import ExportFile
-    rslvr = linkResolver()
-    if len(sys.argv) > 1 : rslvr.addExportFile(ExportFile(open(sys.argv[1]).read()))
-    print rslvr.hasPackage('\xa0\x00\x00\x00b\x00\x01')
-    print rslvr.hasPackage('\xa0')
 

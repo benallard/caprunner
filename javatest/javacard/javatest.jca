@@ -1,5 +1,5 @@
 // converted by version  [v3.0.1]
-// on Tue Apr 12 08:48:10 CEST 2011
+// on Wed Apr 20 00:12:55 CEST 2011
 
 .package javatest {
 	.aid 0xA0:0x0:0x0:0x0:0x18:0xFF:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x1:0x1;
@@ -27,6 +27,10 @@
 		virtualMethodRef 0.3.1()V;		// register()V
 		// 5
 		staticMethodRef 0.7.1(S)V;		// javacard/framework/ISOException.throwIt(S)V
+		// 6
+		virtualMethodRef Test/accessField(S)S;
+		// 7
+		staticMethodRef Test/gcdRecursif(SS)S;
 	}
 
 	.class public Test 0 extends 0.3 {		// extends javacard/framework/Applet
@@ -49,6 +53,7 @@
 			testSomeIf(S)S;
 			accessField(S)S;
 			testLocalVariable()V;
+			testCallAnotherFunction()V;
 		}
 
 		.packageMethodTable 0 {
@@ -178,7 +183,53 @@
 					return;
 		}
 
-		.method public static testStatic()V 2 {
+		.method public testCallAnotherFunction()V 13 {
+			.stack 2;
+			.locals 0;
+
+				L0:	aload_0;
+					getfield_s_this 0;		// short javatest/Test.blah
+					invokevirtual 6;		// accessField(S)S
+					pop;
+					return;
+		}
+
+		.method public static gcdIteratif(SS)S 2 {
+			.stack 2;
+			.locals 1;
+
+				L0:	sload_1;
+					ifne L2;
+				L1:	sload_0;
+					sreturn;
+				L2:	sload_0;
+					sload_1;
+					srem;
+					sstore_2;
+					sload_1;
+					sstore_0;
+					sload_2;
+					sstore_1;
+					goto L0;
+		}
+
+		.method public static gcdRecursif(SS)S 3 {
+			.stack 3;
+			.locals 0;
+
+				L0:	sload_1;
+					ifne L2;
+				L1:	sload_0;
+					sreturn;
+				L2:	sload_1;
+					sload_0;
+					sload_1;
+					srem;
+					invokestatic 7;		// javatest/Test.gcdRecursif(SS)S
+					sreturn;
+		}
+
+		.method public static testStatic()V 4 {
 			.stack 1;
 			.locals 1;
 

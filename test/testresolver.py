@@ -1,7 +1,10 @@
+import sys
 import unittest
 
 from resolver import linkResolver
 from exportfile import ExportFile
+
+from pythoncard.framework import ISOException
 
 class TestResolver(unittest.TestCase):
     
@@ -12,10 +15,26 @@ class TestResolver(unittest.TestCase):
 
     def test_resolveStaticMethod(self):
         rslvr = linkResolver()
-        self.assertEqual("", rslvr.resolveStaticMethod('\xa0\x00\x00\x00b\x01\x01', 3, 0))
+        # ISOExcption.throwIt
+        mtd = rslvr.resolveStaticMethod('\xa0\x00\x00\x00b\x01\x01', 7, 1)
+        try:
+            mtd(0x9000)
+            self.fail()
+        except ISOException, ioe:
+            self.assertEquals(0x9000, ioe.getReason())
+
+    def test_resolveClass(self):
+        rslvr = linkResolver()
+        self.assertEquals(ISOException, rslvr.resolveClass('\xa0\x00\x00\x00b\x01\x01', 7))
 
     def test_addExportFile(self):
         rslvr = linkResolver()
         self.assertFalse(rslvr.hasPackage('\xA0\x00\x00\x00\x18\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01'))
         rslvr.addExportFile(ExportFile(open('../javatest/javacard/javatest.exp').read()))
         self.assertTrue(rslvr.hasPackage('\xA0\x00\x00\x00\x18\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01'))
+
+    def test_getModule(self):
+        rslvr = linkResolver()
+        from python import lang
+        self.assertEqual(sys.modules['python.lang'], rslvr._getModule('java.lang'))
+

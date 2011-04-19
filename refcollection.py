@@ -92,6 +92,9 @@ class refCollection(object):
         self.addclassFields(cls, CP)
         self.addclassMethods(cls, CP)
 
+    def getClassName(self, token):
+        return self.classes[token].name
+
     def addclassFields(self, cls, CP):
         tmp = {}
         names = []
