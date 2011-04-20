@@ -197,7 +197,8 @@ class Classref(object):
     def __init__(self, data):
         self.internal_class_ref = u2(data[:2])
         self.external_class_ref = self.Externalref(data[:2])
-        if bool(u1(data[:1]) & 0x80):
+        self.isExternal = bool(u1(data[:1]) & 0x80)
+        if self.isExternal:
             self.class_ref = self.external_class_ref
         else:
             self.class_ref = self.internal_class_ref
@@ -229,7 +230,7 @@ class CPInfoVirtualMethodref(CPInfoClassTokenref):
     def __init__(self, data):
         CPInfoClassTokenref.__init__(self, data)
         self.isPrivate = bool(self.token & 0x80)
-        self.token = self.token & 0x7f
+        self.token &= 0x7f
 class CPInfoSuperMethodref(CPInfoVirtualMethodref): pass
 
 class StaticBaseref(object):
@@ -252,7 +253,8 @@ class StaticBaseref(object):
     def __init__(self, data):
         self.internal_ref = self.Internalref(data)
         self.external_ref = self.Externalref(data)
-        if bool(u1(data[:1]) & 0x80):
+        self.isExternal = bool(u1(data[:1]) & 0x80)
+        if self.isExternal:
             self._ref = self.external_ref
         else:
             self._ref = self.internal_ref
