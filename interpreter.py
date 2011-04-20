@@ -13,6 +13,8 @@ class JavaCardStack(list):
 
     def pop_int(self):
         return self.pop() | (self.pop() << 16)
+    
+    # We are a stack after all ...
     push = list.append
 
 class JavaCardLocals(dict):
@@ -20,21 +22,26 @@ class JavaCardLocals(dict):
     The method parameters are the first local variables.
     0 being "self" in the majority of the cases
     Theorically, the number and type of the params is known ...
+    The mapping is: index -> value
     """
     def __init__(self, *params):
         for i in xrange(len(params)):
             self[i] = params[i]
 
     def aget(self, index):
+        """ Get an address """
         return self.get(index, None)
 
     def sget(self, index):
+        """ Get a short """
         return self.get(index, 0)
 
 class JavaCardFrame(object):
     """
-    A frame has its own local variables and stack
-    A frame should also have its own context for security purposes. We will forget that for the moment
+    A frame has its own local variables, stack, bytecodes
+    A frame has its own Exception handlers
+    A frame should also have its own context for security purposes.
+    We will forget that for the moment
     """
     def __init__(self, params, bytecodes):
         self.bytecodes = bytecodes
@@ -53,13 +60,51 @@ class JavaCardFrame(object):
         return self.locals.aget(index)
 
     def sget(self, index):
-        return self.locas.sget(index)
+        return self.locals.sget(index)
+
+class ExecutionDone(Exception):
+    pass
+
+class DummyFrame(object):
+    """ 
+    The bottom of the frame stack. 
+    Only used to get the return value.
+    """
+    ip = -1
+    #stack = []
+    def __init__(self):
+        self.returnVal = None
+    def push(self, val):
+        self.returnVal = val
+    def getValue(self):
+        return self.returnVal
+
+class JavaCardFrames(list):
+    """
+    This is the frame stack
+    """
+    def __init__(self):
+        self.push(DummyFrame())
+
+    def push(self, frame):
+        self.current = frame
+        self.append(frame)
+
+    def pop(self):
+        """ When we pop a frame, we don't care about the old one """
+        list.pop(self)
+        self.current = self[-1]
 
 class JavaCardVM(object):
     def __init__(self, resolver):
         self.resolver = resolver
         # Stack of frames
-        self.frames = []
+        self.frames = JavaCardFrames()
+
+    @property
+    def frame(self):
+        """ current frame """
+        return self.frames.current
 
     def step(self):
         code = self.frame.bytecodes[self.frame.ip:]
@@ -70,15 +115,18 @@ class JavaCardVM(object):
         len, params = bytecode.getParams(code)
         # execute the function
         inc = f(*params)
+        # if we are done
+        if isinstance(self.frame, DummyFrame):
+            raise ExecutionDone
         # increment IP
         if inc is None:
             # regular function without branching
             inc = len
         self.frame.ip += inc
 
-    @property
-    def frame(self):
-        return self.frames[-1]
+    def _invokejava(self, method):
+        self.frames.append(JavaCardFrame(method))
+        self.frame = self.frames[-1]
 
     def aload_0(self):
         self.aload(0)
@@ -89,7 +137,7 @@ class JavaCardVM(object):
     def aload_3(self):
         self.aload(3)
     def aload(self, index):
-        self.frame.stack.push(self.frame.locals.get(index, None))
+        self.frame.push(self.frame.aget(index))
 
     def sload_0(self):
         self.sload(0)
@@ -100,7 +148,7 @@ class JavaCardVM(object):
     def sload_3(self):
         self.sload(3)
     def sload(self, index):
-        self.frame.stack.push(self.frame.locals.get(index, 0))
+        self.frame.push(self.frame.sget(index))
 
     def sconst_m1(self):
         self._sconst(-1)
@@ -174,11 +222,3 @@ class JavaCardVM(object):
     def sstore(self, index):
         val = self.frame.pop()
         self.frame.locals[index] = val
-
-class Program(object):
-    def __init__(self, vm, cap_file):
-        self.vm = vm
-        self.cap_file = cap_file
-
-    def install(self, applet):
-        return self.Method.methods[self.Applet.applets[applet].install_method]

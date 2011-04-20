@@ -1,9 +1,9 @@
 import sys
 import unittest
 
-from resolver import linkResolver
-from exportfile import ExportFile
+from testconfig import *
 
+from resolver import linkResolver
 from pythoncard.framework import ISOException
 
 class TestResolver(unittest.TestCase):
@@ -30,11 +30,11 @@ class TestResolver(unittest.TestCase):
     def test_addExportFile(self):
         rslvr = linkResolver()
         self.assertFalse(rslvr.hasPackage('\xA0\x00\x00\x00\x18\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01'))
-        rslvr.addExportFile(ExportFile(open('../javatest/javacard/javatest.exp').read()))
+        rslvr.addExportFile(javatest_exp)
         self.assertTrue(rslvr.hasPackage('\xA0\x00\x00\x00\x18\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x01\x01'))
 
     def test_getModule(self):
         rslvr = linkResolver()
-        from python import lang
-        self.assertEqual(sys.modules['python.lang'], rslvr._getModule('java.lang'))
+        from python import lang as java_lang
+        self.assertEqual(java_lang, rslvr._getModule('java.lang'))
 
