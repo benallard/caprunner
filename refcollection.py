@@ -20,7 +20,6 @@ class refCollection(object):
             self.virtualmethods = {}
             self.staticmethods = {}
             self.interfacemethods = {}
-            self.constructors = {}
             # two kinds of fields:
             # - static
             # - instance
@@ -37,8 +36,8 @@ class refCollection(object):
 
         def addVirtualMethod(self, token, name):
             if "<init>" in name:
-                assert self.token not in self.constructors
-                self.constructors[token] = name
+                assert self.token not in self.staticmethods
+                self.staticmethods[token] = name
             else:
                 assert not token in self.virtualmethods, self.virtualmethods[token]
                 self.virtualmethods[token] = name
@@ -57,12 +56,11 @@ class refCollection(object):
             struct['virtualmethods'] = self.virtualmethods
             struct['staticmethods'] = self.staticmethods
             struct['interfacemethods'] = self.interfacemethods
-            struct['constructors'] = self.constructors
             struct['staticfields'] = self.staticfields
             struct['instancefields'] = self.instancefields
             return struct
 
-        def deroll(self, struct, name):
+        def _unroll(self, struct, name):
             dct = getattr(self, name)
             for token, name in struct[name].iteritems():
                 dct[int(token)] = name
@@ -71,12 +69,11 @@ class refCollection(object):
         def impoort(cls, struct):
             slf = cls(struct['token'], struct['name'])
             
-            slf.deroll(struct, 'virtualmethods')
-            slf.deroll(struct, 'staticmethods')
-            slf.deroll(struct, 'interfacemethods')
-            slf.deroll(struct, 'constructors')
-            slf.deroll(struct, 'staticfields')
-            slf.deroll(struct, 'instancefields')
+            slf._unroll(struct, 'virtualmethods')
+            slf._unroll(struct, 'staticmethods')
+            slf._unroll(struct, 'interfacemethods')
+            slf._unroll(struct, 'staticfields')
+            slf._unroll(struct, 'instancefields')
             return slf
 
     def __init__(self, AID, name):
