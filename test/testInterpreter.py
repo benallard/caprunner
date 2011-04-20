@@ -17,7 +17,7 @@ class TestInterpreter(unittest.TestCase):
 
     def testEasy(self):
         intr = JavaCardVM(None)
-        intr.frames.push(JavaCardFrame([None, 4], [29, 16, 58, 65, 91, 120]))
+        intr.frames.push(JavaCardFrame([None, 4],[]))
         intr.sload_1()
         intr.bspush(58)
         intr.sadd()

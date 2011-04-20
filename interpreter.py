@@ -80,7 +80,6 @@ class DummyFrame(object):
     Only used to get the return value.
     """
     ip = -1
-    #stack = []
     def __init__(self):
         self.returnVal = None
     def push(self, val):

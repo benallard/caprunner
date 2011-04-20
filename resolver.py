@@ -8,20 +8,25 @@ class linkResolver(object):
     """
     This is our link resolver. Its goal is to feed the interpeter with values
     it can understand. Those are either PythonMethod or JavaCardMethod.
-    
+
     Note: We don't care (yet ?) of version of packages ...
     """
     def __init__(self, version=(3,0,1)):
-        self.version = version
         # load preprocessed pickle from all the exp files
-        f = open({(3,0,1): '3.0.1.json'}[self.version])
+        f = open({(3,0,1): '3.0.1.json'}[version])
         struct = json.loads(f.read())
         self.refs = {}
         for pkg in struct:
             self.refs[a2d(pkg['AID'])] = refCollection.impoort(pkg)
 
     def addConstantPool(self, cap_file):
+        """
+        Incorporate information from the CAPFile so that we can resolve indexes
+        """
         self.constantpool = cap_file.ConstantPool
+        self.aidmap = {}
+        for i in xrange(cap_file.Import.count):
+            self.aidmap[i] = a2d(cap_file.Import.packages[i].aid)
 
     def _getModule(self, name):
         if name.startswith('java'):
@@ -55,8 +60,11 @@ class linkResolver(object):
         # get the class
         return getattr(mod, clsname)
 
-    def resolveStaticMethod(self, aid, cls, token):
-        """ return a python method corrsponding to the tokens """
+    def _resolveExtStaticMethod(self, aid, cls, token):
+        """ 
+        Resolve an external static method
+        return a python method corrsponding to the tokens 
+        """
         pkg = self.refs[aid]
         (clsname, mtdname) = pkg.getStaticMethod(cls, token)
         # get the module
