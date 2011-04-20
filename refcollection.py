@@ -26,28 +26,26 @@ class refCollection(object):
             self.staticfields = {}
             self.instancefields = {}
 
-        def addStaticMethod(self, token, name):
+        def addStaticMethod(self, token, name, type):
             assert not token in self.staticmethods
-            self.staticmethods[token] = name
+            self.staticmethods[token] = {'name':name, 'type':type}
 
         def getStaticMethod(self, token):
-            print self.staticmethods.keys()
             return self.staticmethods[token]
 
-        def addVirtualMethod(self, token, name):
+        def addVirtualMethod(self, token, name, type):
             if "<init>" in name:
-                assert self.token not in self.staticmethods
-                self.staticmethods[token] = name
+                self.addStaticMethod(token, name, type)
             else:
                 assert not token in self.virtualmethods, self.virtualmethods[token]
-                self.virtualmethods[token] = name
+                self.virtualmethods[token] = {'name':name, 'type':type}
 
         def getVirtualMethod(self, token):
             return self.virtualmethods[token]
 
-        def addInterfaceMethod(self, token, name):
+        def addInterfaceMethod(self, token, name, type):
             assert not token in self.interfacemethods
-            self.interfacemethods[token] = name
+            self.interfacemethods[token] = {'name':name, 'type':type}
 
         def export(self):
             struct = {}
@@ -132,25 +130,26 @@ class refCollection(object):
         for mtd in cls.methods:
             tmp[mtd.token] = mtd
             mtdname = names[mtd]
+            mtdtype = str(CP[mtd.descriptor_index])
             if cls.isInterface:
-                self.addInterfaceMethod(cls.token, mtd.token, mtdname)
+                self.addInterfaceMethod(cls.token, mtd.token, mtdname, mtdtype)
             elif mtd.isStatic:
-                self.addStaticMethod(cls.token, mtd.token, mtdname)
+                self.addStaticMethod(cls.token, mtd.token, mtdname, mtdtype)
             else:
-                self.addVirtualMethod(cls.token, mtd.token, mtdname)
+                self.addVirtualMethod(cls.token, mtd.token, mtdname, mtdtype)
 
-    def addStaticMethod(self, clstoken, token, name):
-        self.classes[clstoken].addStaticMethod(token, name)
+    def addStaticMethod(self, clstoken, token, name, type):
+        self.classes[clstoken].addStaticMethod(token, name, type)
 
     def getStaticMethod(self, clstoken, token):
         cls = self.classes[clstoken]
         return cls.name, cls.getStaticMethod(token)
 
-    def addVirtualMethod(self, clstoken, token, name):
-        self.classes[clstoken].addVirtualMethod(token, name)
+    def addVirtualMethod(self, clstoken, token, name, type):
+        self.classes[clstoken].addVirtualMethod(token, name, type)
 
-    def addInterfaceMethod(self, clstoken, token, name):
-        self.classes[clstoken].addInterfaceMethod(token, name)
+    def addInterfaceMethod(self, clstoken, token, name, type):
+        self.classes[clstoken].addInterfaceMethod(token, name, type)
 
     def populate(self, export_file):
         for cls in export_file.classes:

@@ -4,13 +4,12 @@ class JavaCardMethod(object):
     This class would embed the parameters, the bytecode and the exception 
     handlers (more might come later)
     """
-    def __init__(self, packageaid, offset):
+    def __init__(self, offset):
         """ 
         This object is first created from information of the export_file and 
         the ConstantPool. Those only provide the offset in the Method 
         Component in case of internal references.
         """
-        self.packageaid = packageaid
         self.offset = offset
 
     def feedFromCAP(self, cap_file):
@@ -32,5 +31,6 @@ class JavaCardMethod(object):
         if self.methoddescriptorinfo is None:
             assert(False, "Method Not found in Descriptor Component")
         # We now care about the exception handlers
-        
-                
+        # ... later
+        # I first want the number of arguments
+        self.nargs = self.methodinfo.method_info.nargs

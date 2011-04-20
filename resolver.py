@@ -3,6 +3,8 @@ import json
 from utils import a2d
 
 from refcollection import refCollection
+from pymethod import PythonMethod
+from jcmethod import JavaCardMethod
 
 class linkResolver(object):
     """
@@ -66,20 +68,21 @@ class linkResolver(object):
         return a python method corrsponding to the tokens 
         """
         pkg = self.refs[aid]
-        (clsname, mtdname) = pkg.getStaticMethod(cls, token)
+        (clsname, mtd) = pkg.getStaticMethod(cls, token)
+        mtdname = mtd['name']
         # get the module
         mod = self._getModule(pkg.name.replace('/', '.'))
         # get the class
         cls = getattr(mod, clsname)
         # get the method
-        return getattr(cls, mtdname)
+        method = getattr(cls, mtdname)
+        return PythonMethod(mtdname, mtd['type'], method)
 
     def resolveIndex(self, index):
         """
         Reslove an item in the ConstantPool
         """
         cst = self.constant_pool[index]
-        print cst.tag
         if cst.tag == 1:
             if cst.isExternal:
                 return self.resolveClass(self.aidmap[cst.package_token], cst.class_token)
@@ -101,9 +104,9 @@ class linkResolver(object):
                                                     cst.static_method_ref.class_token,
                                                     cst.static_method_ref.token)
             else:
-                pass
+                return JavaCardMethod(cst.static_method_ref.offset)
         else:
-            assert(False, cst.tag + "Is of wrong type")
+            assert False, cst.tag + "Is of wrong type"
 
     def resolvefield(self, aid, cls, token):
         """ return a python field corresponding to the tokens """

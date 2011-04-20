@@ -2,6 +2,9 @@ import python.lang
 
 import bytecode, utils
 
+from pymethod import PythonMethod
+from jcmethod import JavaCardMethod
+
 class JavaCardStack(list):
     """
     This is the operand stack
@@ -95,8 +98,8 @@ class JavaCardFrames(list):
         self.push(DummyFrame())
 
     def push(self, frame):
-        self.current = frame
         self.append(frame)
+        self.current = frame
 
     def pop(self):
         """ When we pop a frame, we don't care about the old one """
@@ -108,9 +111,12 @@ class JavaCardVM(object):
         self.resolver = resolver
         # Stack of frames
         self.frames = JavaCardFrames()
+        self.cap_file = None
 
     def load(self, cap_file):
-        self.cap_files.append(cap_file)
+        assert self.cap_file == None, "Cannot load two CAPFiles"
+        self.cap_file = cap_file
+        self.resolver.linkToCAP(cap_file)
 
     @property
     def frame(self):
@@ -125,6 +131,7 @@ class JavaCardVM(object):
         # get the params
         len, params = bytecode.getParams(code)
         # execute the function
+        oldframe = self.frame
         inc = f(*params)
         # if we are done
         if isinstance(self.frame, DummyFrame):
@@ -133,7 +140,7 @@ class JavaCardVM(object):
         if inc is None:
             # regular function without branching
             inc = len
-        self.frame.ip += inc
+        oldframe.ip += inc
 
     def getRetValue(self):
         """ return the result of the finished execution """
@@ -147,10 +154,10 @@ class JavaCardVM(object):
         to fill it with informations from the rest of te CAPFile, then push
         a new frame on top of the frame stack and we're done
         """
-        method.feedFromCAP(self.cap_file[method.packageaid])
+        method.feedFromCAP(self.cap_file)
         # ouch, what happend to the int parameters ?
-        params = [self.frame.pop() for i in xrange(method.nargs)]
-        self.frames.push(JavaCardFrame(params, method))
+        params = reversed([self.frame.pop() for i in xrange(method.nargs)])
+        self.frames.push(JavaCardFrame(params, method.methodinfo.bytecodes))
 
     def _popparams(self, paramstype):
         """
@@ -161,10 +168,13 @@ class JavaCardVM(object):
         number of cells required for storage is two if one or more of the local 
         variables is of type int.
         """
-        return JavaCardLocals([self.frame.pop() for i in xrange(paramstype.nargs)])
+        return JavaCardLocals(*reversed([self.frame.pop() for i in xrange(len(paramstype))]))
 
     def _pushretval(self, value, rettype):
-        self.frame.push(val)
+        if rettype == 'integer':
+            self.frame.push_int(val)
+        elif rettype != 'void':
+            self.frame.push(val)
 
     def _invokenative(self, method):
         """ method is of type PythonMethod """
@@ -176,12 +186,12 @@ class JavaCardVM(object):
         self._pushretval(ret, mtdtype.ret)
 
     def _invoke(self, method):
-        if instanceof(method, PythonMethod):
+        if isinstance(method, PythonMethod):
             self._invokenative(method)
-        elif instanceof(method, JavaCardMethod):
+        elif isinstance(method, JavaCardMethod):
             self._invokejava(method)
         else:
-            assert(False, method + "not of known type")
+            assert False, str(type(method)) + "not of known type"
 
     def aload_0(self):
         self.aload(0)
@@ -277,3 +287,13 @@ class JavaCardVM(object):
     def sstore(self, index):
         val = self.frame.pop()
         self.frame.locals[index] = val
+
+    def sspush(self, short):
+        self.frame.push(short)
+
+    def invokestatic(self, index):
+        method = self.resolver.resolveIndex(index)
+        self._invoke(method)
+
+    def nop(self):
+        pass

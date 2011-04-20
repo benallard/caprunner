@@ -1,6 +1,11 @@
 import unittest
 
+from testconfig import *
+
+from resolver import linkResolver
 from interpreter import ExecutionDone, JavaCardVM, JavaCardFrame, JavaCardLocals, JavaCardStack
+
+from pythoncard.framework import ISOException
 
 class TestInterpreter(unittest.TestCase):
 
@@ -31,7 +36,8 @@ class TestInterpreter(unittest.TestCase):
         self._run(intr)
 
     def test_gcdRecursif(self):
-        intr = JavaCardVM(None)
+        intr = JavaCardVM(linkResolver())
+        intr.load(javatest_cap)
         intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 29, 28, 29, 73, 141, 0, 7, 120]))
         self._run(intr)
         self.assertEquals(14, intr.getRetValue())
@@ -42,6 +48,16 @@ class TestInterpreter(unittest.TestCase):
         intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 28, 29, 73, 49, 29, 47, 30, 48, 112, 243]))
         self._run(intr)
         self.assertEquals(14, intr.getRetValue())
+
+    def test_callExtStaticMethod(self):
+        intr = JavaCardVM(linkResolver())
+        intr.load(javatest_cap)
+        intr.frames.push(JavaCardFrame([None, None], [17, 106, 129, 141, 0, 5, 122]))
+        try:
+            self._run(intr)
+            self.fail()
+        except ISOException, ioe:
+            self.assertEquals(0x6A81, ioe.getReason())
 
 class TestLocals(unittest.TestCase):
     def test_init(self):
