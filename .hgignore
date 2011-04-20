@@ -1,2 +1,5 @@
 glob:*~
 glob:*.pyc
+glob:python/*
+glob:pythoncard/*
+glob:pythoncardx/*

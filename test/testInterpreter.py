@@ -23,22 +23,25 @@ class TestInterpreter(unittest.TestCase):
         intr.sadd()
         intr.s2b()
         intr.sreturn()
-        self.assertEquals(62, intr.CF.getValue())
+        self.assertEquals(62, intr.getRetValue())
 
-    def oldtestSomeIf(self):
+    def testSomeIf(self):
         intr = JavaCardVM(None)
         intr.frames.push(JavaCardFrame([None, 6], [29, 5, 73, 97, 6, 29, 6, 69, 120, 3, 49, 30, 29, 109, 13, 30, 8, 65, 48, 30, 4, 65, 91, 49, 112, 243, 29, 120]))
         self._run(intr)
 
-    def tiestgcdRecursif(self):
+    def test_gcdRecursif(self):
         intr = JavaCardVM(None)
-        intr.frames.push(JavaCardFrame([3,7], [29, 97, 4, 28, 120, 29, 28, 29, 73, 141, 0, 7, 120]))
+        intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 29, 28, 29, 73, 141, 0, 7, 120]))
         self._run(intr)
+        self.assertEquals(14, intr.getRetValue())
+        
 
     def test_gcdIteratif(self):
         intr = JavaCardVM(None)
-        intr.frames.push(JavaCardFrame([3,7], [29, 97, 4, 28, 120, 28, 29, 73, 49, 29, 47, 30, 48, 112, 243]))
+        intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 28, 29, 73, 49, 29, 47, 30, 48, 112, 243]))
         self._run(intr)
+        self.assertEquals(14, intr.getRetValue())
 
 class TestLocals(unittest.TestCase):
     def test_init(self):
@@ -60,6 +63,11 @@ class TestLocals(unittest.TestCase):
         loc = JavaCardLocals(self)
         self.assertEqual(0, loc.sget(3))
         self.assertTrue(loc.aget(1) is None)
+
+    def test_asArray(self):
+        array = [89,3,None,7]
+        loc = JavaCardLocals(*array)
+        self.assertEqual(array, loc.asArray())
 
 class TestStack(unittest.TestCase):
     def test(self):

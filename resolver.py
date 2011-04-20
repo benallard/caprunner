@@ -6,7 +6,10 @@ from refcollection import refCollection
 
 class linkResolver(object):
     """
-    We don't take care of version of packages ...
+    This is our link resolver. Its goal is to feed the interpeter with values
+    it can understand. Those are either PythonMethod or JavaCardMethod.
+    
+    Note: We don't care (yet ?) of version of packages ...
     """
     def __init__(self, version=(3,0,1)):
         self.version = version
@@ -16,6 +19,9 @@ class linkResolver(object):
         self.refs = {}
         for pkg in struct:
             self.refs[a2d(pkg['AID'])] = refCollection.impoort(pkg)
+
+    def addConstantPool(self, cap_file):
+        self.constantpool = cap_file.ConstantPool
 
     def _getModule(self, name):
         if name.startswith('java'):

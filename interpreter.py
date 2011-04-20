@@ -36,6 +36,15 @@ class JavaCardLocals(dict):
         """ Get a short """
         return self.get(index, 0)
 
+    def asArray(self):
+        """ Return the locals as an array. Good for calling functions """
+        res = []
+        keys = self.keys()
+        keys.sort()
+        for key in keys:
+            res.append(self[key])
+        return res
+
 class JavaCardFrame(object):
     """
     A frame has its own local variables, stack, bytecodes
@@ -101,6 +110,9 @@ class JavaCardVM(object):
         # Stack of frames
         self.frames = JavaCardFrames()
 
+    def load(self, cap_file):
+        self.cap_files.append(cap_file)
+
     @property
     def frame(self):
         """ current frame """
@@ -124,9 +136,53 @@ class JavaCardVM(object):
             inc = len
         self.frame.ip += inc
 
+    def getRetValue(self):
+        """ return the result of the finished execution """
+        return self.frame.getValue()
+
+# --- I'd like to split the opcodes interpretation from the rest
+
     def _invokejava(self, method):
-        self.frames.append(JavaCardFrame(method))
-        self.frame = self.frames[-1]
+        """
+        The resolver only gave us an empty JavaCardMethod. we first need
+        to fill it with informations from the rest of te CAPFile, then push
+        a new frame on top of the frame stack and we're done
+        """
+        method.feedFromCAP(self.cap_file[method.packageaid])
+        # ouch, what happend to the int parameters ?
+        params = [self.frame.pop() for i in xrange(method.nargs)]
+        self.frames.push(JavaCardFrame(params, method))
+
+    def _popparams(self, paramstype):
+        """
+        Local variables of type int are represented in two 16-bit cells, while 
+        all others are represented in one 16-bit cell. If an entry in the local 
+        variables array of the stack frame is reused to store more than one 
+        local variable (for example, local variables from separate scopes), the 
+        number of cells required for storage is two if one or more of the local 
+        variables is of type int.
+        """
+        return JavaCardLocals([self.frame.pop() for i in xrange(paramstype.nargs)])
+
+    def _pushretval(self, value, rettype):
+        self.frame.push(val)
+
+    def _invokenative(self, method):
+        """ method is of type PythonMethod """
+        # pop the params
+        params = self._popparams(method.params)
+        # call the method
+        ret = method(*params.asArray())
+        # push the returnvalue
+        self._pushretval(ret, mtdtype.ret)
+
+    def _invoke(self, method):
+        if instanceof(method, PythonMethod):
+            self._invokenative(method)
+        elif instanceof(method, JavaCardMethod):
+            self._invokejava(method)
+        else:
+            assert(False, method + "not of known type")
 
     def aload_0(self):
         self.aload(0)
