@@ -13,10 +13,20 @@ class TestResolver(unittest.TestCase):
         self.assertTrue(rslvr.hasPackage('\xa0\x00\x00\x00b\x00\x01'))
         self.assertFalse(rslvr.hasPackage('\xa0'))
 
-    def test_resolveStaticMethod(self):
+    def test__resolveExtStaticMethod(self):
         rslvr = linkResolver()
         # ISOExcption.throwIt
-        mtd = rslvr.resolveStaticMethod('\xa0\x00\x00\x00b\x01\x01', 7, 1)
+        mtd = rslvr._resolveExtStaticMethod('\xa0\x00\x00\x00b\x01\x01', 7, 1)
+        try:
+            mtd(0x9000)
+            self.fail()
+        except ISOException, ioe:
+            self.assertEquals(0x9000, ioe.getReason())
+
+    def test_resolveIndex(self):
+        rslvr = linkResolver()
+        rslvr.linkToCAP(javatest_cap)
+        mtd = rslvr.resolveIndex(5)
         try:
             mtd(0x9000)
             self.fail()

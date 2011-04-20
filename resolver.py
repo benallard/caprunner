@@ -19,11 +19,11 @@ class linkResolver(object):
         for pkg in struct:
             self.refs[a2d(pkg['AID'])] = refCollection.impoort(pkg)
 
-    def addConstantPool(self, cap_file):
+    def linkToCAP(self, cap_file):
         """
         Incorporate information from the CAPFile so that we can resolve indexes
         """
-        self.constantpool = cap_file.ConstantPool
+        self.constant_pool = cap_file.ConstantPool.constant_pool
         self.aidmap = {}
         for i in xrange(cap_file.Import.count):
             self.aidmap[i] = a2d(cap_file.Import.packages[i].aid)
@@ -73,6 +73,37 @@ class linkResolver(object):
         cls = getattr(mod, clsname)
         # get the method
         return getattr(cls, mtdname)
+
+    def resolveIndex(self, index):
+        """
+        Reslove an item in the ConstantPool
+        """
+        cst = self.constant_pool[index]
+        print cst.tag
+        if cst.tag == 1:
+            if cst.isExternal:
+                return self.resolveClass(self.aidmap[cst.package_token], cst.class_token)
+            else:
+                # internal class ...
+                pass
+        elif cst.tag == 2:
+            pass # instance fields
+        elif cst.tag == 3:
+            pass # virtual method
+        elif cst.tag == 4:
+            pass # super method
+        elif cst.tag == 5:
+            pass # ststic field
+        elif cst.tag == 6:
+            # static method
+            if cst.isExternal:
+                return self._resolveExtStaticMethod(self.aidmap[cst.static_method_ref.package_token],
+                                                    cst.static_method_ref.class_token,
+                                                    cst.static_method_ref.token)
+            else:
+                pass
+        else:
+            assert(False, cst.tag + "Is of wrong type")
 
     def resolvefield(self, aid, cls, token):
         """ return a python field corresponding to the tokens """
