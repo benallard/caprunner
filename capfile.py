@@ -203,7 +203,10 @@ class Classref(object):
         else:
             self.class_ref = self.internal_class_ref
     def __str__(self):
-        return "%s" % self.class_ref
+        if not self.isExternal:
+            return "Int: cls@%d" % self.class_ref
+        else:
+            return "%s" % self.class_ref
 
 class CPInfoClassref(CPInfo, Classref):
     def __init__(self, data):
@@ -472,11 +475,11 @@ class Class(Component):
             data = self.data[shift:]
             if self.BaseInfo.isInterface(u1(self.data[shift:])):
                 cls = self.InterfaceInfo(data)
-                self.interfaces[shift] = cls
+                self.interfaces[shift - 3] = cls # -3: info block, not data
                 shift += cls.size
             else:
                 cls = self.ClassInfo(data)
-                self.classes[shift] = cls
+                self.classes[shift - 3] = cls # -3: idem
                 shift += cls.size
 
     def __str__(self):
