@@ -114,6 +114,10 @@ class JavaCardVM(object):
         self.cap_file = None
 
     def load(self, cap_file):
+        """
+        Actually, this should create a `Context` for the given cap_file. Such
+        that multiple context could coexist.
+        """
         assert self.cap_file == None, "Cannot load two CAPFiles"
         self.cap_file = cap_file
         self.resolver.linkToCAP(cap_file)
