@@ -128,7 +128,6 @@ class JavaCardVM(object):
 
     def step(self):
         code = self.frame.bytecodes[self.frame.ip:]
-        print bytecode.opname[code[0]]
         # get the function
         f = getattr(self, bytecode.opname[code[0]])
         # get the params
@@ -151,7 +150,7 @@ class JavaCardVM(object):
 
 # --- I'd like to split the opcodes interpretation from the rest
 
-    def _invokejava(self, method):
+    def _invokestaticjava(self, method):
         """
         The resolver only gave us an empty JavaCardMethod. we first need
         to fill it with informations from the rest of te CAPFile, then push
@@ -179,7 +178,7 @@ class JavaCardVM(object):
         elif rettype != 'void':
             self.frame.push(val)
 
-    def _invokenative(self, method):
+    def _invokestaticnative(self, method):
         """ method is of type PythonMethod """
         # pop the params
         params = self._popparams(method.params)
@@ -190,9 +189,9 @@ class JavaCardVM(object):
 
     def _invoke(self, method):
         if isinstance(method, PythonStaticMethod):
-            self._invokenative(method)
+            self._invokestaticnative(method)
         elif isinstance(method, JavaCardStaticMethod):
-            self._invokejava(method)
+            self._invokestaticjava(method)
         else:
             assert False, str(type(method)) + "not of known type"
 
