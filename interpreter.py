@@ -2,8 +2,7 @@ import python.lang
 
 import bytecode, utils
 
-from pymethod import PythonMethod
-from jcmethod import JavaCardMethod
+from methods import PythonStaticMethod, JavaCardStaticMethod
 
 class JavaCardStack(list):
     """
@@ -190,9 +189,9 @@ class JavaCardVM(object):
         self._pushretval(ret, mtdtype.ret)
 
     def _invoke(self, method):
-        if isinstance(method, PythonMethod):
+        if isinstance(method, PythonStaticMethod):
             self._invokenative(method)
-        elif isinstance(method, JavaCardMethod):
+        elif isinstance(method, JavaCardStaticMethod):
             self._invokejava(method)
         else:
             assert False, str(type(method)) + "not of known type"

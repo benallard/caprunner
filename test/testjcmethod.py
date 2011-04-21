@@ -2,10 +2,10 @@ import unittest
 
 from testconfig import *
 
-from jcmethod import JavaCardMethod
+from methods import JavaCardStaticMethod
 
 class TestJavaCardMethod(unittest.TestCase):
     
     def testInit(self):
-        jcmtd = JavaCardMethod(151)
+        jcmtd = JavaCardStaticMethod(151)
         

@@ -3,14 +3,28 @@ import json
 from utils import a2d
 
 from refcollection import refCollection
-from pymethod import PythonMethod
-from jcmethod import JavaCardMethod
+from methods import PythonStaticMethod, JavaCardStaticMethod
+
+def cacheresult(f):
+    """
+    Caching for the resolver
+    Quick test shown that it is not efficient ... :(
+    Anyway, this is at least necessary for the fields ... That twice the same
+    request returns the same field.
+    """
+    __cache = {}
+    def wrapper(self, index):
+        try:
+            return __cache[index]
+        except KeyError:
+            __cache[index] = f(self, index)
+            return __cache[index]
+    return wrapper
 
 class linkResolver(object):
     """
     This is our link resolver. Its goal is to feed the interpeter with values
-    it can understand. Those are either PythonMethod or JavaCardMethod.
-
+    it can understand.
     Note: We don't care (yet ?) of version of packages ...
     """
     def __init__(self, version=(3,0,1)):
@@ -76,8 +90,9 @@ class linkResolver(object):
         cls = getattr(mod, clsname)
         # get the method
         method = getattr(cls, mtdname)
-        return PythonMethod(mtdname, mtd['type'], method)
+        return PythonStaticMethod(mtdname, mtd['type'], method)
 
+    @cacheresult
     def resolveIndex(self, index):
         """
         Reslove an item in the ConstantPool
@@ -104,7 +119,7 @@ class linkResolver(object):
                                                     cst.static_method_ref.class_token,
                                                     cst.static_method_ref.token)
             else:
-                return JavaCardMethod(cst.static_method_ref.offset)
+                return JavaCardStaticMethod(cst.static_method_ref.offset)
         else:
             assert False, cst.tag + "Is of wrong type"
 
