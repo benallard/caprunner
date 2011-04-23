@@ -21,17 +21,6 @@ class linkResolver(object):
         for pkg in struct:
             self.refs[a2d(pkg['AID'])] = refCollection.impoort(pkg)
 
-    def linkToCAP(self, cap_file):
-        """
-        Incorporate information from the CAPFile so that we can resolve indexes
-        This function is a bad idea. The cap_file should be given at resolve time when resolving an index
-        Other than that, there is no reason to provide the cap_file to the resolver. 
-        """
-        self.__constant_pool = cap_file.ConstantPool.constant_pool
-        self.__aidmap = {}
-        for i in xrange(cap_file.Import.count):
-            self.__aidmap[i] = a2d(cap_file.Import.packages[i].aid)
-
     def _getModule(self, name):
         if name.startswith('java'):
             try:
@@ -87,7 +76,7 @@ class linkResolver(object):
         cst = cap_file.ConstantPool..constant_pool[index]
         if cst.tag == 1:
             if cst.isExternal:
-                return self.resolveClass(self.aidmap[cst.package_token], cst.class_token)
+                return self.resolveClass(cap_file.Import.packages[cst.static_method_ref.package_token].aid, cst.class_token)
             else:
                 # internal class ...
                 pass
