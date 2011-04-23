@@ -24,11 +24,13 @@ class linkResolver(object):
     def linkToCAP(self, cap_file):
         """
         Incorporate information from the CAPFile so that we can resolve indexes
+        This function is a bad idea. The cap_file should be given at resolve time when resolving an index
+        Other than that, there is no reason to provide the cap_file to the resolver. 
         """
-        self.constant_pool = cap_file.ConstantPool.constant_pool
-        self.aidmap = {}
+        self.__constant_pool = cap_file.ConstantPool.constant_pool
+        self.__aidmap = {}
         for i in xrange(cap_file.Import.count):
-            self.aidmap[i] = a2d(cap_file.Import.packages[i].aid)
+            self.__aidmap[i] = a2d(cap_file.Import.packages[i].aid)
 
     def _getModule(self, name):
         if name.startswith('java'):
@@ -78,11 +80,11 @@ class linkResolver(object):
         method = getattr(cls, mtdname)
         return PythonMethod(mtdname, mtd['type'], method)
 
-    def resolveIndex(self, index):
+    def resolveIndex(self, index, cap_file):
         """
         Reslove an item in the ConstantPool
         """
-        cst = self.constant_pool[index]
+        cst = cap_file.ConstantPool..constant_pool[index]
         if cst.tag == 1:
             if cst.isExternal:
                 return self.resolveClass(self.aidmap[cst.package_token], cst.class_token)
@@ -100,7 +102,7 @@ class linkResolver(object):
         elif cst.tag == 6:
             # static method
             if cst.isExternal:
-                return self._resolveExtStaticMethod(self.aidmap[cst.static_method_ref.package_token],
+                return self._resolveExtStaticMethod(cap_file.Import.packages[cst.static_method_ref.package_token].aid,
                                                     cst.static_method_ref.class_token,
                                                     cst.static_method_ref.token)
             else:
