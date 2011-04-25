@@ -35,15 +35,6 @@ class linkResolver(object):
         for pkg in struct:
             self.refs[a2d(pkg['AID'])] = refCollection.impoort(pkg)
 
-    def linkToCAP(self, cap_file):
-        """
-        Incorporate information from the CAPFile so that we can resolve indexes
-        """
-        self.constant_pool = cap_file.ConstantPool.constant_pool
-        self.aidmap = {}
-        for i in xrange(cap_file.Import.count):
-            self.aidmap[i] = a2d(cap_file.Import.packages[i].aid)
-
     def _getModule(self, name):
         if name.startswith('java'):
             try:
@@ -93,14 +84,14 @@ class linkResolver(object):
         return PythonStaticMethod(mtdname, mtd['type'], method)
 
     @cacheresult
-    def resolveIndex(self, index):
+    def resolveIndex(self, index, cap_file):
         """
         Reslove an item in the ConstantPool
         """
-        cst = self.constant_pool[index]
+        cst = cap_file.ConstantPool..constant_pool[index]
         if cst.tag == 1:
             if cst.isExternal:
-                return self.resolveClass(self.aidmap[cst.package_token], cst.class_token)
+                return self.resolveClass(cap_file.Import.packages[cst.static_method_ref.package_token].aid, cst.class_token)
             else:
                 # internal class ...
                 pass
@@ -115,7 +106,7 @@ class linkResolver(object):
         elif cst.tag == 6:
             # static method
             if cst.isExternal:
-                return self._resolveExtStaticMethod(self.aidmap[cst.static_method_ref.package_token],
+                return self._resolveExtStaticMethod(cap_file.Import.packages[cst.static_method_ref.package_token].aid,
                                                     cst.static_method_ref.class_token,
                                                     cst.static_method_ref.token)
             else:
