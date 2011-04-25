@@ -13,12 +13,17 @@ def cacheresult(f):
     request returns the same field.
     """
     __cache = {}
-    def wrapper(self, index):
+    def wrapper(self, index, cap_file):
         try:
-            return __cache[index]
+            pkg = __cache[a2d(cap_file.Header.package.aid)]
         except KeyError:
-            __cache[index] = f(self, index)
-            return __cache[index]
+            __cache[a2d(cap_file.Header.package.aid)] = {}
+            pkg = __cache[a2d(cap_file.Header.package.aid)]
+        try:
+            return pkg[index]
+        except KeyError:
+            pkg[index] = f(self, index, cap_file)
+            return pkg[index]
     return wrapper
 
 class linkResolver(object):
@@ -88,10 +93,10 @@ class linkResolver(object):
         """
         Reslove an item in the ConstantPool
         """
-        cst = cap_file.ConstantPool..constant_pool[index]
+        cst = cap_file.ConstantPool.constant_pool[index]
         if cst.tag == 1:
             if cst.isExternal:
-                return self.resolveClass(cap_file.Import.packages[cst.static_method_ref.package_token].aid, cst.class_token)
+                return self.resolveClass(a2d(cap_file.Import.packages[cst.static_method_ref.package_token].aid), cst.class_token)
             else:
                 # internal class ...
                 pass
@@ -106,7 +111,7 @@ class linkResolver(object):
         elif cst.tag == 6:
             # static method
             if cst.isExternal:
-                return self._resolveExtStaticMethod(cap_file.Import.packages[cst.static_method_ref.package_token].aid,
+                return self._resolveExtStaticMethod(a2d(cap_file.Import.packages[cst.static_method_ref.package_token].aid),
                                                     cst.static_method_ref.class_token,
                                                     cst.static_method_ref.token)
             else:

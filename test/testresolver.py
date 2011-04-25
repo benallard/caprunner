@@ -25,8 +25,7 @@ class TestResolver(unittest.TestCase):
 
     def test_resolveIndex(self):
         rslvr = linkResolver()
-        rslvr.linkToCAP(javatest_cap)
-        mtd = rslvr.resolveIndex(5)
+        mtd = rslvr.resolveIndex(5, javatest_cap)
         try:
             mtd(0x9000)
             self.fail()

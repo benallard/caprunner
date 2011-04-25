@@ -119,7 +119,6 @@ class JavaCardVM(object):
         """
         assert self.cap_file == None, "Cannot load two CAPFiles"
         self.cap_file = cap_file
-        self.resolver.linkToCAP(cap_file)
 
     @property
     def frame(self):
@@ -294,7 +293,7 @@ class JavaCardVM(object):
         self.frame.push(short)
 
     def invokestatic(self, index):
-        method = self.resolver.resolveIndex(index)
+        method = self.resolver.resolveIndex(index, self.cap_file)
         self._invoke(method)
 
     def nop(self):
