@@ -155,7 +155,6 @@ class JavaCardVM(object):
         to fill it with informations from the rest of te CAPFile, then push
         a new frame on top of the frame stack and we're done
         """
-        method.feedFromCAP(self.cap_file)
         # ouch, what happend to the int parameters ?
         params = reversed([self.frame.pop() for i in xrange(method.nargs)])
         self.frames.push(JavaCardFrame(params, method.methodinfo.bytecodes))

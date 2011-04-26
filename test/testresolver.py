@@ -4,7 +4,7 @@ import unittest
 from testconfig import *
 
 from resolver import linkResolver
-from pythoncard.framework import ISOException
+from pythoncard.framework import ISOException, Applet
 
 class TestResolver(unittest.TestCase):
     
@@ -32,9 +32,12 @@ class TestResolver(unittest.TestCase):
         except ISOException, ioe:
             self.assertEquals(0x9000, ioe.getReason())
 
-    def test_resolveClass(self):
+        cls = rslvr.resolveIndex(2, javatest_cap)
+        self.assertTrue(issubclass(cls.cls, Applet))
+
+    def test__resolveExtClass(self):
         rslvr = linkResolver()
-        self.assertEquals(ISOException, rslvr.resolveClass('\xa0\x00\x00\x00b\x01\x01', 7))
+        self.assertEquals(ISOException, rslvr._resolveExtClass('\xa0\x00\x00\x00b\x01\x01', 7).cls)
 
     def test_addExportFile(self):
         rslvr = linkResolver()

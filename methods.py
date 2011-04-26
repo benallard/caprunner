@@ -17,15 +17,16 @@ class JavaCardStaticMethod(object):
     This class would embed the parameters, the bytecode and the exception 
     handlers (more might come later)
     """
-    def __init__(self, offset):
+    def __init__(self, offset, cap_file):
         """ 
         This object is first created from information of the export_file and 
         the ConstantPool. Those only provide the offset in the Method 
         Component in case of internal references.
         """
         self.offset = offset
+        self._feedFromCAP(cap_file)
 
-    def feedFromCAP(self, cap_file):
+    def _feedFromCAP(self, cap_file):
         """ 
         We init it from components of the cap_file
         """

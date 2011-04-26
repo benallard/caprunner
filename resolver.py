@@ -4,6 +4,7 @@ from utils import a2d
 
 from refcollection import refCollection
 from methods import PythonStaticMethod, JavaCardStaticMethod
+from classes import PythonClass, JavaCardClass
 
 def cacheresult(f):
     """
@@ -63,14 +64,29 @@ class linkResolver(object):
         """ return if a python package corresponding to the aid is known """
         return aid in self.refs
 
-    def resolveClass(self, aid, token):
+    def resolveClass(self, cst, cap_file):
+        if cst.isExternal:
+            return self._resolveExtClass(a2d(cap_file.Import.packages[cst.class_ref.package_token].aid), cst.class_ref.class_token)
+        else:
+            # internal class ...
+            return JavaCardClass(cst.class_ref, cap_file, self)
+
+    def _resolveExtClass(self, aid, token):
         """ return a python class corresponding to the token """
         pkg = self.refs[aid]
         clsname = pkg.getClassName(token)
         # get the module
         mod = self._getModule(pkg.name.replace('/', '.'))
         # get the class
-        return getattr(mod, clsname)
+        return PythonClass(getattr(mod, clsname))
+
+    def resolveStaticMethod(self, cst, cap_file):
+        if cst.isExternal:
+            return self._resolveExtStaticMethod(a2d(cap_file.Import.packages[cst.static_method_ref.package_token].aid),
+                                                cst.static_method_ref.class_token,
+                                                cst.static_method_ref.token)
+        else:
+            return JavaCardStaticMethod(cst.static_method_ref.offset, cap_file)
 
     def _resolveExtStaticMethod(self, aid, cls, token):
         """ 
@@ -95,11 +111,7 @@ class linkResolver(object):
         """
         cst = cap_file.ConstantPool.constant_pool[index]
         if cst.tag == 1:
-            if cst.isExternal:
-                return self.resolveClass(a2d(cap_file.Import.packages[cst.static_method_ref.package_token].aid), cst.class_token)
-            else:
-                # internal class ...
-                pass
+            return self.resolveClass(cst, cap_file)
         elif cst.tag == 2:
             pass # instance fields
         elif cst.tag == 3:
@@ -110,12 +122,7 @@ class linkResolver(object):
             pass # ststic field
         elif cst.tag == 6:
             # static method
-            if cst.isExternal:
-                return self._resolveExtStaticMethod(a2d(cap_file.Import.packages[cst.static_method_ref.package_token].aid),
-                                                    cst.static_method_ref.class_token,
-                                                    cst.static_method_ref.token)
-            else:
-                return JavaCardStaticMethod(cst.static_method_ref.offset)
+            return self.resolveStaticMethod(cst, cap_file)
         else:
             assert False, cst.tag + "Is of wrong type"
 

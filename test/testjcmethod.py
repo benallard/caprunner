@@ -7,5 +7,5 @@ from methods import JavaCardStaticMethod
 class TestJavaCardMethod(unittest.TestCase):
     
     def testInit(self):
-        jcmtd = JavaCardStaticMethod(151)
+        jcmtd = JavaCardStaticMethod(151, javatest_cap)
         
