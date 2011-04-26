@@ -148,6 +148,10 @@ class refCollection(object):
     def addVirtualMethod(self, clstoken, token, name, type):
         self.classes[clstoken].addVirtualMethod(token, name, type)
 
+    def getVirtualMethod(self, clstoken, token):
+        cls = self.classes[clstoken]
+        return cls.name, cls.getVirtualMethod(token)
+
     def addInterfaceMethod(self, clstoken, token, name, type):
         self.classes[clstoken].addInterfaceMethod(token, name, type)
 

@@ -5,13 +5,13 @@ from testconfig import *
 from resolver import linkResolver
 from interpreter import ExecutionDone, JavaCardVM, JavaCardFrame, JavaCardLocals, JavaCardStack, DummyFrame
 
-from pythoncard.framework import ISOException
+from pythoncard.framework import ISOException, Applet
 
 class TestDummyFrame(JavaCardFrame, DummyFrame):
     def __init__(self, params):
         JavaCardFrame.__init__(self, params, [])
-
-    
+    push = JavaCardFrame.push
+    pop = JavaCardFrame.pop
 
 class TestInterpreter(unittest.TestCase):
 
@@ -40,7 +40,7 @@ class TestInterpreter(unittest.TestCase):
     def test_gcdRecursif(self):
         intr = JavaCardVM(linkResolver())
         intr.load(javatest_cap)
-        intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 29, 28, 29, 73, 141, 0, 7, 120]))
+        intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 29, 28, 29, 73, 141, 0, 8, 120]))
         self._run(intr)
         self.assertEquals(14, intr.getRetValue())
         
@@ -71,7 +71,18 @@ class TestInterpreter(unittest.TestCase):
         self._run(intr) # dig into
         intr.invokevirtual(4)
         intr.returnn()
-        
+
+    def test_callVirtualMethod(self):
+        intr = JavaCardVM(linkResolver())
+        intr.load(javatest_cap)
+        intr.frames.push(TestDummyFrame([None]))
+        intr.new(2) # 1
+        intr.dup() # 2
+        intr.invokespecial(3) # 1
+        self._run(intr)
+        self.assertTrue(isinstance(intr.frame.stack[-1], Applet))
+        intr.invokevirtual(6) # 0
+        self._run(intr)
 
 class TestLocals(unittest.TestCase):
     def test_init(self):

@@ -3,7 +3,7 @@ import json
 from utils import a2d
 
 from refcollection import refCollection
-from methods import PythonStaticMethod, JavaCardStaticMethod
+from methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
 from classes import PythonClass, JavaCardClass
 
 def cacheresult(f):
@@ -66,7 +66,9 @@ class linkResolver(object):
 
     def resolveClass(self, cst, cap_file):
         if cst.isExternal:
-            return self._resolveExtClass(a2d(cap_file.Import.packages[cst.class_ref.package_token].aid), cst.class_ref.class_token)
+            pkg = cap_file.Import.packages[cst.class_ref.package_token]
+            return self._resolveExtClass(a2d(pkg.aid),
+                                         cst.class_ref.class_token)
         else:
             # internal class ...
             return JavaCardClass(cst.class_ref, cap_file, self)
@@ -82,9 +84,11 @@ class linkResolver(object):
 
     def resolveStaticMethod(self, cst, cap_file):
         if cst.isExternal:
-            return self._resolveExtStaticMethod(a2d(cap_file.Import.packages[cst.static_method_ref.package_token].aid),
-                                                cst.static_method_ref.class_token,
-                                                cst.static_method_ref.token)
+            pkg = cap_file.Import.packages[cst.static_method_ref.package_token]
+            return self._resolveExtStaticMethod(
+                a2d(pkg.aid),
+                cst.static_method_ref.class_token,
+                cst.static_method_ref.token)
         else:
             return JavaCardStaticMethod(cst.static_method_ref.offset, cap_file)
 
@@ -106,29 +110,40 @@ class linkResolver(object):
         method = getattr(cls, mtdname)
         return PythonStaticMethod(mtdname, mtd['type'], method)
 
+    def resolveVirtualMethod(self, cst, cap_file):
+        if cst.isExternal:
+            pkg = cap_file.Import.packages[cst.class_ref.package_token]
+            return self._resolveExtVirtualMethod(a2d(pkg.aid),
+                                                 cst.class_ref.class_token,
+                                                 cst.token)
+        else:
+            # it is fully already resolved from the other side, we just need
+            # the token
+            return JavaCardVirtualMethod(cst.class_ref, cst.token, cap_file)
+
+    def _resolveExtVirtualMethod(self, aid, cls, token):
+        pkg = self.refs[aid]
+        (clsname, mtd) = pkg.getVirtualMethod(cls, token)
+        return PythonVirtualMethod(mtd['name'], mtd['type'])
+
     @cacheresult
     def resolveIndex(self, index, cap_file):
         """
-        Reslove an item in the ConstantPool
+        Resolve an item in the ConstantPool
         """
         cst = cap_file.ConstantPool.constant_pool[index]
-        if cst.tag == 1:
+        if cst.tag == 1: # class
             return self.resolveClass(cst, cap_file)
-        elif cst.tag == 2:
-            pass # instance fields
-        elif cst.tag == 3:
-            pass # virtual method
+        elif cst.tag == 2: # instance fields
+            return cst.token
+        elif cst.tag == 3: # virtual method
+            return self.resolveVirtualMethod(cst, cap_file)
         elif cst.tag == 4:
             pass # super method
         elif cst.tag == 5:
-            pass # ststic field
-        elif cst.tag == 6:
-            # static method
+            pass # static field
+        elif cst.tag == 6: # static method
             return self.resolveStaticMethod(cst, cap_file)
         else:
             assert False, cst.tag + "Is of wrong type"
-
-    def resolvefield(self, aid, cls, token):
-        """ return a python field corresponding to the tokens """
-        pass
 

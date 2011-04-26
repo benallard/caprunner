@@ -1,4 +1,35 @@
-from bytecode import disassemble
+from bytecode import disassemble # for verbosity
+
+def extractTypes(string):
+    res = []
+    strtype = ''
+    while len(string) > 0:
+        if string[0] == 'B':
+            strtype += 'boolean'
+            size = 1
+        elif string[0] == 'I':
+            strtype += 'integer'
+            size = 1
+        elif string[0] == 'S':
+            strtype += 'short'
+            size = 1
+        elif string[0] == 'Z':
+            string = string[1:]
+            end = string.find(';')
+            strtype += 'ref of '+string[:end - 1]
+            size = end
+        elif string[0] == 'V':
+            strtype += 'void'
+            size = 1
+        elif string[0] == '[':
+            strtype = 'array of '
+            string = string[1:]
+            continue
+        else:
+            assert False, string[0]+' not recognized'
+        res.append(strtype)
+        string = string[size:]
+    return res
 
 class ExceptionHandler(object):
     def __init__(self, handler_info):
@@ -73,42 +104,11 @@ class PythonStaticMethod(object):
         self.method = method
         self._analyseType(typ)
 
-    def _getTypes(self, string):
-        res = []
-        strtype = ''
-        while len(string) > 0:
-            if string[0] == 'B':
-                strtype += 'boolean'
-                size = 1
-            elif string[0] == 'I':
-                strtype += 'integer'
-                size = 1
-            elif string[0] == 'S':
-                strtype += 'short'
-                size = 1
-            elif string[0] == 'Z':
-                string = string[1:]
-                end = string.find(';')
-                strtype += 'ref of '+string[:end - 1]
-                size = end
-            elif string[0] == 'V':
-                strtype += 'void'
-                size = 1
-            elif string[0] == '[':
-                strtype = 'array of '
-                string = string[1:]
-                continue
-            else:
-                assert False, string[0]+' not recognized'
-            res.append(strtype)
-            string = string[size:]
-        return res
-
     def _analyseType(self, string):
         assert string[0] == '('
         # First analyse the params
-        self.params = self._getTypes(string[1:string.find(')')])
-        self.retType = self._getTypes(string[string.find(')') + 1:])[0]
+        self.params = extractTypes(string[1:string.find(')')])
+        self.retType = extractTypes(string[string.find(')') + 1:])[0]
 
     def __call__(self, *params):
         print params
@@ -118,3 +118,50 @@ class PythonStaticMethod(object):
         return "<PythonStaticMethod %d args, %s, %s>" % (
            len(self.params), self.retType, self.method.__name__
            )
+
+class JavaCardVirtualMethod(object):
+    def __init__(self, clsoffset, token, cap_file):
+        self.token = token
+        self._feedFromCAP(clsoffset, cap_file)
+        self.offset = None
+
+    def _feedFromCAP(self, clsoffset, cap_file):
+        """ actually, we are only interested in the nember of parameters """
+        class_info = cap_file.Class.classes[clsoffset]
+        cdi = None
+        for cls in cap_file.Descriptor.classes:
+            if cls.this_class_ref.class_ref == clsoffset:
+                cdi = cls
+                for mtd in cdi.methods:
+                    if mtd.token == self.token:
+                        self.offset = mtd.method_offset
+                        break
+                break
+        assert cdi
+        assert self.offset
+        self.method_info = cap_file.Method.methods[self.offset]
+        self.nargs = self.method_info.method_info.nargs
+
+class PythonVirtualMethod(object):
+    """
+    This object has to be initialised twice, once with the infos, and a second
+    time with the actual object refereference
+    """
+    def __init__(self, name, typ):
+        self.name = name
+        self._analyseType(typ)
+        self.method = None
+
+    def _analyseType(self, string):
+        assert string[0] == '('
+        # First analyse the params
+        self.params = extractTypes(string[1:string.find(')')])
+        self.retType = extractTypes(string[string.find(')') + 1:])[0]
+
+    def bindToObject(self, obj):
+        self.method = getattr(obj, self.name)
+
+    def __call__(self, *params):
+        assert self.method
+        return self.method(*params)
+

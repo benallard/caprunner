@@ -10,7 +10,9 @@ public class Test extends Applet{
     }
 
     public void process(APDU apdu) throws ISOException{
+	if (false) testCallAnotherFunction();
 	ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
+	testCallAnotherFunction();
     }
 
     public byte testfinally(byte a){

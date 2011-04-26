@@ -3,30 +3,14 @@ class JavaCardField(object):
     This is a field of a class
     It is important that this field be cached in order to keep its value
     """
-    def __init__(self, clsoffset, token, cap_file):
-        self.cloffset = clsoffset
-        self.token = token
-        self._feedFromCAP(cap_file)
-        self.objref = None
+    def __init__(self, field_descriptor_info):
+        self.fdi = field_descriptor_info
+        self._val = None
 
-    def _feedFromCAP(self, cap_file):
-        # First I want to know the class
-        self.cls = cap_file.Class.classes[self.cls_ofset]
-        for cls in cap_file.Descriptor.classes:
-            for fld in cls.fields:
-                if fld.offset
-        type = cap_file.Descriptor
-        self._val = {'': 0}[type]
-
-    def bindTo(self, objectref):
-        self.objref = objectref
-
-    def set(self, val):
-        assert self.objref, "Field not bound to an object"
+    def setValue(self, val):
         self._val = val
         
-    def get(self):
-        assert self.objref, "Field not bound to an object"
+    def getValue(self):
         return self._val
 
 class PythonField(object):
@@ -38,8 +22,8 @@ class PythonField(object):
         self.obj = obj
         self.name = name
 
-    def set(self, val):
+    def setValue(self, val):
         setattr(self.obj, self.name, val)
 
-    def get(self):
+    def getValue(self):
         return getattr(self.obj, self.name)

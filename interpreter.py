@@ -2,7 +2,7 @@ import python.lang
 
 import bytecode, utils
 
-from methods import PythonStaticMethod, JavaCardStaticMethod
+from methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod
 
 class JavaCardStack(list):
     """
@@ -74,7 +74,10 @@ class JavaCardFrame(object):
         return self.locals.sget(index)
 
     def __str__(self):
-        return "<JavaCardFrame: ip: %d, bytecodes: %s>" % (self.ip, self.bytecodes)
+        return "<JavaCardFrame: ip: %d, locals: %s, bytecodes: %s>" % (
+            self.ip,
+            self.locals.asArray(),
+            self.bytecodes)
 
 class ExecutionDone(Exception):
     pass
@@ -133,8 +136,9 @@ class JavaCardVM(object):
         # get the function
         print self.frame
         f = getattr(self, bytecode.opname[code[0]])
-        print bytecode.opname[code[0]]
-        print len(self.frames)
+        #print bytecode.opname[code[0]]
+        #print len(self.frames)
+        print self.frame.stack
         # get the params
         size, params = bytecode.getParams(code)
         # execute the function
@@ -162,8 +166,8 @@ class JavaCardVM(object):
         a new frame on top of the frame stack and we're done
         """
         # ouch, what happend to the int parameters ?
-        params = reversed([self.frame.pop() for i in xrange(method.nargs)])
-        self.frames.push(JavaCardFrame(params, method.methodinfo.bytecodes))
+        params = self._popparams(method.nargs)
+        self.frames.push(JavaCardFrame(params.asArray(), method.methodinfo.bytecodes))
 
     def _popparams(self, paramslen):
         """
@@ -324,17 +328,40 @@ class JavaCardVM(object):
         elif isinstance(method, JavaCardStaticMethod):
             self._invokespecialjava(method)
 
+    def _invokevirtualnative(self, method):
+        params = self._popparams(len(method.params))
+        objref = self.frame.pop()
+        method.bindToObject(objref)
+        ret = method(*params.asArray())
+        self._pushretval(ret, method.retType)
+
+    def _invokevirtualjava(self, method):
+        # we need to know how many parameters we need to pop before getting objref
+        params = self._popparams(method.nargs)
+        #objref = params.aget(0)
+        #mtd = objref.methods[method.token]
+        self.frames.push(JavaCardFrame(params.asArray(), method.method_info.bytecodes))
+
     def invokevirtual(self, index):
         method = self.resolver.resolveIndex(index, self.cap_file)
         if isinstance(method, PythonVirtualMethod):
             self._invokevirtualnative(method)
-        elif isinstance(method, JavaCardVirtualMethod):
+        else:
             self._invokevirtualjava(method)
 
     def putfield_s(self, index):
         value = self.frame.pop()
         objref = self.frame.pop()
-        objref.setFieldAt(index, value)
+        token = self.resolver.resolveIndex(index, self.cap_file)
+        objref.setFieldAt(token, value)
+
+    def getfield_s_this(self, index):
+        objref = self.frame.aget(0)
+        token = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(token))
 
     def returnn(self):
         self.frames.pop()
+
+    def pop(self):
+        self.frame.pop()
