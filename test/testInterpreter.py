@@ -7,23 +7,13 @@ from interpreter import ExecutionDone, JavaCardVM, JavaCardFrame, JavaCardLocals
 
 from pythoncard.framework import ISOException
 
-class TestDummyFrame(DummyFrame):
+class TestDummyFrame(JavaCardFrame, DummyFrame):
     def __init__(self, params):
-        DummyFrame.__init__(self)
-        self.stack = JavaCardStack()
-        self.locals = JavaCardLocals(*params)
-        
-    def push(self, val):
-        self.stack.push(val)
+        JavaCardFrame.__init__(self, params, [])
 
-    def pop(self):
-        return self.stack.pop()
+    
 
 class TestInterpreter(unittest.TestCase):
-
-    def _func(self, intr, params, bytecodes):
-        intr.frames.append(JavaCardFrame(params, bytecodes))
-        
 
     def _run(self, intr):
         try:
@@ -31,10 +21,6 @@ class TestInterpreter(unittest.TestCase):
                 intr.step()
         except ExecutionDone:
             pass
-
-    def _runAt(self, index, intr):
-        
-        self._run(intr)
 
     def testEasy(self):
         intr = JavaCardVM(None)
