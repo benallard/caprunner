@@ -3,9 +3,21 @@ import unittest
 from testconfig import *
 
 from resolver import linkResolver
-from interpreter import ExecutionDone, JavaCardVM, JavaCardFrame, JavaCardLocals, JavaCardStack
+from interpreter import ExecutionDone, JavaCardVM, JavaCardFrame, JavaCardLocals, JavaCardStack, DummyFrame
 
 from pythoncard.framework import ISOException
+
+class TestDummyFrame(DummyFrame):
+    def __init__(self, params):
+        DummyFrame.__init__(self)
+        self.stack = JavaCardStack()
+        self.locals = JavaCardLocals(*params)
+        
+    def push(self, val):
+        self.stack.push(val)
+
+    def pop(self):
+        return self.stack.pop()
 
 class TestInterpreter(unittest.TestCase):
 
@@ -20,9 +32,13 @@ class TestInterpreter(unittest.TestCase):
         except ExecutionDone:
             pass
 
+    def _runAt(self, index, intr):
+        
+        self._run(intr)
+
     def testEasy(self):
         intr = JavaCardVM(None)
-        intr.frames.push(JavaCardFrame([None, 4],[]))
+        intr.frames.push(TestDummyFrame([None, 4]))
         intr.sload_1()
         intr.bspush(58)
         intr.sadd()
@@ -58,6 +74,18 @@ class TestInterpreter(unittest.TestCase):
             self.fail()
         except ISOException, ioe:
             self.assertEquals(0x6A81, ioe.getReason())
+
+    def test_objectCreation(self):
+        intr = JavaCardVM(linkResolver())
+        intr.load(javatest_cap)
+        intr.frames.push(TestDummyFrame([None]))
+        intr.new(2)
+        intr.dup()
+        intr.invokespecial(3)
+        self._run(intr) # dig into
+        intr.invokevirtual(4)
+        intr.returnn()
+        
 
 class TestLocals(unittest.TestCase):
     def test_init(self):

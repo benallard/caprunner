@@ -1,3 +1,15 @@
+class JavaCardClassType(object):
+    """
+    utilities functions for a Javacard class
+    """
+    fields = {}
+    
+    def setFieldAt(self, index, value):
+        self.fields[index] = value
+        
+    def getFieldAt(self, index):
+        return self.fields[index]
+
 class JavaCardClass(object):
     """
     This represent a JavaCard class as internal to the CAP file.
@@ -20,7 +32,7 @@ class JavaCardClass(object):
         self.super = resolver.resolveClass(sup_ref, cap_file)
 
         # create our class type
-        self.cls = type("randomname", (self.super.cls,), {})
+        self.cls = type("randomname", (self.super.cls,JavaCardClassType,), {})
 
 class PythonClass(object):
     """

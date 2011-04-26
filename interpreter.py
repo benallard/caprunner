@@ -73,6 +73,9 @@ class JavaCardFrame(object):
     def sget(self, index):
         return self.locals.sget(index)
 
+    def __str__(self):
+        return "<JavaCardFrame: ip: %d, bytecodes: %s>" % (self.ip, self.bytecodes)
+
 class ExecutionDone(Exception):
     pass
 
@@ -128,9 +131,12 @@ class JavaCardVM(object):
     def step(self):
         code = self.frame.bytecodes[self.frame.ip:]
         # get the function
+        print self.frame
         f = getattr(self, bytecode.opname[code[0]])
+        print bytecode.opname[code[0]]
+        print len(self.frames)
         # get the params
-        len, params = bytecode.getParams(code)
+        size, params = bytecode.getParams(code)
         # execute the function
         oldframe = self.frame
         inc = f(*params)
@@ -140,7 +146,7 @@ class JavaCardVM(object):
         # increment IP
         if inc is None:
             # regular function without branching
-            inc = len
+            inc = size
         oldframe.ip += inc
 
     def getRetValue(self):
@@ -159,7 +165,7 @@ class JavaCardVM(object):
         params = reversed([self.frame.pop() for i in xrange(method.nargs)])
         self.frames.push(JavaCardFrame(params, method.methodinfo.bytecodes))
 
-    def _popparams(self, paramstype):
+    def _popparams(self, paramslen):
         """
         Local variables of type int are represented in two 16-bit cells, while 
         all others are represented in one 16-bit cell. If an entry in the local 
@@ -168,7 +174,7 @@ class JavaCardVM(object):
         number of cells required for storage is two if one or more of the local 
         variables is of type int.
         """
-        return JavaCardLocals(*reversed([self.frame.pop() for i in xrange(len(paramstype))]))
+        return JavaCardLocals(*reversed([self.frame.pop() for i in xrange(paramslen)]))
 
     def _pushretval(self, value, rettype):
         if rettype == 'integer':
@@ -179,19 +185,11 @@ class JavaCardVM(object):
     def _invokestaticnative(self, method):
         """ method is of type PythonMethod """
         # pop the params
-        params = self._popparams(method.params)
+        params = self._popparams(len(method.params))
         # call the method
         ret = method(*params.asArray())
         # push the returnvalue
-        self._pushretval(ret, mtdtype.ret)
-
-    def _invoke(self, method):
-        if isinstance(method, PythonStaticMethod):
-            self._invokestaticnative(method)
-        elif isinstance(method, JavaCardStaticMethod):
-            self._invokestaticjava(method)
-        else:
-            assert False, str(type(method)) + "not of known type"
+        self._pushretval(ret, method.retType)
 
     def aload_0(self):
         self.aload(0)
@@ -293,7 +291,50 @@ class JavaCardVM(object):
 
     def invokestatic(self, index):
         method = self.resolver.resolveIndex(index, self.cap_file)
-        self._invoke(method)
+        if isinstance(method, PythonStaticMethod):
+            self._invokestaticnative(method)
+        elif isinstance(method, JavaCardStaticMethod):
+            self._invokestaticjava(method)
 
     def nop(self):
         pass
+
+    def new(self, index):
+        cls = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(object.__new__(cls.cls))
+
+    def dup(self):
+        self.frame.push(self.frame.stack[-1])
+
+    def _invokespecialnative(self, method):
+        """ looks like we have to add one paraneter to the list here ... """        
+        params = self._popparams(len(method.params) + 1)
+        # call the method
+        ret = method(*params.asArray())
+        # push the returnvalue
+        self._pushretval(ret, method.retType)
+
+    _invokespecialjava = _invokestaticjava
+
+    def invokespecial(self, index):
+        method = self.resolver.resolveIndex(index, self.cap_file)
+        print method
+        if isinstance(method, PythonStaticMethod):
+            self._invokespecialnative(method)
+        elif isinstance(method, JavaCardStaticMethod):
+            self._invokespecialjava(method)
+
+    def invokevirtual(self, index):
+        method = self.resolver.resolveIndex(index, self.cap_file)
+        if isinstance(method, PythonVirtualMethod):
+            self._invokevirtualnative(method)
+        elif isinstance(method, JavaCardVirtualMethod):
+            self._invokevirtualjava(method)
+
+    def putfield_s(self, index):
+        value = self.frame.pop()
+        objref = self.frame.pop()
+        objref.setFieldAt(index, value)
+
+    def returnn(self):
+        self.frames.pop()

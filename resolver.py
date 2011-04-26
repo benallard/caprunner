@@ -101,6 +101,8 @@ class linkResolver(object):
         # get the class
         cls = getattr(mod, clsname)
         # get the method
+        if '<init>' in mtdname:
+            mtdname = '__init__' + mtdname[6:]
         method = getattr(cls, mtdname)
         return PythonStaticMethod(mtdname, mtd['type'], method)
 

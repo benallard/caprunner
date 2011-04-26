@@ -143,7 +143,8 @@ opnamepar = {
     130: ("putstatic_i", 2, (2,)),
     129: ("putstatic_s", 2, (2,)),
     114: ("ret", 1, (1,)),
-    122: ("return", 0, ()),
+    # typo is intentionnal, to avoid conflict with reserved word
+    122: ("returnn", 0, ()),
     91: ("s2b", 0, ()),
     92: ("s2i", 0, ()),
     65: ("sadd", 0, ()),

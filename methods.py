@@ -1,3 +1,5 @@
+from bytecode import disassemble
+
 class ExceptionHandler(object):
     def __init__(self, handler_info):
         """ handler is the type found in the cap_file """
@@ -52,6 +54,13 @@ class JavaCardStaticMethod(object):
         # I first want the number of arguments
         self.nargs = self.methodinfo.method_info.nargs
 
+    def __str__(self):
+       return "<JavaCardStaticMethod %d args, %d excpt handlers, %s>" % (
+           self.nargs,
+           len(self.excpt_handlers),
+           ', '.join(disassemble(self.methodinfo.bytecodes)),
+           )
+
 class PythonStaticMethod(object):
     """
     This is the Python version of the JavaCardMethod
@@ -102,4 +111,10 @@ class PythonStaticMethod(object):
         self.retType = self._getTypes(string[string.find(')') + 1:])[0]
 
     def __call__(self, *params):
+        print params
         return self.method(*params)
+
+    def __str__(self):
+        return "<PythonStaticMethod %d args, %s, %s>" % (
+           len(self.params), self.retType, self.method.__name__
+           )
