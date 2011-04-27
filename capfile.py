@@ -732,7 +732,8 @@ class Descriptor(Component):
                 self.exception_handler_count = u2(data[8:10])
                 self.exception_handler_index = u2(data[10:12])
             def __str__(self):
-                return "Method: [%d:+%d],type: @%d excpt: %d @%d" % (
+                return "Method: %d [%d:+%d],type: @%d excpt: %d @%d" % (
+                    self.token,
                     self.method_offset,
                     self.bytecode_count,
                     self.type_offset,

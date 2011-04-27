@@ -90,7 +90,7 @@ class linkResolver(object):
                 cst.static_method_ref.class_token,
                 cst.static_method_ref.token)
         else:
-            return JavaCardStaticMethod(cst.static_method_ref.offset, cap_file)
+            return JavaCardStaticMethod(cst.static_method_ref.offset, cap_file, self)
 
     def _resolveExtStaticMethod(self, aid, cls, token):
         """ 
@@ -119,7 +119,7 @@ class linkResolver(object):
         else:
             # it is fully already resolved from the other side, we just need
             # the token
-            return JavaCardVirtualMethod(cst.class_ref, cst.token, cap_file)
+            return JavaCardVirtualMethod(cst.class_ref, cst.token, cap_file, self)
 
     def _resolveExtVirtualMethod(self, aid, cls, token):
         pkg = self.refs[aid]

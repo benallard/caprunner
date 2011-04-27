@@ -13,6 +13,7 @@ public class Test extends Applet{
 	if (false) testCallAnotherFunction();
 	ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
 	testCallAnotherFunction();
+	testExcpts((short)6);
     }
 
     public byte testfinally(byte a){
@@ -76,6 +77,49 @@ public class Test extends Applet{
 
     public static void testStatic(){
 	short a = 3;
+    }
+
+    public short testExcpts(short param){
+	// Return value should be equal to the param
+	try{
+	    if (param == 1){
+		APDUException.throwIt((short)0);
+	    }
+	}
+	catch (APDUException ae){
+	    return 1;
+	}
+	try{
+	    try{
+		if (param == 2){
+		    PINException.throwIt((short)0);
+		}
+	    }
+	    catch (PINException pe){
+		SystemException.throwIt((short)0);
+	    }
+	}
+	catch (SecurityException se){
+	    return 0xff;
+	}
+	finally {
+	    if (param == 2) return 2;
+	}
+	if (param < 3) return 0xff;
+	try{
+	    try{
+		if (param == 3){
+		    TransactionException.throwIt((short)0);
+		}
+	    }
+	    catch (SystemException se){
+		return 0xff;
+	    }
+	}
+	catch (TransactionException te){
+	    return 3;
+	}
+	return 4;
     }
 
 }

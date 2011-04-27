@@ -54,8 +54,9 @@ class JavaCardFrame(object):
     A frame should also have its own context for security purposes.
     We will forget that for the moment
     """
-    def __init__(self, params, bytecodes):
+    def __init__(self, params, bytecodes, handlers = []):
         self.bytecodes = bytecodes
+        self.handlers = handlers
         self.stack = JavaCardStack()
         self.locals = JavaCardLocals(*params)
         # Current instruction pointer
@@ -134,16 +135,34 @@ class JavaCardVM(object):
     def step(self):
         code = self.frame.bytecodes[self.frame.ip:]
         # get the function
-        #print self.frame
         f = getattr(self, bytecode.opname[code[0]])
-        #print bytecode.opname[code[0]]
-        #print len(self.frames)
-        #print self.frame.stack
         # get the params
         size, params = bytecode.getParams(code)
         # execute the function
-        oldframe = self.frame
-        inc = f(*params)
+        frame = self.frame
+        inc = None
+#        print frame.stack
+#        print frame
+        try:
+            inc = f(*params)
+        except Exception, e:
+            print "caught exception: ", type(e)
+            while not isinstance(self.frame, DummyFrame):
+                for handler in self.frame.handlers:
+                    if self.frame.ip in handler:
+                        if handler.match(e):
+                            print "exception handled: ip = ", handler.handler_offs
+                            self.frame.ip = handler.handler_offs
+                            self.frame.push(e)
+                            return
+                        if handler.last:
+                            break
+                print "%d local handlers exhausted poping frame" % len(self.frame.handlers)
+                self.frames.pop()
+            # not handled, re-raise
+            print "exception not handled, re-raising"
+            raise
+                    
         # if we are done
         if isinstance(self.frame, DummyFrame):
             raise ExecutionDone
@@ -151,7 +170,7 @@ class JavaCardVM(object):
         if inc is None:
             # regular function without branching
             inc = size
-        oldframe.ip += inc
+        frame.ip += inc
 
     def getRetValue(self):
         """ return the result of the finished execution """
@@ -167,7 +186,7 @@ class JavaCardVM(object):
         """
         # ouch, what happend to the int parameters ?
         params = self._popparams(method.nargs)
-        self.frames.push(JavaCardFrame(params.asArray(), method.methodinfo.bytecodes))
+        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
 
     def _popparams(self, paramslen):
         """
@@ -269,11 +288,29 @@ class JavaCardVM(object):
         if val != 0:
             return utils.signed1(branch)
 
-    def if_scmpge(self, branch):
+    def _if_scmpxx(self, branch, op):
         val2 = self.frame.pop()
         val1 = self.frame.pop()
-        if val1 >= val2:
+        if {'eq': val1 == val2,
+            'ne': val1 != val2,
+            'lt': val1 < val2,
+            'le': val1 <= val2,
+            'gt': val1 > val2,
+            'ge': val1 >= val2}[op]:
             return utils.signed1(branch)
+
+    def if_scmpeq(self, branch):
+        return self._if_scmpxx(branch, 'eq')
+    def if_scmpne(self, branch):
+        return self._if_scmpxx(branch, 'ne')
+    def if_scmplt(self, branch):
+        return self._if_scmpxx(branch, 'lt')
+    def if_scmple(self, branch):
+        return self._if_scmpxx(branch, 'le')
+    def if_scmpgt(self, branch):
+        return self._if_scmpxx(branch, 'gt')
+    def if_scmpge(self, branch):
+        return self._if_scmpxx(branch, 'ge')
 
     def goto(self, branch):
         return utils.signed1(branch)
@@ -289,6 +326,18 @@ class JavaCardVM(object):
     def sstore(self, index):
         val = self.frame.pop()
         self.frame.locals[index] = val
+
+    def astore_0(self):
+        self.astore(0)
+    def astore_1(self):
+        self.astore(1)
+    def astore_2(self):
+        self.astore(2)
+    def astore_3(self):
+        self.astore(3)
+    def astore(self, index):
+        objref = self.frame.pop()
+        self.frame.locals[index] = objref
 
     def sspush(self, short):
         self.frame.push(short)
@@ -339,7 +388,7 @@ class JavaCardVM(object):
         params = self._popparams(method.nargs)
         #objref = params.aget(0)
         #mtd = objref.methods[method.token]
-        self.frames.push(JavaCardFrame(params.asArray(), method.method_info.bytecodes))
+        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
 
     def invokevirtual(self, index):
         method = self.resolver.resolveIndex(index, self.cap_file)

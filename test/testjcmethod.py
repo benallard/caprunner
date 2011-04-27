@@ -2,10 +2,13 @@ import unittest
 
 from testconfig import *
 
-from methods import JavaCardStaticMethod
+from resolver import linkResolver
+from methods import JavaCardStaticMethod, JavaCardVirtualMethod
 
 class TestJavaCardMethod(unittest.TestCase):
     
     def testInit(self):
-        jcmtd = JavaCardStaticMethod(155, javatest_cap)
-
+        rslvr = linkResolver()
+        jcmtd = JavaCardStaticMethod(175, javatest_cap, rslvr)
+        jcmtd = JavaCardVirtualMethod(0, 8, javatest_cap, rslvr)
+        self.assertEquals(2, len(jcmtd.excpt_handlers))

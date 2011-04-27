@@ -40,7 +40,7 @@ class TestInterpreter(unittest.TestCase):
     def test_gcdRecursif(self):
         intr = JavaCardVM(linkResolver())
         intr.load(javatest_cap)
-        intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 29, 28, 29, 73, 141, 0, 8, 120]))
+        intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 29, 28, 29, 73, 141, 0, 9, 120]))
         self._run(intr)
         self.assertEquals(14, intr.getRetValue())
         
@@ -76,13 +76,18 @@ class TestInterpreter(unittest.TestCase):
         intr = JavaCardVM(linkResolver())
         intr.load(javatest_cap)
         intr.frames.push(TestDummyFrame([None]))
-        intr.new(2) # 1
-        intr.dup() # 2
-        intr.invokespecial(3) # 1
+        intr.new(2)
+        intr.dup()
+        intr.invokespecial(3)
         self._run(intr)
         self.assertTrue(isinstance(intr.frame.stack[-1], Applet))
-        intr.invokevirtual(6) # 0
-        self._run(intr)
+        for i in xrange(1,4):
+            intr.dup()
+            intr.sspush(i)
+            intr.invokevirtual(7)
+            self._run(intr)
+            self.assertEqual(i, intr.frame.stack[-1])
+            intr.pop()
         intr.returnn()
 
 class TestLocals(unittest.TestCase):

@@ -1,12 +1,12 @@
-// converted by version  [v3.0.1]
-// on Tue Apr 26 23:42:17 CEST 2011
+// converted by version 1.3
+// on Wed Apr 27 17:10:54 CEST 2011
 
 .package javatest {
 	.aid 0xA0:0x0:0x0:0x0:0x18:0xFF:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x1:0x1;
 	.version 1.0;
 
 	.imports {
-		0xA0:0x0:0x0:0x0:0x62:0x1:0x1 1.4;		//javacard/framework
+		0xA0:0x0:0x0:0x0:0x62:0x1:0x1 1.3;		//javacard/framework
 		0xA0:0x0:0x0:0x0:0x62:0x0:0x1 1.0;		//java/lang
 	}
 
@@ -20,7 +20,7 @@
 		// 1
 		staticMethodRef 0.3.0()V;		// javacard/framework/Applet.<init>()V
 		// 2
-		.classRef Test;
+		classRef Test;
 		// 3
 		staticMethodRef Test/<init>()V;
 		// 4
@@ -30,9 +30,29 @@
 		// 6
 		virtualMethodRef Test/testCallAnotherFunction()V;
 		// 7
-		virtualMethodRef Test/accessField(S)S;
+		virtualMethodRef Test/testExcpts(S)S;
 		// 8
+		virtualMethodRef Test/accessField(S)S;
+		// 9
 		staticMethodRef Test/gcdRecursif(SS)S;
+		// 10
+		classRef 0.12;		// javacard/framework/APDUException
+		// 11
+		classRef 0.11;		// javacard/framework/PINException
+		// 12
+		classRef 1.10;		// java/lang/SecurityException
+		// 13
+		classRef 0.13;		// javacard/framework/SystemException
+		// 14
+		classRef 0.14;		// javacard/framework/TransactionException
+		// 15
+		staticMethodRef 0.12.1(S)V;		// javacard/framework/APDUException.throwIt(S)V
+		// 16
+		staticMethodRef 0.11.1(S)V;		// javacard/framework/PINException.throwIt(S)V
+		// 17
+		staticMethodRef 0.13.1(S)V;		// javacard/framework/SystemException.throwIt(S)V
+		// 18
+		staticMethodRef 0.14.1(S)V;		// javacard/framework/TransactionException.throwIt(S)V
 	}
 
 	.class public Test 0 extends 0.3 {		// extends javacard/framework/Applet
@@ -56,6 +76,7 @@
 			accessField(S)S;
 			testLocalVariable()V;
 			testCallAnotherFunction()V;
+			testExcpts(S)S;
 		}
 
 		.packageMethodTable 0 {
@@ -85,7 +106,7 @@
 		}
 
 		.method public process(Ljavacard/framework/APDU;)V 7 {
-			.stack 1;
+			.stack 2;
 			.locals 0;
 
 			.descriptor	Ljavacard/framework/APDU;	0.10;
@@ -94,6 +115,10 @@
 					invokestatic 5;		// javacard/framework/ISOException.throwIt(S)V
 					aload_0;
 					invokevirtual 6;		// testCallAnotherFunction()V
+					aload_0;
+					bspush 6;
+					invokevirtual 7;		// testExcpts(S)S
+					pop;
 					return;
 		}
 
@@ -193,7 +218,7 @@
 
 				L0:	aload_0;
 					getfield_s_this 0;		// short javatest/Test.blah
-					invokevirtual 7;		// accessField(S)S
+					invokevirtual 8;		// accessField(S)S
 					pop;
 					return;
 		}
@@ -229,7 +254,7 @@
 					sload_0;
 					sload_1;
 					srem;
-					invokestatic 8;		// javatest/Test.gcdRecursif(SS)S
+					invokestatic 9;		// javatest/Test.gcdRecursif(SS)S
 					sreturn;
 		}
 
@@ -240,6 +265,84 @@
 				L0:	sconst_3;
 					sstore_0;
 					return;
+		}
+
+		.method public testExcpts(S)S 14 {
+			.stack 2;
+			.locals 3;
+
+				L0:	sload_1;
+					sconst_1;
+					if_scmpne L2;
+				L1:	sconst_0;
+					invokestatic 15;		// javacard/framework/APDUException.throwIt(S)V
+				L2:	goto L4;
+				L3:	astore_2;
+					sconst_1;
+					sreturn;
+				L4:	sload_1;
+					sconst_2;
+					if_scmpne L6;
+				L5:	sconst_0;
+					invokestatic 16;		// javacard/framework/PINException.throwIt(S)V
+				L6:	goto L8;
+				L7:	astore_2;
+					sconst_0;
+					invokestatic 17;		// javacard/framework/SystemException.throwIt(S)V
+				L8:	sload_1;
+					sconst_2;
+					if_scmpne L18;
+				L9:	sconst_2;
+					sreturn;
+				L10:	astore_2;
+					sspush 255;
+					sstore_3;
+				L11:	sload_1;
+					sconst_2;
+					if_scmpne L13;
+				L12:	sconst_2;
+					sreturn;
+				L13:	sload_3;
+					sreturn;
+				L14:	astore 4;
+				L15:	sload_1;
+					sconst_2;
+					if_scmpne L17;
+				L16:	sconst_2;
+					sreturn;
+				L17:	aload 4;
+					athrow;
+				L18:	sload_1;
+					sconst_3;
+					if_scmpge L20;
+				L19:	sspush 255;
+					sreturn;
+				L20:	sload_1;
+					sconst_3;
+					if_scmpne L22;
+				L21:	sconst_0;
+					invokestatic 18;		// javacard/framework/TransactionException.throwIt(S)V
+				L22:	goto L25;
+				L23:	astore_2;
+					sspush 255;
+				L24:	sreturn;
+				L25:	goto L27;
+				L26:	astore_2;
+					sconst_3;
+					sreturn;
+				L27:	sconst_4;
+					sreturn;
+			.exceptionTable {
+				// start_block end_block handler_block catch_type_index
+				L0 L2 L3 10;
+				L4 L6 L7 11;
+				L4 L8 L10 12;
+				L4 L8 L14 0;
+				L10 L11 L14 0;
+				L14 L15 L14 0;
+				L20 L22 L23 13;
+				L20 L24 L26 14;
+			}
 		}
 
 	}
