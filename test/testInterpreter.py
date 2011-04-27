@@ -2,8 +2,8 @@ import unittest
 
 from testconfig import *
 
-from resolver import linkResolver
-from interpreter import ExecutionDone, JavaCardVM, JavaCardFrame, JavaCardLocals, JavaCardStack, DummyFrame
+from caprunner.resolver import linkResolver
+from caprunner.interpreter import ExecutionDone, JavaCardVM, JavaCardFrame, JavaCardLocals, JavaCardStack, DummyFrame
 
 from pythoncard.framework import ISOException, Applet
 

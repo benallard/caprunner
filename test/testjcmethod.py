@@ -2,8 +2,8 @@ import unittest
 
 from testconfig import *
 
-from resolver import linkResolver
-from methods import JavaCardStaticMethod, JavaCardVirtualMethod
+from caprunner.resolver import linkResolver
+from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod
 
 class TestJavaCardMethod(unittest.TestCase):
     

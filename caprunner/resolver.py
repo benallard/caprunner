@@ -2,9 +2,9 @@ import json
 
 from utils import a2d
 
-from refcollection import refCollection
-from methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
-from classes import PythonClass, JavaCardClass
+from caprunner.refcollection import refCollection
+from caprunner.interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
+from caprunner.interpreter.classes import PythonClass, JavaCardClass
 
 def cacheresult(f):
     """

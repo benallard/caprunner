@@ -3,7 +3,7 @@ import unittest
 
 from testconfig import *
 
-from resolver import linkResolver
+from caprunner.resolver import linkResolver
 from pythoncard.framework import ISOException, Applet
 
 class TestResolver(unittest.TestCase):

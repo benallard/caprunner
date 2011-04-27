@@ -1,4 +1,4 @@
-from bytecode import disassemble # for verbosity
+from caprunner.bytecode import disassemble # for verbosity
 
 def extractTypes(string):
     res = []

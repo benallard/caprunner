@@ -1,8 +1,8 @@
 import python.lang
 
-import bytecode, utils
+from caprunner import bytecode, utils
 
-from methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod
+from caprunner.interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod
 
 class JavaCardStack(list):
     """
