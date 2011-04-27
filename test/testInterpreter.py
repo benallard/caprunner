@@ -83,6 +83,7 @@ class TestInterpreter(unittest.TestCase):
         self.assertTrue(isinstance(intr.frame.stack[-1], Applet))
         intr.invokevirtual(6) # 0
         self._run(intr)
+        intr.returnn()
 
 class TestLocals(unittest.TestCase):
     def test_init(self):

@@ -33,7 +33,6 @@ class JavaCardClass(object):
         class_info stuff.
         """
         class_info = cap_file.Class.classes[self.offset]
-        print class_info
         self.class_descriptor_info = None
         for cls in cap_file.Descriptor.classes:
             if cls.this_class_ref.class_ref == self.offset:

@@ -111,7 +111,6 @@ class PythonStaticMethod(object):
         self.retType = extractTypes(string[string.find(')') + 1:])[0]
 
     def __call__(self, *params):
-        print params
         return self.method(*params)
 
     def __str__(self):

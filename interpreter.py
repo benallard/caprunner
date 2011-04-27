@@ -134,11 +134,11 @@ class JavaCardVM(object):
     def step(self):
         code = self.frame.bytecodes[self.frame.ip:]
         # get the function
-        print self.frame
+        #print self.frame
         f = getattr(self, bytecode.opname[code[0]])
         #print bytecode.opname[code[0]]
         #print len(self.frames)
-        print self.frame.stack
+        #print self.frame.stack
         # get the params
         size, params = bytecode.getParams(code)
         # execute the function
@@ -322,7 +322,6 @@ class JavaCardVM(object):
 
     def invokespecial(self, index):
         method = self.resolver.resolveIndex(index, self.cap_file)
-        print method
         if isinstance(method, PythonStaticMethod):
             self._invokespecialnative(method)
         elif isinstance(method, JavaCardStaticMethod):
