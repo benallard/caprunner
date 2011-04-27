@@ -45,6 +45,8 @@ class JavaCardClass(object):
 
         # create our class type
         self.cls = type("randomname", (self.super.cls,JavaCardClassType,), {})
+        # We put a ref to ourself in the created class ...
+        self.cls._ref = self
         # I should now add the fields and the methods to the class object
         for fld in self.class_descriptor_info.fields:
             self.cls.fields[fld.token] = JavaCardField(fld)

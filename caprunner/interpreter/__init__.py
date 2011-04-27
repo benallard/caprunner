@@ -87,14 +87,18 @@ class DummyFrame(object):
     """ 
     The bottom of the frame stack. 
     Only used to get the return value.
+    Actually, we need a stack to pass parameters ...
     """
     ip = -1
     def __init__(self):
         self.returnVal = None
+        self.stack = []
     def push(self, val):
-        self.returnVal = val
+        self.stack.append(val)
+    def pop(self):
+        return self.stack.pop()
     def getValue(self):
-        return self.returnVal
+        return self.stack[-1]
 
 class JavaCardFrames(list):
     """

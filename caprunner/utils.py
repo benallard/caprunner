@@ -69,6 +69,14 @@ def a2s(a):
     """
     return ' '.join(["%02X" % i for i in a])
 
+def s2a(s):
+    """
+    string to array
+    >>> s2a('A0 00 00 00 62 00 03')
+    [160, 0, 0, 0, 98, 0, 3]
+    """
+    return [int(ss, 16) for ss in s.split()]
+
 def a2d(array):
     r"""
     array to data
