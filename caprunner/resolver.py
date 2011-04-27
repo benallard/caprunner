@@ -124,7 +124,11 @@ class linkResolver(object):
     def _resolveExtVirtualMethod(self, aid, cls, token):
         pkg = self.refs[aid]
         (clsname, mtd) = pkg.getVirtualMethod(cls, token)
-        return PythonVirtualMethod(mtd['name'], mtd['type'])
+        mtdname = mtd['name']
+        if mtdname[0] == '$':
+            # Call every variations of the function the same way
+            mtdname = mtdname[1:mtdname[1:].find('$') + 1]
+        return PythonVirtualMethod(mtdname, mtd['type'])
 
     @cacheresult
     def resolveIndex(self, index, cap_file):

@@ -205,9 +205,9 @@ class JavaCardVM(object):
 
     def _pushretval(self, value, rettype):
         if rettype == 'integer':
-            self.frame.push_int(val)
+            self.frame.push_int(value)
         elif rettype != 'void':
-            self.frame.push(val)
+            self.frame.push(value)
 
     def _invokestaticnative(self, method):
         """ method is of type PythonMethod """
@@ -239,6 +239,19 @@ class JavaCardVM(object):
         self.sload(3)
     def sload(self, index):
         self.frame.push(self.frame.sget(index))
+
+    def baload(self):
+        index = utils.signed2(self.frame.pop())
+        arrayref = self.frame.pop()
+        if arrayref is None:
+            raise python.lang.NullPointerException()
+        if index < 0:
+            raise python.lang.ArrayIndexOutOfBoundsException()
+        try:
+            value = arrayref[index]
+        except IndexError:
+            raise python.lang.ArrayIndexOutOfBoundsException()
+        self.frame.push(value)
 
     def sconst_m1(self):
         self._sconst(-1)
@@ -360,6 +373,13 @@ class JavaCardVM(object):
         cls = self.resolver.resolveIndex(index, self.cap_file)
         self.frame.push(object.__new__(cls.cls))
 
+    def newarray(self, elemtype):
+        count = utils.signed2(self.frame.pop())
+        if count < 0:
+            raise python.lang.NegativeArraySizeException()
+        array = [{10:False, 11:0, 12:0, 13:0}[elemtype] for i in xrange(count)]
+        self.frame.push(array)
+
     def dup(self):
         self.frame.push(self.frame.stack[-1])
 
@@ -407,10 +427,14 @@ class JavaCardVM(object):
         token = self.resolver.resolveIndex(index, self.cap_file)
         objref.setFieldAt(token, value)
 
+    putfield_a = putfield_s
+
     def getfield_s_this(self, index):
         objref = self.frame.aget(0)
         token = self.resolver.resolveIndex(index, self.cap_file)
         self.frame.push(objref.getFieldAt(token))
+
+    getfield_a_this = getfield_s_this
 
     def returnn(self):
         self.frames.pop()

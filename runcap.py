@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from caprunner import resolver, capfile
-from caprunner.utils import s2a
+from caprunner.utils import s2a, a2s
 from caprunner.interpreter import JavaCardVM, ExecutionDone
 from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod
 
