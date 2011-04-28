@@ -229,7 +229,7 @@ def getParams(data):
     elif code == opcode["slookupswitch"]:
         npairs = params[1]
         for i in xrange(npairs):
-            params.append((u2(data[ofs:]), u2(data[ofs+4:]), ))
+            params.append((u2(data[ofs:]), u2(data[ofs+2:]), ))
             ofs += 4
     elif code == opcode["stableswitch"]:
         lowbytes = params[1]

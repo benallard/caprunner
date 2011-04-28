@@ -128,7 +128,7 @@ class JavaCardVM(object):
         Actually, this should create a `Context` for the given cap_file. Such
         that multiple context could coexist.
         """
-        assert self.cap_file == None, "Cannot load two CAPFiles"
+        assert self.cap_file is None, "Cannot load two CAPFiles, don't know about contexts yet"
         self.cap_file = cap_file
 
     @property
@@ -147,6 +147,7 @@ class JavaCardVM(object):
         inc = None
         print bytecode.opname[code[0]], params
         print frame.stack
+        print frame.ip
         #print frame.locals
         try:
             inc = f(*params)
@@ -287,6 +288,11 @@ class JavaCardVM(object):
         val1 = self.frame.pop()
         self.frame.push(val1 + val2)
 
+    def ssub(self):
+        val2 = self.frame.pop()
+        val1 = self.frame.pop()
+        self.frame.push(utils.signed2((val1 - val2) & 0xffff))
+
     def bspush(self, byte):
         self.frame.push(byte)
 
@@ -303,11 +309,28 @@ class JavaCardVM(object):
         val2 = self.frame.pop()
         val1 = self.frame.pop()
         self.frame.push((val1 * val2) & 0xffff)
-        
-    def ifne(self, branch):
+
+    def _ifxx(self, branch, op):
         val = self.frame.pop()
-        if val != 0:
+        if {'eq': val == 0,
+            'ne': val != 0,
+            'lt': val < 0,
+            'le': val <= 0,
+            'gt': val > 0,
+            'ge': val >= 0}[op]:
             return utils.signed1(branch)
+    def ifeq(self, branch):
+        return self._ifxx(branch, 'eq')
+    def ifne(self, branch):
+        return self._ifxx(branch, 'ne')
+    def iflt(self, branch):
+        return self._ifxx(branch, 'lt')
+    def ifle(self, branch):
+        return self._ifxx(branch, 'le')
+    def ifgt(self, branch):
+        return self._ifxx(branch, 'gt')
+    def ifge(self, branch):
+        return self._ifxx(branch, 'ge')
 
     def _if_scmpxx(self, branch, op):
         val2 = self.frame.pop()
@@ -433,6 +456,11 @@ class JavaCardVM(object):
         else:
             self._invokevirtualjava(method)
 
+    def putfield_b(self, index):
+        value = bool(self.frame.pop())
+        objref = self.frame.pop()
+        token = self.resolver.resolveIndex(index, self.cap_file)
+        objref.setFieldAt(token, value)
     def putfield_s(self, index):
         value = self.frame.pop()
         objref = self.frame.pop()
@@ -442,12 +470,20 @@ class JavaCardVM(object):
     putfield_a = putfield_s
     putfield_b = putfield_s
 
+    def getfield_b_this(self, index):
+        objref = self.frame.aget(0)
+        token = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(bool(objref.getFieldAt(token)))
+
     def getfield_s_this(self, index):
         objref = self.frame.aget(0)
         token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token))
+        self.frame.push(objref.getFieldAt(token) or 0)
 
-    getfield_a_this = getfield_s_this
+    def getfield_a_this(self, index):
+        objref = self.frame.aget(0)
+        token = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(token) or None)
 
     def getfield_a(self, index):
         objref = self.frame.pop()
@@ -459,3 +495,24 @@ class JavaCardVM(object):
 
     def pop(self):
         self.frame.pop()
+
+    def slookupswitch(self, default, npairs, *pairs):
+        key = self.frame.pop()
+        for pair in pairs:
+            match, offset = pair
+            if key == match:
+                return utils.signed2(offset)
+            elif key < match:
+                return utils.signed2(default)
+        return utils.signed2(default)
+
+    def sshr(self):
+        value2 = self.frame.pop()
+        value1 = self.frame.pop()
+        s = value2 & 0x1f
+        self.frame.push(value1 >> s)
+
+    def sand(self):
+        value2 = self.frame.pop()
+        value1 = self.frame.pop()
+        self.frame.push(value1 & value2)

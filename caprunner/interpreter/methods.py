@@ -5,13 +5,16 @@ def extractTypes(string):
     strtype = ''
     while len(string) > 0:
         if string[0] == 'B':
-            strtype += 'boolean'
+            strtype += 'byte'
             size = 1
         elif string[0] == 'I':
             strtype += 'integer'
             size = 1
         elif string[0] == 'S':
             strtype += 'short'
+            size = 1
+        elif string[0] == 'Z':
+            strtype += 'boolean'
             size = 1
         elif string[0] == 'L':
             string = string[1:]
