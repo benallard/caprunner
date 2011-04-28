@@ -13,6 +13,10 @@ class JavaCardField(object):
     def getValue(self):
         return self._val
 
+    def __str__(self):
+        return str(self._val)
+    __repr__ = __str__
+
 class PythonField(object):
     """
     This is a python field.

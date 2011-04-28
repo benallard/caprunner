@@ -21,13 +21,16 @@ def main():
     vm.load(cap_file)
     # create the applet
     for apl in cap_file.Applet.applets:
-        vm.frame.push([0,0,0])
+        vm.frame.push([0,0,11,0,1,2,3,4,5,6,7,8,9,10])
         vm.frame.push(0)
         vm.frame.push(3)
         vm._invokestaticjava(JavaCardStaticMethod(apl.install_method_offset, vm.cap_file, vm.resolver))
         try:
             while True:
                 vm.step()
+        except ISOException, ie:
+            sw = ie.getReason()
+            print "instanciating throwed : %02X %02X" % ((sw & 0xff00) >> 8, sw & 0x00ff)
         except ExecutionDone:
             pass
 

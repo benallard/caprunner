@@ -220,13 +220,15 @@ class ClassTokenref(Classref):
     def __init__(self, data):
         Classref.__init__(self, data)
         self.token = u1(data[2:3])
+    def __str__(self):
+        return "%s, token %d" % (Classref.__str__(self), self.token)
 
 class CPInfoClassTokenref(CPInfo, ClassTokenref):
     def __init__(self, data):
         CPInfo.__init__(self, data)
         ClassTokenref.__init__(self, data[1:])
     def __str__(self):
-        return "<%s %s, token: %d>" % (self.__class__.__name__, Classref.__str__(self), self.token)
+        return "<%s %s>" % (self.__class__.__name__, ClassTokenref.__str__(self))
 
 class CPInfoInstanceFieldref(CPInfoClassTokenref): pass
 class CPInfoVirtualMethodref(CPInfoClassTokenref):
@@ -297,7 +299,8 @@ class ConstantPool(Component):
             shift += CPInfo.size
 
     def __str__(self):
-        return "< ConstantPool: \n\t%s\n>" % '\n\t'.join([str(cp_info) for cp_info in self.constant_pool])
+        return "< ConstantPool: \n\t%s\n>" % '\n\t'.join(
+            ["%d: %s" % (i, str(self.constant_pool[i])) for i in xrange(self.count)])
 
 class TypeDescriptor(object):
     def __init__(self, data):
@@ -712,7 +715,8 @@ class Descriptor(Component):
                 else:
                     self.type = self.reference_type
             def __str__(self):
-                return "Field: %s of type %d" % (self.field, self.type)
+                return "Field: %s%s of type %d" % (
+                    self.isStatic and "STATIC " or "", self.field, self.type)
 
         class MethodDescriptorInfo(object):
             size = 12

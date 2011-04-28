@@ -13,11 +13,11 @@ def extractTypes(string):
         elif string[0] == 'S':
             strtype += 'short'
             size = 1
-        elif string[0] == 'Z':
+        elif string[0] == 'L':
             string = string[1:]
             end = string.find(';')
-            strtype += 'ref of '+string[:end - 1]
-            size = end
+            strtype += 'ref of '+string[:end]
+            size = end + 1
         elif string[0] == 'V':
             strtype += 'void'
             size = 1
@@ -34,7 +34,6 @@ def extractTypes(string):
 class ExceptionHandler(object):
     def __init__(self, orig_offset, handler_info, cap_file, resolver):
         """ handler is the type found in the cap_file """
-        print orig_offset, handler_info.handler_offset, handler_info.start_offset
         self.handler_offs = handler_info.handler_offset - orig_offset
         self.start = handler_info.start_offset - orig_offset
         self.stop = self.start + handler_info.active_length
@@ -49,15 +48,12 @@ class ExceptionHandler(object):
 
     def __contains__(self, ip):
         """ returns if the ip is in the range of this handler """
-        print self.start, ip, self.stop
         return self.start < ip < self.stop
     
     def match(self, exception):
         if self.isFinally:
             return True
-        print self.catch_type.cls
-        res = isinstance(exception, self.catch_type.cls)
-        return res
+        return isinstance(exception, self.catch_type.cls)
 
 class JavaCardMethod(object):
     def _fillHandlers(self, cap_file, resolver):

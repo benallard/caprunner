@@ -145,8 +145,9 @@ class JavaCardVM(object):
         # execute the function
         frame = self.frame
         inc = None
-#        print frame.stack
-#        print frame
+        print bytecode.opname[code[0]], params
+        print frame.stack
+        #print frame.locals
         try:
             inc = f(*params)
         except Exception, e:
@@ -227,7 +228,7 @@ class JavaCardVM(object):
     def aload_3(self):
         self.aload(3)
     def aload(self, index):
-        self.frame.push(self.frame.aget(index))
+        self.frame.push(self.frame.locals[index])
 
     def sload_0(self):
         self.sload(0)
@@ -270,6 +271,9 @@ class JavaCardVM(object):
     def _sconst(self, value):
         """ Not to be externaly called """
         self.frame.push(value)
+
+    def aconst_null(self):
+        self.frame.push(None)
 
     def srem(self):
         val2 = self.frame.pop()
@@ -356,6 +360,12 @@ class JavaCardVM(object):
         objref = self.frame.pop()
         self.frame.locals[index] = objref
 
+    def bastore(self):
+        value = self.frame.pop()
+        index = self.frame.pop()
+        arrayref = self.frame.pop()
+        arrayref[utils.signed2(index)] = value
+
     def sspush(self, short):
         self.frame.push(short)
 
@@ -381,7 +391,9 @@ class JavaCardVM(object):
         self.frame.push(array)
 
     def dup(self):
-        self.frame.push(self.frame.stack[-1])
+        value = self.frame.pop()
+        self.frame.push(value)
+        self.frame.push(value)
 
     def _invokespecialnative(self, method):
         """ looks like we have to add one paraneter to the list here ... """        
@@ -428,6 +440,7 @@ class JavaCardVM(object):
         objref.setFieldAt(token, value)
 
     putfield_a = putfield_s
+    putfield_b = putfield_s
 
     def getfield_s_this(self, index):
         objref = self.frame.aget(0)
@@ -435,6 +448,11 @@ class JavaCardVM(object):
         self.frame.push(objref.getFieldAt(token))
 
     getfield_a_this = getfield_s_this
+
+    def getfield_a(self, index):
+        objref = self.frame.pop()
+        token = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(token))
 
     def returnn(self):
         self.frames.pop()

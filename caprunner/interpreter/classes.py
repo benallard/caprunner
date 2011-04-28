@@ -8,13 +8,13 @@ class JavaCardClassType(object):
     """
     utilities functions for a Javacard class
     """
-    fields = {}
-    methods = {}
     def setFieldAt(self, token, value):
         self.fields[token].setValue(value)
         
     def getFieldAt(self, token):
         return self.fields[token].getValue()
+
+COUNTER = -1
 
 class JavaCardClass(object):
     """
@@ -43,15 +43,16 @@ class JavaCardClass(object):
         sup_ref = class_info.super_class_ref
         self.super = resolver.resolveClass(sup_ref, cap_file)
 
+        global COUNTER
+        COUNTER += 1
         # create our class type
-        self.cls = type("randomname", (self.super.cls,JavaCardClassType,), {})
+        self.cls = type("class%d"%COUNTER, (self.super.cls,JavaCardClassType,), {})
         # We put a ref to ourself in the created class ...
         self.cls._ref = self
-        # I should now add the fields and the methods to the class object
+        self.cls.fields = {}
+        # I should now add the fields and the methods to the class object.
         for fld in self.class_descriptor_info.fields:
             self.cls.fields[fld.token] = JavaCardField(fld)
-        for mtd in self.class_descriptor_info.methods:
-            self.cls.methods[mtd.token] = JavaCardMethodType(mtd)
 
 class PythonClass(object):
     """

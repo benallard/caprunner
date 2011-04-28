@@ -143,8 +143,10 @@ class linkResolver(object):
         elif cst.tag == 3: # virtual method
             return self.resolveVirtualMethod(cst, cap_file)
         elif cst.tag == 4:
+            raise NotImplementedError
             pass # super method
         elif cst.tag == 5:
+            raise NotImplementedError
             pass # static field
         elif cst.tag == 6: # static method
             return self.resolveStaticMethod(cst, cap_file)
