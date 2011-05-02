@@ -3,9 +3,9 @@
 import sys
 
 from caprunner import resolver, capfile
-from caprunner.utils import s2a, a2s
+from caprunner.utils import s2a, a2s, d2a, signed1
 from caprunner.interpreter import JavaCardVM, ExecutionDone
-from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod
+from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
 
 from pythoncard.framework import Applet, APDU, ISOException
 
@@ -33,11 +33,11 @@ def process(vm, send, receive):
         pass
     except ISOException, ie:
         sw = ie.getReason()
-        buf = [(sw & 0xff00) >> 8, sw & 0x00ff]
+        buf = [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
         isoE = True
     if not isoE:
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
-        buf.extend([0x90, 0x00])
+        buf.extend(d2a('\x90\x00'))
     if buf != receive:
         print "<== %s (%s)" % (a2s(buf), a2s(receive))
         sys.exit()
@@ -53,7 +53,11 @@ def deselect(vm):
 
 def select(vm):
     vm.frame.push(applets[0])
-    vm._invokevirtualjava(JavaCardVirtualMethod(applets[0]._ref.offset, 6, vm.cap_file, vm.resolver))
+    try:
+        selectmtd = JavaCardVirtualMethod(applets[0]._ref.offset, 6, vm.cap_file, vm.resolver)
+    except NoSuchMethod:
+        return
+    vm._invokevirtualjava(selectmtd)
     try:
         while True:
             vm.step()

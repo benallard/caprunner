@@ -294,7 +294,7 @@ class JavaCardVM(object):
         self.frame.push(utils.signed2((val1 - val2) & 0xffff))
 
     def bspush(self, byte):
-        self.frame.push(byte)
+        self.frame.push(utils.signed1(byte))
 
     def s2b(self):
         val = self.frame.pop()
@@ -331,6 +331,16 @@ class JavaCardVM(object):
         return self._ifxx(branch, 'gt')
     def ifge(self, branch):
         return self._ifxx(branch, 'ge')
+
+    def ifnull(self, branch):
+        val = self.frame.pop()
+        if val is None:
+            return utils.signed1(branch)
+
+    def ifnull_w(self, branch):
+        val = self.frame.pop()
+        if val is None:
+            return utils.signed2(branch)
 
     def _if_scmpxx(self, branch, op):
         val2 = self.frame.pop()
@@ -390,7 +400,7 @@ class JavaCardVM(object):
         arrayref[utils.signed2(index)] = value
 
     def sspush(self, short):
-        self.frame.push(short)
+        self.frame.push(utils.signed2(short))
 
     def invokestatic(self, index):
         method = self.resolver.resolveIndex(index, self.cap_file)
@@ -500,6 +510,7 @@ class JavaCardVM(object):
         key = self.frame.pop()
         for pair in pairs:
             match, offset = pair
+            match = utils.signed2(match)
             if key == match:
                 return utils.signed2(offset)
             elif key < match:

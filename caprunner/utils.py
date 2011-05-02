@@ -66,32 +66,36 @@ def a2s(a):
     array to string
     >>> a2s([0xa0, 0, 0, 0, 98, 0, 3])
     'A0 00 00 00 62 00 03'
+    >>> a2s([-96])
+    'A0'
     """
-    return ' '.join(["%02X" % i for i in a])
+    return ' '.join(["%02X" % (i & 0xff) for i in a])
 
 def s2a(s):
     """
     string to array
     >>> s2a('A0 00 00 00 62 00 03')
-    [160, 0, 0, 0, 98, 0, 3]
+    [-96, 0, 0, 0, 98, 0, 3]
     """
-    return [int(ss, 16) for ss in s.split()]
+    return [signed1(int(ss, 16)) for ss in s.split()]
 
 def a2d(array):
     r"""
     array to data
     >>> a2d([0xa0, 0, 0, 0, 98, 0, 3])
     '\xa0\x00\x00\x00b\x00\x03'
+    >>> a2d([-96])
+    '\xa0'
     """
-    return ''.join([chr(i) for i in array])
+    return ''.join([chr(i & 0xff) for i in array])
 
 def d2a(data):
-    """
+    r"""
     data to array
     >>> d2a('\xa0\x00\x00\x00b\x00\x03')
-    [160, 0, 0, 0, 98, 0, 3]
+    [-96, 0, 0, 0, 98, 0, 3]
     """
-    return [ord(c) for c in data]
+    return [signed1(ord(c)) for c in data]
 
 def d2s(s):
     r"""

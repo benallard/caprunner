@@ -1,5 +1,11 @@
 from caprunner.bytecode import disassemble # for verbosity
 
+class NoSuchClass(Exception):
+    pass
+
+class NoSuchMethod(Exception):
+    pass
+
 def extractTypes(string):
     res = []
     strtype = ''
@@ -99,7 +105,8 @@ class JavaCardStaticMethod(JavaCardMethod):
                     # Bingo !
                     self.method_descriptor_info = mtd
                     break
-        assert self.method_descriptor_info is not None, "Method Not found in Descriptor Component"
+        if self.method_descriptor_info is None:
+            raise NoSuchMethod(self.offset)
         # We now care about the exception handlers
         self._fillHandlers(cap_file, resolver)
         # I first want the number of arguments
@@ -157,8 +164,10 @@ class JavaCardVirtualMethod(JavaCardMethod):
                         mdi = mtd
                         break
                 break
-        assert cdi
-        assert mdi
+        if cdi is None:
+            raise NoSuchClass(clsoffset)
+        if mdi is None:
+            raise NoSuchMethod(clsoffset, self.token)
         self.method_descriptor_info = mdi
         self.offset = mdi.method_offset
         self.method_info = cap_file.Method.methods[self.offset]
