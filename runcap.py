@@ -102,9 +102,7 @@ def main():
             sep1 = 8
             sep2 = line.find(':', sep1+1)
             sep3 = line.find(':', sep2+1)
-            print line[sep1:sep2]
             data = s2a(line[sep1:sep2])
-            print line[sep2+1:sep3]
             offset = s2a(line[sep2 + 1:sep3])[0]
             length = s2a(line[sep3 + 1:])
             install(vm, data, offset, length)
