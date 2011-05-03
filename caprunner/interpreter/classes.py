@@ -14,8 +14,6 @@ class JavaCardClassType(object):
     def getFieldAt(self, token):
         return self.fields[token].getValue()
 
-COUNTER = -1
-
 class JavaCardClass(object):
     """
     This represent a JavaCard class as internal to the CAP file.
@@ -43,10 +41,8 @@ class JavaCardClass(object):
         sup_ref = class_info.super_class_ref
         self.super = resolver.resolveClass(sup_ref, cap_file)
 
-        global COUNTER
-        COUNTER += 1
         # create our class type
-        self.cls = type("class%d"%COUNTER, (self.super.cls,JavaCardClassType,), {})
+        self.cls = type("class%d"%self.offset, (self.super.cls,JavaCardClassType,), {})
         # We put a ref to ourself in the created class ...
         self.cls._ref = self
         self.cls.fields = {}
