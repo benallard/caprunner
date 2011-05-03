@@ -1,7 +1,6 @@
 from caprunner.bytecode import disassemble # for verbosity
 
-class NoSuchClass(Exception):
-    pass
+from caprunner.interpreter.classes import NoSuchClass
 
 class NoSuchMethod(Exception):
     pass

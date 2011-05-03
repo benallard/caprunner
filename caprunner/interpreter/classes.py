@@ -1,5 +1,8 @@
 from fields import JavaCardField
 
+class NoSuchClass(Exception):
+    pass
+
 class JavaCardMethodType(object):
     def __init__(self, method_descriptor_info):
         self.mdi = method_descriptor_info
@@ -36,7 +39,8 @@ class JavaCardClass(object):
             if cls.this_class_ref.class_ref == self.offset:
                 self.class_descriptor_info = cls
                 break
-        assert self.class_descriptor_info, "Not found in the Descriptor Conponent"
+        if self.class_descriptor_info is None:
+            raise NoSuchClass(self.offset)
         # And now, we want to extract the stuff
         sup_ref = class_info.super_class_ref
         self.super = resolver.resolveClass(sup_ref, cap_file)
