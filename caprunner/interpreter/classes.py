@@ -50,9 +50,14 @@ class JavaCardClass(object):
         # We put a ref to ourself in the created class ...
         self.cls._ref = self
         self.cls.fields = {}
+        self.fillFields(self.cls)
+
+    def fillFields(self, cls):
         # I should now add the fields and the methods to the class object.
         for fld in self.class_descriptor_info.fields:
-            self.cls.fields[fld.token] = JavaCardField(fld)
+            cls.fields[fld.token] = JavaCardField(fld)
+        if isinstance(self.super, JavaCardClass):
+            self.super.fillFields(cls)
 
 class PythonClass(object):
     """
