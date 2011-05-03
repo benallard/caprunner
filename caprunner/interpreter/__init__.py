@@ -393,11 +393,19 @@ class JavaCardVM(object):
         objref = self.frame.pop()
         self.frame.locals[index] = objref
 
-    def bastore(self):
+    def _xastore(self):
         value = self.frame.pop()
         index = self.frame.pop()
         arrayref = self.frame.pop()
-        arrayref[utils.signed2(index)] = value
+        # we should check index validity
+        arrayref[index] = value
+
+    bastore = _xastore
+    aastore = _xastore
+
+    def sinc(self, index, const):
+        self.frame.locals[index] += utils.signed1(const)
+        
 
     def sspush(self, short):
         self.frame.push(utils.signed2(short))
@@ -421,6 +429,14 @@ class JavaCardVM(object):
         if count < 0:
             raise python.lang.NegativeArraySizeException()
         array = [{10:False, 11:0, 12:0, 13:0}[elemtype] for i in xrange(count)]
+        self.frame.push(array)
+
+    def anewarray(self, index):
+        count = utils.signed2(self.frame.pop())
+        if count < 0:
+            raise python.lang.NegativeArraySizeException()
+        # We don't really care of the type of the elements
+        array = [None for i in xrange(count)]
         self.frame.push(array)
 
     def dup(self):
@@ -498,7 +514,13 @@ class JavaCardVM(object):
     def getfield_a(self, index):
         objref = self.frame.pop()
         token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token))
+        self.frame.push(objref.getFieldAt(token) or None)
+
+
+    def getfield_s(self, index):
+        objref = self.frame.pop()
+        token = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(token) or 0)
 
     def returnn(self):
         self.frames.pop()
