@@ -621,11 +621,13 @@ class StaticField(Component):
         self.non_default_value_count = u2(self.data[shift+2:])
         self.non_default_values = u1a(self.non_default_value_count, self.data[shift+4:])
     def __str__(self):
-        return "< StaticField:\n\tImage size: %d\n\tRef Count: %d\n\tArray Init:\n\t\t%s\n\tDefault values: %d\n\tNon default Values: %s\n>" % (
+        return "< StaticField:\n\tImage size: %d\n\tRef Count: %d\n\tArray Init: (%d)\n\t\t%s\n\tDefault values: %d\n\tNon default Values: (%d) %s\n>" % (
             self.image_size,
             self.reference_count,
+            self.array_init_count,
             '\n\t\t'.join([str(aii) for aii in self.array_init]),
             self.default_value_count,
+            self.non_default_value_count,
             a2s(self.non_default_values)
             )
 
