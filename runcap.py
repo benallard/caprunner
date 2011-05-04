@@ -10,8 +10,12 @@ from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualM
 from pythoncard.framework import Applet, APDU, ISOException
 
 current_install_aid = None
+# a2d(aid) => Applet
 applets = {}
-selected = None
+# channel => Applet
+selected = [None, None, None, None]
+# opened
+channels = [True, False, False, False]
 
 def myregister(applet, *args):
     if len(args) == 0:
@@ -22,21 +26,47 @@ Applet.register = myregister
 def process(vm, send, receive):
 
     print send[:4]
-    if send[:4] == [00, -92, 0x04, 00]:
-        aid = send[5:5 + send[4]]
-        print "select command : %s" % a2s(aid)
-        # select command
-        select(vm, aid)
+    if not bool(send[0] & 0x80):
+        # ISO command
+        if send[1:4] == [-92, 4, 0]:
+            aid = send[5:5 + send[4]]
+            print "select command : %s" % a2s(aid)
+            # select command
+            select(vm, send[0] & 0x3, aid)
+        elif send[1:4] == [112, 0, 0]:
+            # open channel
+            for idx in xrange(4):
+                if not channels[idx]:
+                    channels[idx] = True
+                    buf = [idx]
+                    buf.extend(d2a('\x90\x00'))
+                    if buf != receive:
+                        print "<== %02X 90 00 (%s)" % (idx, a2s(receive))
+                        sys.exit()
+                    return
+            print "No more channels"
+            sys.exit()
+        elif send[1:3] == [112, -128]:
+            if channels[send[3]]:
+                channels[send[3]] = False
+                buf = d2a('\x90\x00')
+                if buf != receive:
+                    print "<== %02X 90 00 (%s)" % (idx, a2s(receive))
+                    sys.exit()
+                return
+            else:
+                print "Channel %d not opened" % send[3]
+                sys.exit()
 
-    global selected
     print "==> %s" % a2s(send)
     # Make an APDU object
     apdu = APDU(send)
     # pass to the process method
-    vm.frame.push(selected)
+    applet = (selected[send[0] & 0x3])
+    vm.frame.push(applet)
     vm.frame.push(apdu)
     # invoke the process method
-    vm._invokevirtualjava(JavaCardVirtualMethod(selected._ref.offset, 7, vm.cap_file, vm.resolver))
+    vm._invokevirtualjava(JavaCardVirtualMethod(applet._ref.offset, 7, vm.cap_file, vm.resolver))
     isoE = False
     try:
         while True:
@@ -54,21 +84,22 @@ def process(vm, send, receive):
         print "<== %s (%s)" % (a2s(buf), a2s(receive))
         sys.exit()
 
-def deselect(vm):
-    global selected
-    vm.frame.push(selected)
-    vm._invokevirtualjava(JavaCardVirtualMethod(selected._ref.offset, 4, vm.cap_file, vm.resolver))
+def deselect(vm, channel):
+    applet = selected[channel]
+    vm.frame.push(applet)
+    vm._invokevirtualjava(JavaCardVirtualMethod(applet._ref.offset, 4, vm.cap_file, vm.resolver))
     try:
         while True:
             vm.step()
     except ExecutionDone:
         pass
-    selected = None
+    return vm.frame.getValue()
 
-def select(vm, aid):
-    global selected
-    if selected is not None:
-        deselect(vm)
+def select(vm, channel, aid):
+    applet = selected[channel]
+    if applet is not None:
+        if not deselect(vm, channel):
+            return False
     vm.frame.push(applets[a2d(aid)])
     try:
         selectmtd = JavaCardVirtualMethod(applets[a2d(aid)]._ref.offset, 6, vm.cap_file, vm.resolver)
@@ -81,7 +112,10 @@ def select(vm, aid):
     except ExecutionDone:
         pass
     if vm.frame.getValue() == True:
-        selected = applets[a2d(aid)]
+        selected[channel] = applets[a2d(aid)]
+        return True
+    else:
+        return False
 
 def install(vm, data, offset):
     global current_install_aid
