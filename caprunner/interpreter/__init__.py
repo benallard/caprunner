@@ -255,6 +255,8 @@ class JavaCardVM(object):
             raise python.lang.ArrayIndexOutOfBoundsException()
         self.frame.push(value)
 
+    saload = baload
+
     def sconst_m1(self):
         self._sconst(-1)
     def sconst_0(self):
@@ -308,6 +310,8 @@ class JavaCardVM(object):
         self.frames.pop()
         self.frame.push(val)
 
+    areturn = sreturn
+
     def smul(self):
         val2 = self.frame.pop()
         val1 = self.frame.pop()
@@ -338,6 +342,11 @@ class JavaCardVM(object):
     def ifnull(self, branch):
         val = self.frame.pop()
         if val is None:
+            return utils.signed1(branch)
+
+    def ifnonnull(self, branch):
+        val = self.frame.pop()
+        if val is not None:
             return utils.signed1(branch)
 
     def ifnull_w(self, branch):
