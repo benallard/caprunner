@@ -229,9 +229,9 @@ class JavaCardVM(object):
     def aload_3(self):
         self.aload(3)
     def aload(self, index):
-        self.frame.push(self.frame.locals[index])
+        self.frame.push(self.frame.aget(index))
 
-    def sload_0(self):
+    def sloadg_0(self):
         self.sload(0)
     def sload_1(self):
         self.sload(1)
@@ -243,7 +243,7 @@ class JavaCardVM(object):
         self.frame.push(self.frame.sget(index))
 
     def baload(self):
-        index = utils.signed2(self.frame.pop())
+        index = self.frame.pop()
         arrayref = self.frame.pop()
         if arrayref is None:
             raise python.lang.NullPointerException()
@@ -287,6 +287,9 @@ class JavaCardVM(object):
         val2 = self.frame.pop()
         val1 = self.frame.pop()
         self.frame.push(val1 + val2)
+
+    def sinc(self, index, const):
+        self.frame.locals[index] += utils.signed1(const)
 
     def ssub(self):
         val2 = self.frame.pop()
@@ -397,7 +400,9 @@ class JavaCardVM(object):
         value = self.frame.pop()
         index = self.frame.pop()
         arrayref = self.frame.pop()
-        arrayref[utils.signed2(index)] = value
+        arrayref[index] = value
+
+    sastore = bastore
 
     def sspush(self, short):
         self.frame.push(utils.signed2(short))
@@ -422,6 +427,10 @@ class JavaCardVM(object):
             raise python.lang.NegativeArraySizeException()
         array = [{10:False, 11:0, 12:0, 13:0}[elemtype] for i in xrange(count)]
         self.frame.push(array)
+
+    def arraylength(self):
+        arrayref = self.frame.pop()
+        self.frame.push(len(arrayref))
 
     def dup(self):
         value = self.frame.pop()
@@ -478,7 +487,11 @@ class JavaCardVM(object):
         objref.setFieldAt(token, value)
 
     putfield_a = putfield_s
-    putfield_b = putfield_s
+
+    def putstatic_a(self, index):
+        value = self.frame.pop()
+        field = self.resolver.resolveIndex(index, self.cap_file)
+        field.set(value)
 
     def getfield_b_this(self, index):
         objref = self.frame.aget(0)
@@ -499,6 +512,10 @@ class JavaCardVM(object):
         objref = self.frame.pop()
         token = self.resolver.resolveIndex(index, self.cap_file)
         self.frame.push(objref.getFieldAt(token))
+
+    def getstatic_a(self, index):
+        field = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(field.get() or None)
 
     def returnn(self):
         self.frames.pop()
@@ -521,9 +538,20 @@ class JavaCardVM(object):
         value2 = self.frame.pop()
         value1 = self.frame.pop()
         s = value2 & 0x1f
-        self.frame.push(value1 >> s)
+        self.frame.push((value1 >> s) & 0xffff)
+
+    def sshl(self):
+        value2 = self.frame.pop()
+        value1 = self.frame.pop()
+        s = value2 & 0x1f
+        self.frame.push((value1 << s) & 0xffff)
 
     def sand(self):
         value2 = self.frame.pop()
         value1 = self.frame.pop()
         self.frame.push(value1 & value2)
+
+    def sor(self):
+        value2 = self.frame.pop()
+        value1 = self.frame.pop()
+        self.frame.push(value1 | value2)
