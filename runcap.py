@@ -7,7 +7,7 @@ from caprunner.utils import s2a, a2s, d2a, a2d, signed1
 from caprunner.interpreter import JavaCardVM, ExecutionDone
 from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
 
-from pythoncard.framework import Applet, APDU, ISOException
+from pythoncard.framework import Applet, APDU, ISOException, JCSystem, AID
 
 current_install_aid = None
 # a2d(aid) => Applet
@@ -22,6 +22,18 @@ def myregister(applet, *args):
         applets[a2d(current_install_aid)] = applet
 
 Applet.register = myregister
+
+def mylookupAID(buffer, offset, length):
+    if a2d(buffer[offset:offset + length]) in applets:
+        return AID(buffer, offset, length)
+    return None
+
+JCSystem.lookupAID = mylookupAID
+
+def myisAppletActive(aid):
+    return applets[a2d(aid.aid)] in selected
+
+JCSystem.isAppletActive = myisAppletActive
 
 def process(vm, send, receive):
 
