@@ -17,6 +17,26 @@ class JavaCardField(object):
         return str(self._val)
     __repr__ = __str__
 
+class JavaCardStaticField(object):
+    def __init__(self, offset, cap_file, resolver):
+        self.offset = offset
+        print "I am field", offset
+        sf = cap_file.StaticField
+        if offset < sf.array_init_count * 2:
+            offset = offset // 2
+            self.val = sf.array_init[offset].values
+        elif offset < sf.reference_count * 2:
+            self.val = None
+        else:
+            print "I am a primitive type"
+            raise NotImplementedError("primitive static field")
+
+    def set(self, value):
+        self.val = value
+
+    def get(self):
+        return self.val
+
 class PythonField(object):
     """
     This is a python field.
