@@ -731,6 +731,8 @@ class Descriptor(Component):
             ACC_INIT = 0x80
             def __init__(self, data):
                 self.token = u1(data[:1])
+                self.isPrivate = bool(self.token & 0x80)
+                self.token &= 0x7f
                 self.access_flags = u1(data[1:2])
                 self.method_offset = u2(data[2:4])
                 self.type_offset = u2(data[4:6])

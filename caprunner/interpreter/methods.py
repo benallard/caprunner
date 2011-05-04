@@ -147,8 +147,9 @@ class PythonStaticMethod(object):
            )
 
 class JavaCardVirtualMethod(JavaCardMethod):
-    def __init__(self, clsoffset, token, cap_file, resolver):
+    def __init__(self, clsoffset, token, isPrivate, cap_file, resolver):
         self.token = token
+        self.isPrivate = isPrivate
         self._feedFromCAP(clsoffset, cap_file, resolver)
 
     def _feedFromCAP(self, clsoffset, cap_file, resolver):
@@ -160,7 +161,7 @@ class JavaCardVirtualMethod(JavaCardMethod):
             if cls.this_class_ref.class_ref == clsoffset:
                 cdi = cls
                 for mtd in cdi.methods:
-                    if mtd.token == self.token:
+                    if (mtd.token == self.token) and (mtd.isPrivate == self.isPrivate):
                         mdi = mtd
                         break
                 break

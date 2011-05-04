@@ -78,7 +78,7 @@ def process(vm, send, receive):
     vm.frame.push(applet)
     vm.frame.push(apdu)
     # invoke the process method
-    vm._invokevirtualjava(JavaCardVirtualMethod(applet._ref.offset, 7, vm.cap_file, vm.resolver))
+    vm._invokevirtualjava(JavaCardVirtualMethod(applet._ref.offset, 7, False, vm.cap_file, vm.resolver))
     isoE = False
     try:
         while True:
@@ -99,7 +99,7 @@ def process(vm, send, receive):
 def deselect(vm, channel):
     applet = selected[channel]
     vm.frame.push(applet)
-    vm._invokevirtualjava(JavaCardVirtualMethod(applet._ref.offset, 4, vm.cap_file, vm.resolver))
+    vm._invokevirtualjava(JavaCardVirtualMethod(applet._ref.offset, 4, False, vm.cap_file, vm.resolver))
     try:
         while True:
             vm.step()
@@ -114,7 +114,7 @@ def select(vm, channel, aid):
             return False
     vm.frame.push(applets[a2d(aid)])
     try:
-        selectmtd = JavaCardVirtualMethod(applets[a2d(aid)]._ref.offset, 6, vm.cap_file, vm.resolver)
+        selectmtd = JavaCardVirtualMethod(applets[a2d(aid)]._ref.offset, 6, False, vm.cap_file, vm.resolver)
     except NoSuchMethod:
         return
     vm._invokevirtualjava(selectmtd)
