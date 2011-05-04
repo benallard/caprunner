@@ -108,7 +108,11 @@ class linkResolver(object):
         # get the method
         if '<init>' in mtdname:
             mtdname = '__init__' + mtdname[6:]
-        method = getattr(cls, mtdname)
+        try:
+            method = getattr(cls, mtdname)
+        except AttributeError:
+            print "Cannot find %s in %s in %s" % (mtdname, clsname, pkg.name)
+            raise
         return PythonStaticMethod(mtdname, mtd['type'], method)
 
     def resolveStaticField(self, cst, cap_file):
