@@ -42,7 +42,6 @@ def process(vm, send, receive):
         # ISO command
         if send[1:4] == [-92, 4, 0]:
             aid = send[5:5 + send[4]]
-            print "select command : %s" % a2s(aid)
             # select command
             select(vm, send[0] & 0x3, aid)
         elif send[1:4] == [112, 0, 0]:
@@ -59,11 +58,13 @@ def process(vm, send, receive):
             print "No more channels"
             sys.exit()
         elif send[1:3] == [112, -128]:
-            if channels[send[3]]:
-                channels[send[3]] = False
+            # close channel
+            idx = send[3]
+            if channels[idx]:
+                channels[idx] = False
                 buf = d2a('\x90\x00')
                 if buf != receive:
-                    print "<== %02X 90 00 (%s)" % (idx, a2s(receive))
+                    print "<== 90 00 (%s)" % a2s(receive)
                     sys.exit()
                 return
             else:
