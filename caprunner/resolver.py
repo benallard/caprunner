@@ -3,6 +3,7 @@ import json
 from utils import a2d
 
 from caprunner.refcollection import refCollection
+from caprunner.interpreter.fields import JavaCardStaticField
 from caprunner.interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
 from caprunner.interpreter.classes import PythonClass, JavaCardClass
 
@@ -93,7 +94,7 @@ class linkResolver(object):
             return JavaCardStaticMethod(cst.static_method_ref.offset, cap_file, self)
 
     def _resolveExtStaticMethod(self, aid, cls, token):
-        """ 
+        """
         Resolve an external static method
         return a python method corrsponding to the tokens 
         """
@@ -107,8 +108,38 @@ class linkResolver(object):
         # get the method
         if '<init>' in mtdname:
             mtdname = '__init__' + mtdname[6:]
-        method = getattr(cls, mtdname)
+        try:
+            method = getattr(cls, mtdname)
+        except AttributeError:
+            print "Cannot find %s in %s in %s" % (mtdname, clsname, pkg.name)
+            raise
         return PythonStaticMethod(mtdname, mtd['type'], method)
+
+    def resolveStaticField(self, cst, cap_file):
+        if cst.isExternal:
+            pkg = cap_file.Import.packages[cst.static_field_ref.package_token]
+            return self._resolveExtStaticField(
+                a2d(pkg.aid),
+                cst.static_field_ref.class_token,
+                cst.static_field_ref.token)
+        else:
+            return JavaCardStaticField(cst.static_field_ref.offset, cap_file, self)
+
+    def _resolveExtStaticField(self, aid, cls, token):
+        """
+        Resolve an external static field
+        return a python method corrsponding to the tokens
+        Cannot really test it actually ...
+        """
+        pkg = self.refs[aid]
+        (clsname, fld) = pkg.getStaticField(cls, token)
+        fldname = fld['name']
+        # get the module
+        mod = self._getModule(pkg.name.replace('/', '.'))
+        # get the class
+        cls = getattr(mod, clsname)
+        field = getattr(cls, fldname)
+        return PythonStaticField(fldname, fld['type'], field)
 
     def resolveVirtualMethod(self, cst, cap_file):
         if cst.isExternal:
@@ -119,7 +150,7 @@ class linkResolver(object):
         else:
             # it is fully already resolved from the other side, we just need
             # the token
-            return JavaCardVirtualMethod(cst.class_ref, cst.token, cap_file, self)
+            return JavaCardVirtualMethod(cst.class_ref, cst.token, cst.isPrivate, cap_file, self)
 
     def _resolveExtVirtualMethod(self, aid, cls, token):
         pkg = self.refs[aid]
@@ -145,9 +176,8 @@ class linkResolver(object):
         elif cst.tag == 4:
             raise NotImplementedError
             pass # super method
-        elif cst.tag == 5:
-            raise NotImplementedError
-            pass # static field
+        elif cst.tag == 5: # static field
+            return self.resolveStaticField(cst, cap_file)
         elif cst.tag == 6: # static method
             return self.resolveStaticMethod(cst, cap_file)
         else:
