@@ -20,6 +20,10 @@ channels = [True, False, False, False]
 def myregister(applet, *args):
     if len(args) == 0:
         applets[a2d(current_install_aid)] = applet
+        print "Registered %s as %s" % (applet, a2s(current_install_aid))
+    else:
+        raise NotImplementedError
+        print "Registering:", args
 
 Applet.register = myregister
 
@@ -117,7 +121,8 @@ def select(vm, channel, aid):
     try:
         selectmtd = JavaCardVirtualMethod(applets[a2d(aid)]._ref.offset, 6, False, vm.cap_file, vm.resolver)
     except NoSuchMethod:
-        return
+        selected[channel] = applets[a2d(aid)]
+        return True
     vm._invokevirtualjava(selectmtd)
     try:
         while True:
@@ -128,6 +133,7 @@ def select(vm, channel, aid):
         selected[channel] = applets[a2d(aid)]
         return True
     else:
+        print "Select failed"
         return False
 
 def install(vm, data, offset):
