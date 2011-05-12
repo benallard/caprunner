@@ -160,7 +160,7 @@ class JavaCardVirtualMethod(JavaCardMethod):
             if cls.this_class_ref.class_ref == clsoffset:
                 cdi = cls
                 for mtd in cdi.methods:
-                    if (mtd.token == self.token) and (mtd.isPrivate == self.isPrivate):
+                    if (not mtd.isConstructor) and (mtd.token == self.token) and (mtd.isPrivate == self.isPrivate):
                         mdi = mtd
                         break
                 break

@@ -734,6 +734,9 @@ class Descriptor(Component):
                 self.isPrivate = bool(self.token & 0x80)
                 self.token &= 0x7f
                 self.access_flags = u1(data[1:2])
+                self.isConstructor = bool(
+                    self.access_flags &
+                    Descriptor.ClassDescriptorInfo.MethodDescriptorInfo.ACC_INIT)
                 self.method_offset = u2(data[2:4])
                 self.type_offset = u2(data[4:6])
                 self.bytecode_count = u2(data[6:8])
