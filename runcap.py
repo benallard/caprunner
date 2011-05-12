@@ -16,6 +16,8 @@ applets = {}
 selected = [None, None, None, None]
 # opened
 channels = [True, False, False, False]
+# current one
+current_channel = 0
 
 def myregister(applet, *args):
     if len(args) == 0:
@@ -35,16 +37,24 @@ def myisAppletActive(aid):
 
 JCSystem.isAppletActive = myisAppletActive
 
-def process(vm, send, receive):
+def mygetAssignedChannel():
+    return current_channel
+    
+JCSystem.getAssignedChannel = mygetAssignedChannel
 
+def process(vm, send, receive):
+    global current_channel
+    current_channel = send[0] & 0x3
     print send[:4]
+    if selected[current_channel]:
+        selected[current_channel]._selectingApplet = False
     if not bool(send[0] & 0x80):
         # ISO command
         if send[1:4] == [-92, 4, 0]:
             aid = send[5:5 + send[4]]
             print "select command : %s" % a2s(aid)
             # select command
-            select(vm, send[0] & 0x3, aid)
+            select(vm, current_channel, aid)
         elif send[1:4] == [112, 0, 0]:
             # open channel
             for idx in xrange(4):
@@ -59,8 +69,8 @@ def process(vm, send, receive):
             print "No more channels"
             sys.exit()
         elif send[1:3] == [112, -128]:
-            if channels[send[3]]:
-                channels[send[3]] = False
+            if channels[current_channel]:
+                channels[current_channel] = False
                 buf = d2a('\x90\x00')
                 if buf != receive:
                     print "<== %02X 90 00 (%s)" % (idx, a2s(receive))
@@ -74,7 +84,7 @@ def process(vm, send, receive):
     # Make an APDU object
     apdu = APDU(send)
     # pass to the process method
-    applet = (selected[send[0] & 0x3])
+    applet = selected[current_channel]
     vm.frame.push(applet)
     vm.frame.push(apdu)
     # invoke the process method
@@ -125,6 +135,7 @@ def select(vm, channel, aid):
         pass
     if vm.frame.getValue() == True:
         selected[channel] = applets[a2d(aid)]
+        selected[channel]._selectingApplet = True
         return True
     else:
         return False
@@ -175,10 +186,6 @@ def main():
             send.extend(s2a(line[4:]))
         elif line[:4] == "<== ":
             receive.extend(s2a(line[4:]))
-        elif line.startswith('deselect;'):
-            deselect(vm)
-        elif line.startswith('select;'):
-            select(vm)
         elif line.startswith('install:'):
             sep1 = 8
             sep2 = line.find(':', sep1+1)
