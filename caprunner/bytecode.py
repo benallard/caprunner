@@ -233,7 +233,7 @@ def getParams(data):
             ofs += 4
     elif code == opcode["stableswitch"]:
         lowbytes = params[1]
-        highbytes = prams[2]
+        highbytes = params[2]
         for i in xrange(highbytes - lowbytes):
             params.append(u2(data[ofs:]))
             ofs += 2
