@@ -346,6 +346,28 @@ class JavaCardVM(object):
         if val is not None:
             return utils.signed1(branch)
 
+    def _ifxx_w(self, branch, op):
+        val = self.frame.pop()
+        if {'eq': val == 0,
+            'ne': val != 0,
+            'lt': val < 0,
+            'le': val <= 0,
+            'gt': val > 0,
+            'ge': val >= 0}[op]:
+            return utils.signed2(branch)
+    def ifeq_w(self, branch):
+        return self._ifxx_w(branch, 'eq')
+    def ifne_w(self, branch):
+        return self._ifxx_w(branch, 'ne')
+    def iflt_w(self, branch):
+        return self._ifxx_w(branch, 'lt')
+    def ifle_w(self, branch):
+        return self._ifxx_w(branch, 'le')
+    def ifgt_w(self, branch):
+        return self._ifxx_w(branch, 'gt')
+    def ifge_w(self, branch):
+        return self._ifxx_w(branch, 'ge')
+
     def ifnull_w(self, branch):
         val = self.frame.pop()
         if val is None:
@@ -377,6 +399,9 @@ class JavaCardVM(object):
 
     def goto(self, branch):
         return utils.signed1(branch)
+
+    def goto_w(self, branch):
+        return utils.signed2(branch)
 
     def sstore_0(self):
         self.sstore(0)
