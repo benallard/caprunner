@@ -11,11 +11,11 @@ class JavaCardClassType(object):
     """
     utilities functions for a Javacard class
     """
-    def setFieldAt(self, token, value):
-        self.fields[token].setValue(value)
+    def setFieldAt(self, cls, token, value):
+        self.fields[token + self.fieldoffsets[cls]].setValue(value)
         
-    def getFieldAt(self, token):
-        return self.fields[token].getValue()
+    def getFieldAt(self, cls, token):
+        return self.fields[token + self.fieldoffsets[cls]].getValue()
 
 class JavaCardClass(object):
     """
@@ -50,14 +50,18 @@ class JavaCardClass(object):
         # We put a ref to ourself in the created class ...
         self.cls._ref = self
         self.cls.fields = {}
+        self.cls.fieldoffsets = {}
         self.fillFields(self.cls)
 
     def fillFields(self, cls):
-        # I should now add the fields and the methods to the class object.
-        for fld in self.class_descriptor_info.fields:
-            cls.fields[fld.token] = JavaCardField(fld)
+        # First care about the super fields
         if isinstance(self.super, JavaCardClass):
             self.super.fillFields(cls)
+        fieldoffset = len(cls.fields)
+        cls.fieldoffsets[self.offset] = fieldoffset
+        # I should now add the fields and the methods to the class object.
+        for fld in self.class_descriptor_info.fields:
+            cls.fields[fld.token + fieldoffset] = JavaCardField(fld)
 
 class PythonClass(object):
     """

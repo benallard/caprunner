@@ -115,6 +115,9 @@ class linkResolver(object):
             raise
         return PythonStaticMethod(mtdname, mtd['type'], method)
 
+    def resolveInstanceField(self, cst, cap_file):
+        return (cst.class_ref, cst.token)
+
     def resolveStaticField(self, cst, cap_file):
         if cst.isExternal:
             pkg = cap_file.Import.packages[cst.static_field_ref.package_token]
@@ -170,7 +173,7 @@ class linkResolver(object):
         if cst.tag == 1: # class
             return self.resolveClass(cst, cap_file)
         elif cst.tag == 2: # instance fields
-            return cst.token
+            return self.resolveInstanceField(cst, cap_file)
         elif cst.tag == 3: # virtual method
             return self.resolveVirtualMethod(cst, cap_file)
         elif cst.tag == 4:

@@ -521,18 +521,14 @@ class JavaCardVM(object):
         else:
             self._invokevirtualjava(method)
 
-    def putfield_b(self, index):
-        value = bool(self.frame.pop())
-        objref = self.frame.pop()
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        objref.setFieldAt(token, value)
     def putfield_s(self, index):
         value = self.frame.pop()
         objref = self.frame.pop()
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        objref.setFieldAt(token, value)
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        objref.setFieldAt(clsref, token, value)
 
     putfield_a = putfield_s
+    putfield_b = putfield_s
 
     def putstatic_a(self, index):
         value = self.frame.pop()
@@ -540,30 +536,32 @@ class JavaCardVM(object):
         field.set(value)
 
     def getfield_b_this(self, index):
+        ''' b is for byte, not boolean'''
         objref = self.frame.aget(0)
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(bool(objref.getFieldAt(token)))
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token))
 
     def getfield_s_this(self, index):
         objref = self.frame.aget(0)
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token) or 0)
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token) or 0)
 
     def getfield_a_this(self, index):
         objref = self.frame.aget(0)
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token) or None)
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token) or None)
 
     def getfield_a(self, index):
         objref = self.frame.pop()
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token) or None)
-
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token) or None)
 
     def getfield_s(self, index):
         objref = self.frame.pop()
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token) or 0)
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token) or 0)
+
+    getfield_b = getfield_s
 
     def getstatic_a(self, index):
         field = self.resolver.resolveIndex(index, self.cap_file)
