@@ -256,6 +256,7 @@ class JavaCardVM(object):
         self.frame.push(value)
 
     saload = baload
+    aaload = baload
 
     def sconst_m1(self):
         self._sconst(-1)
@@ -397,6 +398,30 @@ class JavaCardVM(object):
     def if_scmpge(self, branch):
         return self._if_scmpxx(branch, 'ge')
 
+    def _if_scmpxx_w(self, branch, op):
+        val2 = self.frame.pop()
+        val1 = self.frame.pop()
+        if {'eq': val1 == val2,
+            'ne': val1 != val2,
+            'lt': val1 < val2,
+            'le': val1 <= val2,
+            'gt': val1 > val2,
+            'ge': val1 >= val2}[op]:
+            return utils.signed2(branch)
+
+    def if_scmpeq_w(self, branch):
+        return self._if_scmpxx_w(branch, 'eq')
+    def if_scmpne_w(self, branch):
+        return self._if_scmpxx_w(branch, 'ne')
+    def if_scmplt_w(self, branch):
+        return self._if_scmpxx_w(branch, 'lt')
+    def if_scmple_w(self, branch):
+        return self._if_scmpxx_w(branch, 'le')
+    def if_scmpgt_w(self, branch):
+        return self._if_scmpxx_w(branch, 'gt')
+    def if_scmpge_w(self, branch):
+        return self._if_scmpxx_w(branch, 'ge')
+
     def goto(self, branch):
         return utils.signed1(branch)
 
@@ -482,6 +507,14 @@ class JavaCardVM(object):
         value = self.frame.pop()
         self.frame.push(value)
         self.frame.push(value)
+
+    def dup2(self):
+        word1 = self.frame.pop()
+        word2 = self.frame.pop()
+        self.frame.push(word2)
+        self.frame.push(word1)
+        self.frame.push(word2)
+        self.frame.push(word1)
 
     def _invokespecialnative(self, method):
         """ looks like we have to add one paraneter to the list here ... """        
@@ -612,3 +645,29 @@ class JavaCardVM(object):
         value2 = self.frame.pop()
         value1 = self.frame.pop()
         self.frame.push(value1 | value2)
+
+    def sxor(self):
+        value2 = self.frame.pop()
+        value1 = self.frame.pop()
+        self.frame.push(value1 ^ value2)
+
+    def checkcast(self, atype, index):
+        objectref = self.frame.pop()
+        self.frame.push(objectref)
+        # First determine type to check against
+        types = {10: bool, 11: int, 12: int, 13: int}
+        if atype in types:
+            type = types[atype]
+        else:
+            type = self.resolver.resolveIndex(index, self.cap_file).cls
+        # Then check it ...
+        if atype == 14:
+            if not isinstance(objectref, list):
+                raise python.lang.ClassCastException
+            for elem in objectref:
+                if not isinstance(elem, list):
+                    raise python.lang.ClassCastException
+        else:
+            if not isinstance(objectref, type):
+                raise python.lang.ClassCastException
+            
