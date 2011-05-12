@@ -586,6 +586,13 @@ class JavaCardVM(object):
                 return utils.signed2(default)
         return utils.signed2(default)
 
+    def stableswitch(self, default, low, high, *offsets):
+        index = self.frame.pop()
+        try:
+            return utils.signed2(offsets[index - low])
+        except IndexError:
+            return utils.signed2(default)
+
     def sshr(self):
         value2 = self.frame.pop()
         value1 = self.frame.pop()
