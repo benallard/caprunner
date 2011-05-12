@@ -164,6 +164,18 @@ class linkResolver(object):
             mtdname = mtdname[1:mtdname[1:].find('$') + 1]
         return PythonVirtualMethod(mtdname, mtd['type'])
 
+    def resolveSuperMethod(self, cst, cap_file):
+        if cst.isExternal:
+            # unlikely to happen ...
+            raise NotImplementedError("super call from python")
+        else:
+            cls = self.resolveClass(cst, cap_file)
+            if not isinstance(cls.super, JavaCardClass):
+                # also unlikely to happen ...
+                raise NotImplementedError("super call going into python")
+            class_ref = cls.super.class_descriptor_info.this_class_ref.class_ref
+            return JavaCardVirtualMethod(class_ref, cst.token, cst.isPrivate, cap_file, self)
+
     @cacheresult
     def resolveIndex(self, index, cap_file):
         """
@@ -177,8 +189,7 @@ class linkResolver(object):
         elif cst.tag == 3: # virtual method
             return self.resolveVirtualMethod(cst, cap_file)
         elif cst.tag == 4:
-            raise NotImplementedError
-            pass # super method
+            return self.resolveSuperMethod(cst, cap_file)
         elif cst.tag == 5: # static field
             return self.resolveStaticField(cst, cap_file)
         elif cst.tag == 6: # static method

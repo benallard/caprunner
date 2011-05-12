@@ -2,7 +2,7 @@ import python.lang
 
 from caprunner import bytecode, utils
 
-from caprunner.interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod
+from caprunner.interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
 
 class JavaCardStack(list):
     """
@@ -532,6 +532,10 @@ class JavaCardVM(object):
             self._invokespecialnative(method)
         elif isinstance(method, JavaCardStaticMethod):
             self._invokespecialjava(method)
+        elif isinstance(method, JavaCardVirtualMethod):
+            self._invokevirtualjava(method)
+        else:
+            raise NotImplementedError
 
     def _invokevirtualnative(self, method):
         params = self._popparams(len(method.params))
