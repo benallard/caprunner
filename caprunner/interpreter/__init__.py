@@ -122,6 +122,7 @@ class JavaCardVM(object):
         # Stack of frames
         self.frames = JavaCardFrames()
         self.cap_file = None
+        self.log = ""
 
     def load(self, cap_file):
         """
@@ -136,6 +137,10 @@ class JavaCardVM(object):
         """ current frame """
         return self.frames.current
 
+    def echo(self, string):
+        msg = "  " * len(self.frames) + str(string)
+        self.log += msg + '\n'
+    
     def step(self):
         code = self.frame.bytecodes[self.frame.ip:]
         # get the function
@@ -145,28 +150,27 @@ class JavaCardVM(object):
         # execute the function
         frame = self.frame
         inc = None
-        print bytecode.opname[code[0]], params
-        print frame.stack
-        print frame.ip
-        #print frame.locals
+        self.echo("%s %s" % (bytecode.opname[code[0]], params))
+        self.echo(frame.stack)
+        #self.echo(frame.locals)
         try:
             inc = f(*params)
         except Exception, e:
-            print "caught exception: ", type(e)
+            self.echo("caught exception: %s" % type(e))
             while not isinstance(self.frame, DummyFrame):
                 for handler in self.frame.handlers:
                     if self.frame.ip in handler:
                         if handler.match(e):
-                            print "exception handled: ip = ", handler.handler_offs
+                            self.echo("exception handled: ip = ", handler.handler_offs)
                             self.frame.ip = handler.handler_offs
                             self.frame.push(e)
                             return
                         if handler.last:
                             break
-                print "%d local handlers exhausted poping frame" % len(self.frame.handlers)
+                self.echo("%d local handlers exhausted poping frame" % len(self.frame.handlers))
                 self.frames.pop()
             # not handled, re-raise
-            print "exception not handled, re-raising"
+            self.echo("exception not handled, re-raising")
             raise
                     
         # if we are done

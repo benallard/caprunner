@@ -43,6 +43,7 @@ def mygetAssignedChannel():
 JCSystem.getAssignedChannel = mygetAssignedChannel
 
 def process(vm, send, receive):
+    vm.log = ""
     global current_channel
     current_channel = send[0] & 0x3
     print send[:4]
@@ -102,8 +103,12 @@ def process(vm, send, receive):
     if not isoE:
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
         buf.extend(d2a('\x90\x00'))
+    print "<== %s" % a2s(buf)
     if buf != receive:
-        print "<== %s (%s)" % (a2s(buf), a2s(receive))
+        print "<== %s was expected" % a2s(receive)
+        print vm.log
+        print buf
+        print receive
         sys.exit()
 
 def deselect(vm, channel):
@@ -194,6 +199,8 @@ def main():
             install(vm, data, offset)
         elif line.startswith('load:'):
             vm.load(capfile.CAPFile(line[5:].strip()))
+        elif line.startswith('log;'):
+            print vm.log
         else:
             print line
 
