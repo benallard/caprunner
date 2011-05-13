@@ -1,3 +1,4 @@
+import copy
 from fields import JavaCardField
 
 class NoSuchClass(Exception):
@@ -7,13 +8,30 @@ class JavaCardMethodType(object):
     def __init__(self, method_descriptor_info):
         self.mdi = method_descriptor_info
 
+def makefieldmine(f):
+    """ 
+    All fields are created on the class object.
+    The shall not be modified on this object, but on this instance !
+    So we need to make them property of the instance itself.
+    """
+    def wrapper(self, cls, token, *params):
+        if getattr(self, 'fields', None) is None:
+            self.fields = {}
+        idx = token + self.fieldoffsets[cls]
+        if idx not in self.fields:
+            self.fields[idx] = copy.deepcopy(self.clsfields[idx])
+        return f(self, cls, token, *params)
+    return wrapper
+
 class JavaCardClassType(object):
     """
     utilities functions for a Javacard class
     """
+    @makefieldmine
     def setFieldAt(self, cls, token, value):
         self.fields[token + self.fieldoffsets[cls]].setValue(value)
         
+    @makefieldmine
     def getFieldAt(self, cls, token):
         return self.fields[token + self.fieldoffsets[cls]].getValue()
 
@@ -49,19 +67,18 @@ class JavaCardClass(object):
         self.cls = type("class%d"%self.offset, (self.super.cls,JavaCardClassType,), {})
         # We put a ref to ourself in the created class ...
         self.cls._ref = self
-        self.cls.fields = {}
-        self.cls.fieldoffsets = {}
-        self.fillFields(self.cls)
+        if not isinstance(self.super, JavaCardClass):
+            self.cls.clsfields = []
+            self.cls.fieldoffsets = {}
 
-    def fillFields(self, cls):
-        # First care about the super fields
-        if isinstance(self.super, JavaCardClass):
-            self.super.fillFields(cls)
-        fieldoffset = len(cls.fields)
-        cls.fieldoffsets[self.offset] = fieldoffset
+        fieldoffset = len(self.cls.clsfields)
+        self.cls.fieldoffsets[self.offset] = fieldoffset
         # I should now add the fields and the methods to the class object.
         for fld in self.class_descriptor_info.fields:
-            cls.fields[fld.token + fieldoffset] = JavaCardField(fld)
+            if not fld.isStatic:
+                self.cls.clsfields.append(JavaCardField(fld))
+                # this check that we are adding them sequentially
+                assert len(self.cls.clsfields) == fld.token + fieldoffset + 1
 
 class PythonClass(object):
     """
