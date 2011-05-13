@@ -1,3 +1,5 @@
+from caprunner import utils
+
 class JavaCardField(object):
     """
     This is a field of a class
@@ -24,7 +26,19 @@ class JavaCardStaticField(object):
         sf = cap_file.StaticField
         if offset < sf.array_init_count * 2:
             offset = offset // 2
-            self.val = sf.array_init[offset].values
+            aii = sf.array_init[offset]
+            convertfunc = {2: lambda x: bool(x[0]), 
+                           3: lambda x: utils.signed1(x[0]), 
+                           4: lambda x: utils.signed2(x[0] << 8 + x[1]), 
+                           5: lambda x: utils.signed4(x[0] << 24 + x[1] << 16 + x[2] << 8 + x[3])
+                           }[aii.type]
+            elemsize = {2: 1, 3: 1, 4: 2, 5: 4}[aii.type]
+            index = 0
+            value = []
+            while index < aii.count:
+                value.append(convertfunc(aii.values[index:]))
+                index += elemsize
+            self.val = value
         elif offset < sf.reference_count * 2:
             self.val = None
         else:
