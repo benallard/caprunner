@@ -138,6 +138,7 @@ class JavaCardVM(object):
         return self.frames.current
 
     def echo(self, string):
+        return # This greatly improve the performances !
         msg = "  " * len(self.frames) + str(string)
         self.log += msg + '\n'
     
