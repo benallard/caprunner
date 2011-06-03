@@ -1,6 +1,6 @@
 import json
 
-from utils import a2d
+from caprunner.utils import a2d
 
 from caprunner.refcollection import refCollection
 from caprunner.interpreter.fields import JavaCardStaticField
@@ -10,8 +10,7 @@ from caprunner.interpreter.classes import PythonClass, JavaCardClass
 def cacheresult(f):
     """
     Caching for the resolver
-    Quick test shown that it is not efficient ... :(
-    Anyway, this is at least necessary for the fields ... That twice the same
+    Anyway, this is at least necessary for the classes ... That twice the same
     request returns the same field.
     """
     __cache = {}
@@ -158,6 +157,15 @@ class linkResolver(object):
     def _resolveExtVirtualMethod(self, aid, cls, token):
         pkg = self.refs[aid]
         (clsname, mtd) = pkg.getVirtualMethod(cls, token)
+        mtdname = mtd['name']
+        if mtdname[0] == '$':
+            # Call every variations of the function the same way
+            mtdname = mtdname[1:mtdname[1:].find('$') + 1]
+        return PythonVirtualMethod(mtdname, mtd['type'])
+
+    def resolveExtInterfaceMethod(self, aid, cls, token):
+        pkg = self.refs[a2d(aid)]
+        (clsname, mtd) = pkg.getInterfaceMethod(cls, token)
         mtdname = mtd['name']
         if mtdname[0] == '$':
             # Call every variations of the function the same way
