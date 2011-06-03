@@ -46,7 +46,6 @@ def process(vm, send, receive):
     vm.log = ""
     global current_channel
     current_channel = send[0] & 0x3
-    print send[:4]
     if selected[current_channel]:
         selected[current_channel]._selectingApplet = False
     if not bool(send[0] & 0x80):
@@ -127,7 +126,10 @@ def select(vm, channel, aid):
     if applet is not None:
         if not deselect(vm, channel):
             return False
-    vm.frame.push(applets[a2d(aid)])
+    try:
+        vm.frame.push(applets[a2d(aid)])
+    except KeyError:
+        return False
     try:
         selectmtd = JavaCardVirtualMethod(applets[a2d(aid)]._ref.offset, 6, False, vm.cap_file, vm.resolver)
     except NoSuchMethod:
