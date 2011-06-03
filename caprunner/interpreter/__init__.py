@@ -189,16 +189,6 @@ class JavaCardVM(object):
 
 # --- I'd like to split the opcodes interpretation from the rest
 
-    def _invokestaticjava(self, method):
-        """
-        The resolver only gave us an empty JavaCardMethod. we first need
-        to fill it with informations from the rest of te CAPFile, then push
-        a new frame on top of the frame stack and we're done
-        """
-        # ouch, what happend to the int parameters ?
-        params = self._popparams(method.nargs)
-        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
-
     def _popparams(self, paramslen):
         """
         Local variables of type int are represented in two 16-bit cells, while 
@@ -216,6 +206,16 @@ class JavaCardVM(object):
         elif rettype != 'void':
             self.frame.push(value)
 
+    def _invokestaticjava(self, method):
+        """
+        The resolver only gave us an empty JavaCardMethod. we first need
+        to fill it with informations from the rest of te CAPFile, then push
+        a new frame on top of the frame stack and we're done
+        """
+        # ouch, what happend to the int parameters ?
+        params = self._popparams(method.nargs)
+        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
+
     def _invokestaticnative(self, method):
         """ method is of type PythonMethod """
         # pop the params
@@ -224,6 +224,71 @@ class JavaCardVM(object):
         ret = method(*params.asArray())
         # push the returnvalue
         self._pushretval(ret, method.retType)
+
+    def invokestatic(self, index):
+        try:
+            method = self.resolver.resolveIndex(index, self.cap_file)
+        except KeyError:
+            # AID not known
+            pass
+        if isinstance(method, PythonStaticMethod):
+            self._invokestaticnative(method)
+        elif isinstance(method, JavaCardStaticMethod):
+            self._invokestaticjava(method)
+
+    def _invokespecialnative(self, method):
+        """ looks like we have to add one paraneter to the list here ... """        
+        params = self._popparams(len(method.params) + 1)
+        # call the method
+        ret = method(*params.asArray())
+        # push the returnvalue
+        self._pushretval(ret, method.retType)
+
+    _invokespecialjava = _invokestaticjava
+
+    def invokespecial(self, index):
+        method = self.resolver.resolveIndex(index, self.cap_file)
+        if isinstance(method, PythonStaticMethod):
+            self._invokespecialnative(method)
+        elif isinstance(method, JavaCardStaticMethod):
+            self._invokespecialjava(method)
+        elif isinstance(method, JavaCardVirtualMethod):
+            self._invokevirtualjava(method)
+        else:
+            raise NotImplementedError
+
+    def _invokevirtualnative(self, method):
+        params = self._popparams(len(method.params))
+        objref = self.frame.pop()
+        if objref is None:
+            raise python.lang.NullPointerException()
+        method.bindToObject(objref)
+        ret = method(*params.asArray())
+        self._pushretval(ret, method.retType)
+
+    def _invokevirtualjava(self, method):
+        # we need to know how many parameters we need to pop before getting objref
+        params = self._popparams(method.nargs)
+        #objref = params.aget(0)
+        #mtd = objref.methods[method.token]
+        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
+
+    def invokevirtual(self, index):
+        method = self.resolver.resolveIndex(index, self.cap_file)
+        if isinstance(method, PythonVirtualMethod):
+            self._invokevirtualnative(method)
+        else:
+            self._invokevirtualjava(method)
+
+    def invokeinterface(self, nargs, index, methodtoken):
+        cst = self.cap_file.ConstantPool.constant_pool[index]
+        aid = self.cap_file.Import.packages[cst.class_ref.package_token].aid
+        clstoken = cst.class_ref.class_token
+        print aid, clstoken, methodtoken
+        method = self.resolver.resolveExtInterfaceMethod(aid,
+                                                          clstoken,
+                                                          methodtoken)
+        self._invokevirtualnative(method)
 
     def aload_0(self):
         self.aload(0)
@@ -475,13 +540,6 @@ class JavaCardVM(object):
     def sspush(self, short):
         self.frame.push(utils.signed2(short))
 
-    def invokestatic(self, index):
-        method = self.resolver.resolveIndex(index, self.cap_file)
-        if isinstance(method, PythonStaticMethod):
-            self._invokestaticnative(method)
-        elif isinstance(method, JavaCardStaticMethod):
-            self._invokestaticjava(method)
-
     def nop(self):
         pass
 
@@ -520,48 +578,6 @@ class JavaCardVM(object):
         self.frame.push(word1)
         self.frame.push(word2)
         self.frame.push(word1)
-
-    def _invokespecialnative(self, method):
-        """ looks like we have to add one paraneter to the list here ... """        
-        params = self._popparams(len(method.params) + 1)
-        # call the method
-        ret = method(*params.asArray())
-        # push the returnvalue
-        self._pushretval(ret, method.retType)
-
-    _invokespecialjava = _invokestaticjava
-
-    def invokespecial(self, index):
-        method = self.resolver.resolveIndex(index, self.cap_file)
-        if isinstance(method, PythonStaticMethod):
-            self._invokespecialnative(method)
-        elif isinstance(method, JavaCardStaticMethod):
-            self._invokespecialjava(method)
-        elif isinstance(method, JavaCardVirtualMethod):
-            self._invokevirtualjava(method)
-        else:
-            raise NotImplementedError
-
-    def _invokevirtualnative(self, method):
-        params = self._popparams(len(method.params))
-        objref = self.frame.pop()
-        method.bindToObject(objref)
-        ret = method(*params.asArray())
-        self._pushretval(ret, method.retType)
-
-    def _invokevirtualjava(self, method):
-        # we need to know how many parameters we need to pop before getting objref
-        params = self._popparams(method.nargs)
-        #objref = params.aget(0)
-        #mtd = objref.methods[method.token]
-        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
-
-    def invokevirtual(self, index):
-        method = self.resolver.resolveIndex(index, self.cap_file)
-        if isinstance(method, PythonVirtualMethod):
-            self._invokevirtualnative(method)
-        else:
-            self._invokevirtualjava(method)
 
     def putfield_s(self, index):
         value = self.frame.pop()
