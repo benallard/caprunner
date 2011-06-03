@@ -47,6 +47,9 @@ class refCollection(object):
             assert not token in self.interfacemethods
             self.interfacemethods[token] = {'name':name, 'type':type}
 
+        def getInterfaceMethod(self, token):
+            return self.interfacemethods[token]
+
         def export(self):
             struct = {}
             struct['token'] = self.token
@@ -154,6 +157,10 @@ class refCollection(object):
 
     def addInterfaceMethod(self, clstoken, token, name, type):
         self.classes[clstoken].addInterfaceMethod(token, name, type)
+
+    def getInterfaceMethod(self, clstoken, token):
+        cls = self.classes[clstoken]
+        return cls.name, cls.getInterfaceMethod(token)
 
     def populate(self, export_file):
         for cls in export_file.classes:
