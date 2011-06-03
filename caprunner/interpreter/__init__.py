@@ -284,7 +284,6 @@ class JavaCardVM(object):
         cst = self.cap_file.ConstantPool.constant_pool[index]
         aid = self.cap_file.Import.packages[cst.class_ref.package_token].aid
         clstoken = cst.class_ref.class_token
-        print aid, clstoken, methodtoken
         method = self.resolver.resolveExtInterfaceMethod(aid,
                                                           clstoken,
                                                           methodtoken)

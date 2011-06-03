@@ -87,3 +87,6 @@ class PythonClass(object):
     """
     def __init__(self, cls):
         self.cls = cls
+
+    def __str__(self):
+        return "<PythonClass: %s>" % str(self.cls)
