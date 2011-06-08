@@ -54,7 +54,12 @@ def process(vm, send, receive):
             aid = send[5:5 + send[4]]
             print "select command : %s" % a2s(aid)
             # select command
-            select(vm, current_channel, aid)
+            if not select(vm, current_channel, aid):
+                buf = d2a('\x69\x99') # Applet selection failed
+                if buf != receive:
+                    print "<== 69 99 (%s)" % a2s(receive)
+                    sys.exit()
+                return
         elif send[1:4] == [112, 0, 0]:
             # open channel
             for idx in xrange(4):
@@ -69,11 +74,12 @@ def process(vm, send, receive):
             print "No more channels"
             sys.exit()
         elif send[1:3] == [112, -128]:
+            # close channel
             if channels[current_channel]:
                 channels[current_channel] = False
                 buf = d2a('\x90\x00')
                 if buf != receive:
-                    print "<== %02X 90 00 (%s)" % (idx, a2s(receive))
+                    print "<== 90 00 (%s)" % a2s(receive)
                     sys.exit()
                 return
             else:
@@ -125,10 +131,12 @@ def select(vm, channel, aid):
     applet = selected[channel]
     if applet is not None:
         if not deselect(vm, channel):
+            print "Cannot deselect previous applet"
             return False
     try:
         potential = applets[a2d(aid)]
     except KeyError:
+        print "Applet with aid %s not found" % a2s(aid)
         return False
     vm.frame.push(potential)
     try:
@@ -148,6 +156,7 @@ def select(vm, channel, aid):
         selected[channel]._selectingApplet = True
         return True
     else:
+        print "select method returned False"
         return False
 
 def install(vm, data, offset):
