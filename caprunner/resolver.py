@@ -1,6 +1,6 @@
 import json
 
-from utils import a2d
+from caprunner.utils import a2d
 
 from caprunner.refcollection import refCollection
 from caprunner.interpreter.fields import JavaCardStaticField
@@ -10,8 +10,7 @@ from caprunner.interpreter.classes import PythonClass, JavaCardClass
 def cacheresult(f):
     """
     Caching for the resolver
-    Quick test shown that it is not efficient ... :(
-    Anyway, this is at least necessary for the fields ... That twice the same
+    Anyway, this is at least necessary for the classes ... That twice the same
     request returns the same field.
     """
     __cache = {}
@@ -36,7 +35,8 @@ class linkResolver(object):
     """
     def __init__(self, version=(3,0,1)):
         # load preprocessed pickle from all the exp files
-        f = open({(3,0,1): '3.0.1.json'}[version])
+        f = open({(2,1,2): '2.1.2.json',
+                  (3,0,1): '3.0.1.json'}[version])
         struct = json.loads(f.read())
         self.refs = {}
         for pkg in struct:
@@ -115,6 +115,9 @@ class linkResolver(object):
             raise
         return PythonStaticMethod(mtdname, mtd['type'], method)
 
+    def resolveInstanceField(self, cst, cap_file):
+        return (cst.class_ref, cst.token)
+
     def resolveStaticField(self, cst, cap_file):
         if cst.isExternal:
             pkg = cap_file.Import.packages[cst.static_field_ref.package_token]
@@ -161,6 +164,27 @@ class linkResolver(object):
             mtdname = mtdname[1:mtdname[1:].find('$') + 1]
         return PythonVirtualMethod(mtdname, mtd['type'])
 
+    def resolveExtInterfaceMethod(self, aid, cls, token):
+        pkg = self.refs[a2d(aid)]
+        (clsname, mtd) = pkg.getInterfaceMethod(cls, token)
+        mtdname = mtd['name']
+        if mtdname[0] == '$':
+            # Call every variations of the function the same way
+            mtdname = mtdname[1:mtdname[1:].find('$') + 1]
+        return PythonVirtualMethod(mtdname, mtd['type'])
+
+    def resolveSuperMethod(self, cst, cap_file):
+        if cst.isExternal:
+            # unlikely to happen ...
+            raise NotImplementedError("super call from python")
+        else:
+            cls = self.resolveClass(cst, cap_file)
+            if not isinstance(cls.super, JavaCardClass):
+                # also unlikely to happen ...
+                raise NotImplementedError("super call going into python")
+            class_ref = cls.super.class_descriptor_info.this_class_ref.class_ref
+            return JavaCardVirtualMethod(class_ref, cst.token, cst.isPrivate, cap_file, self)
+
     @cacheresult
     def resolveIndex(self, index, cap_file):
         """
@@ -170,12 +194,11 @@ class linkResolver(object):
         if cst.tag == 1: # class
             return self.resolveClass(cst, cap_file)
         elif cst.tag == 2: # instance fields
-            return cst.token
+            return self.resolveInstanceField(cst, cap_file)
         elif cst.tag == 3: # virtual method
             return self.resolveVirtualMethod(cst, cap_file)
         elif cst.tag == 4:
-            raise NotImplementedError
-            pass # super method
+            return self.resolveSuperMethod(cst, cap_file)
         elif cst.tag == 5: # static field
             return self.resolveStaticField(cst, cap_file)
         elif cst.tag == 6: # static method

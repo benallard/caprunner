@@ -1,3 +1,5 @@
+from caprunner import utils
+
 opnamepar = {
     # code: (mnemonic, parameter_length, parameter_sizes)
     36: ("aaload", 0, ()),
@@ -221,8 +223,8 @@ def getParams(data):
             params.append((u4(data[ofs:]), u2(data[ofs+4:]), ))
             ofs += 6
     elif code == opcode["itableswitch"]:
-        lowbytes = params[1]
-        highbytes = prams[2]
+        lowbytes = utils.signed4(params[1])
+        highbytes = utils.signed4(params[2])
         for i in xrange(highbytes - lowbytes):
             params.append(u2(data[ofs:]))
             ofs += 2
@@ -232,9 +234,9 @@ def getParams(data):
             params.append((u2(data[ofs:]), u2(data[ofs+2:]), ))
             ofs += 4
     elif code == opcode["stableswitch"]:
-        lowbytes = params[1]
-        highbytes = prams[2]
-        for i in xrange(highbytes - lowbytes):
+        lowbytes = utils.signed2(params[1])
+        highbytes = utils.signed2(params[2])
+        for i in xrange(highbytes - lowbytes + 1):
             params.append(u2(data[ofs:]))
             ofs += 2
     return ofs, params
@@ -245,15 +247,15 @@ def getPar(data):
         npairs = u2(data[3:5])
         return npairs*6 + 4
     elif code == opcode["itableswitch"]:
-        lowbytes = u4(data[3:7])
-        highbytes = u4(data[7:11])
+        lowbytes = utils.signed2(u4(data[3:7]))
+        highbytes = utils.signed4(u4(data[7:11]))
         return (highbytes - lowbytes + 1)*2 + 10
     elif code == opcode["slookupswitch"]:
         npairs = u2(data[3:5])
         return npairs*4 + 4
     elif code == opcode["stableswitch"]:
-        lowbytes = u2(data[3:5])
-        highbytes = u2(data[5:7])
+        lowbytes = utils.signed2(u2(data[3:5]))
+        highbytes = utils.signed2(u2(data[5:7]))
         return (highbytes - lowbytes + 1)*2 + 6
     else:
         return oppar[code]

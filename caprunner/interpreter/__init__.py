@@ -2,7 +2,7 @@ import python.lang
 
 from caprunner import bytecode, utils
 
-from caprunner.interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod
+from caprunner.interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
 
 class JavaCardStack(list):
     """
@@ -122,6 +122,7 @@ class JavaCardVM(object):
         # Stack of frames
         self.frames = JavaCardFrames()
         self.cap_file = None
+        self.log = ""
 
     def load(self, cap_file):
         """
@@ -136,6 +137,11 @@ class JavaCardVM(object):
         """ current frame """
         return self.frames.current
 
+    def echo(self, string):
+        return # This greatly improve the performances !
+        msg = "  " * len(self.frames) + str(string)
+        self.log += msg + '\n'
+    
     def step(self):
         code = self.frame.bytecodes[self.frame.ip:]
         # get the function
@@ -145,28 +151,27 @@ class JavaCardVM(object):
         # execute the function
         frame = self.frame
         inc = None
-        print bytecode.opname[code[0]], params
-        print frame.stack
-        print frame.ip
-        #print frame.locals
+        self.echo("%s %s" % (bytecode.opname[code[0]], params))
+        self.echo(frame.stack)
+        #self.echo(frame.locals)
         try:
             inc = f(*params)
         except Exception, e:
-            print "caught exception: ", type(e)
+            self.echo("caught exception: %s" % type(e))
             while not isinstance(self.frame, DummyFrame):
                 for handler in self.frame.handlers:
                     if self.frame.ip in handler:
                         if handler.match(e):
-                            print "exception handled: ip = ", handler.handler_offs
+                            self.echo("exception handled: ip = ", handler.handler_offs)
                             self.frame.ip = handler.handler_offs
                             self.frame.push(e)
                             return
                         if handler.last:
                             break
-                print "%d local handlers exhausted poping frame" % len(self.frame.handlers)
+                self.echo("%d local handlers exhausted poping frame" % len(self.frame.handlers))
                 self.frames.pop()
             # not handled, re-raise
-            print "exception not handled, re-raising"
+            self.echo("exception not handled, re-raising")
             raise
                     
         # if we are done
@@ -183,16 +188,6 @@ class JavaCardVM(object):
         return self.frame.getValue()
 
 # --- I'd like to split the opcodes interpretation from the rest
-
-    def _invokestaticjava(self, method):
-        """
-        The resolver only gave us an empty JavaCardMethod. we first need
-        to fill it with informations from the rest of te CAPFile, then push
-        a new frame on top of the frame stack and we're done
-        """
-        # ouch, what happend to the int parameters ?
-        params = self._popparams(method.nargs)
-        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
 
     def _popparams(self, paramslen):
         """
@@ -211,6 +206,16 @@ class JavaCardVM(object):
         elif rettype != 'void':
             self.frame.push(value)
 
+    def _invokestaticjava(self, method):
+        """
+        The resolver only gave us an empty JavaCardMethod. we first need
+        to fill it with informations from the rest of te CAPFile, then push
+        a new frame on top of the frame stack and we're done
+        """
+        # ouch, what happend to the int parameters ?
+        params = self._popparams(method.nargs)
+        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
+
     def _invokestaticnative(self, method):
         """ method is of type PythonMethod """
         # pop the params
@@ -219,6 +224,70 @@ class JavaCardVM(object):
         ret = method(*params.asArray())
         # push the returnvalue
         self._pushretval(ret, method.retType)
+
+    def invokestatic(self, index):
+        try:
+            method = self.resolver.resolveIndex(index, self.cap_file)
+        except KeyError:
+            # AID not known
+            pass
+        if isinstance(method, PythonStaticMethod):
+            self._invokestaticnative(method)
+        elif isinstance(method, JavaCardStaticMethod):
+            self._invokestaticjava(method)
+
+    def _invokespecialnative(self, method):
+        """ looks like we have to add one paraneter to the list here ... """        
+        params = self._popparams(len(method.params) + 1)
+        # call the method
+        ret = method(*params.asArray())
+        # push the returnvalue
+        self._pushretval(ret, method.retType)
+
+    _invokespecialjava = _invokestaticjava
+
+    def invokespecial(self, index):
+        method = self.resolver.resolveIndex(index, self.cap_file)
+        if isinstance(method, PythonStaticMethod):
+            self._invokespecialnative(method)
+        elif isinstance(method, JavaCardStaticMethod):
+            self._invokespecialjava(method)
+        elif isinstance(method, JavaCardVirtualMethod):
+            self._invokevirtualjava(method)
+        else:
+            raise NotImplementedError
+
+    def _invokevirtualnative(self, method):
+        params = self._popparams(len(method.params))
+        objref = self.frame.pop()
+        if objref is None:
+            raise python.lang.NullPointerException()
+        method.bindToObject(objref)
+        ret = method(*params.asArray())
+        self._pushretval(ret, method.retType)
+
+    def _invokevirtualjava(self, method):
+        # we need to know how many parameters we need to pop before getting objref
+        params = self._popparams(method.nargs)
+        #objref = params.aget(0)
+        #mtd = objref.methods[method.token]
+        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
+
+    def invokevirtual(self, index):
+        method = self.resolver.resolveIndex(index, self.cap_file)
+        if isinstance(method, PythonVirtualMethod):
+            self._invokevirtualnative(method)
+        else:
+            self._invokevirtualjava(method)
+
+    def invokeinterface(self, nargs, index, methodtoken):
+        cst = self.cap_file.ConstantPool.constant_pool[index]
+        aid = self.cap_file.Import.packages[cst.class_ref.package_token].aid
+        clstoken = cst.class_ref.class_token
+        method = self.resolver.resolveExtInterfaceMethod(aid,
+                                                          clstoken,
+                                                          methodtoken)
+        self._invokevirtualnative(method)
 
     def aload_0(self):
         self.aload(0)
@@ -256,6 +325,7 @@ class JavaCardVM(object):
         self.frame.push(value)
 
     saload = baload
+    aaload = baload
 
     def sconst_m1(self):
         self._sconst(-1)
@@ -346,6 +416,28 @@ class JavaCardVM(object):
         if val is not None:
             return utils.signed1(branch)
 
+    def _ifxx_w(self, branch, op):
+        val = self.frame.pop()
+        if {'eq': val == 0,
+            'ne': val != 0,
+            'lt': val < 0,
+            'le': val <= 0,
+            'gt': val > 0,
+            'ge': val >= 0}[op]:
+            return utils.signed2(branch)
+    def ifeq_w(self, branch):
+        return self._ifxx_w(branch, 'eq')
+    def ifne_w(self, branch):
+        return self._ifxx_w(branch, 'ne')
+    def iflt_w(self, branch):
+        return self._ifxx_w(branch, 'lt')
+    def ifle_w(self, branch):
+        return self._ifxx_w(branch, 'le')
+    def ifgt_w(self, branch):
+        return self._ifxx_w(branch, 'gt')
+    def ifge_w(self, branch):
+        return self._ifxx_w(branch, 'ge')
+
     def ifnull_w(self, branch):
         val = self.frame.pop()
         if val is None:
@@ -375,8 +467,35 @@ class JavaCardVM(object):
     def if_scmpge(self, branch):
         return self._if_scmpxx(branch, 'ge')
 
+    def _if_scmpxx_w(self, branch, op):
+        val2 = self.frame.pop()
+        val1 = self.frame.pop()
+        if {'eq': val1 == val2,
+            'ne': val1 != val2,
+            'lt': val1 < val2,
+            'le': val1 <= val2,
+            'gt': val1 > val2,
+            'ge': val1 >= val2}[op]:
+            return utils.signed2(branch)
+
+    def if_scmpeq_w(self, branch):
+        return self._if_scmpxx_w(branch, 'eq')
+    def if_scmpne_w(self, branch):
+        return self._if_scmpxx_w(branch, 'ne')
+    def if_scmplt_w(self, branch):
+        return self._if_scmpxx_w(branch, 'lt')
+    def if_scmple_w(self, branch):
+        return self._if_scmpxx_w(branch, 'le')
+    def if_scmpgt_w(self, branch):
+        return self._if_scmpxx_w(branch, 'gt')
+    def if_scmpge_w(self, branch):
+        return self._if_scmpxx_w(branch, 'ge')
+
     def goto(self, branch):
         return utils.signed1(branch)
+
+    def goto_w(self, branch):
+        return utils.signed2(branch)
 
     def sstore_0(self):
         self.sstore(0)
@@ -420,13 +539,6 @@ class JavaCardVM(object):
     def sspush(self, short):
         self.frame.push(utils.signed2(short))
 
-    def invokestatic(self, index):
-        method = self.resolver.resolveIndex(index, self.cap_file)
-        if isinstance(method, PythonStaticMethod):
-            self._invokestaticnative(method)
-        elif isinstance(method, JavaCardStaticMethod):
-            self._invokestaticjava(method)
-
     def nop(self):
         pass
 
@@ -458,56 +570,22 @@ class JavaCardVM(object):
         self.frame.push(value)
         self.frame.push(value)
 
-    def _invokespecialnative(self, method):
-        """ looks like we have to add one paraneter to the list here ... """        
-        params = self._popparams(len(method.params) + 1)
-        # call the method
-        ret = method(*params.asArray())
-        # push the returnvalue
-        self._pushretval(ret, method.retType)
+    def dup2(self):
+        word1 = self.frame.pop()
+        word2 = self.frame.pop()
+        self.frame.push(word2)
+        self.frame.push(word1)
+        self.frame.push(word2)
+        self.frame.push(word1)
 
-    _invokespecialjava = _invokestaticjava
-
-    def invokespecial(self, index):
-        method = self.resolver.resolveIndex(index, self.cap_file)
-        if isinstance(method, PythonStaticMethod):
-            self._invokespecialnative(method)
-        elif isinstance(method, JavaCardStaticMethod):
-            self._invokespecialjava(method)
-
-    def _invokevirtualnative(self, method):
-        params = self._popparams(len(method.params))
-        objref = self.frame.pop()
-        method.bindToObject(objref)
-        ret = method(*params.asArray())
-        self._pushretval(ret, method.retType)
-
-    def _invokevirtualjava(self, method):
-        # we need to know how many parameters we need to pop before getting objref
-        params = self._popparams(method.nargs)
-        #objref = params.aget(0)
-        #mtd = objref.methods[method.token]
-        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
-
-    def invokevirtual(self, index):
-        method = self.resolver.resolveIndex(index, self.cap_file)
-        if isinstance(method, PythonVirtualMethod):
-            self._invokevirtualnative(method)
-        else:
-            self._invokevirtualjava(method)
-
-    def putfield_b(self, index):
-        value = bool(self.frame.pop())
-        objref = self.frame.pop()
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        objref.setFieldAt(token, value)
     def putfield_s(self, index):
         value = self.frame.pop()
         objref = self.frame.pop()
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        objref.setFieldAt(token, value)
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        objref.setFieldAt(clsref, token, value)
 
     putfield_a = putfield_s
+    putfield_b = putfield_s
 
     def putstatic_a(self, index):
         value = self.frame.pop()
@@ -515,30 +593,32 @@ class JavaCardVM(object):
         field.set(value)
 
     def getfield_b_this(self, index):
+        ''' b is for byte, not boolean'''
         objref = self.frame.aget(0)
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(bool(objref.getFieldAt(token)))
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token))
 
     def getfield_s_this(self, index):
         objref = self.frame.aget(0)
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token) or 0)
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token) or 0)
 
     def getfield_a_this(self, index):
         objref = self.frame.aget(0)
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token) or None)
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token) or None)
 
     def getfield_a(self, index):
         objref = self.frame.pop()
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token) or None)
-
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token) or None)
 
     def getfield_s(self, index):
         objref = self.frame.pop()
-        token = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(token) or 0)
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(objref.getFieldAt(clsref, token) or 0)
+
+    getfield_b = getfield_s
 
     def getstatic_a(self, index):
         field = self.resolver.resolveIndex(index, self.cap_file)
@@ -561,6 +641,13 @@ class JavaCardVM(object):
                 return utils.signed2(default)
         return utils.signed2(default)
 
+    def stableswitch(self, default, low, high, *offsets):
+        index = self.frame.pop()
+        try:
+            return utils.signed2(offsets[index - low])
+        except IndexError:
+            return utils.signed2(default)
+
     def sshr(self):
         value2 = self.frame.pop()
         value1 = self.frame.pop()
@@ -582,3 +669,29 @@ class JavaCardVM(object):
         value2 = self.frame.pop()
         value1 = self.frame.pop()
         self.frame.push(value1 | value2)
+
+    def sxor(self):
+        value2 = self.frame.pop()
+        value1 = self.frame.pop()
+        self.frame.push(value1 ^ value2)
+
+    def checkcast(self, atype, index):
+        objectref = self.frame.pop()
+        self.frame.push(objectref)
+        # First determine type to check against
+        types = {10: bool, 11: int, 12: int, 13: int}
+        if atype in types:
+            type = types[atype]
+        else:
+            type = self.resolver.resolveIndex(index, self.cap_file).cls
+        # Then check it ...
+        if atype == 14:
+            if not isinstance(objectref, list):
+                raise python.lang.ClassCastException
+            for elem in objectref:
+                if not isinstance(elem, list):
+                    raise python.lang.ClassCastException
+        else:
+            if not isinstance(objectref, type):
+                raise python.lang.ClassCastException
+            
