@@ -89,11 +89,16 @@ def process(vm, send, receive):
             else:
                 print "Channel %d not opened" % send[3]
                 sys.exit()
+    applet = selected[current_channel]
+    if applet is None:
+        # No applet selected on current channel.
+        # We don't understand the current INS
+        _checkreceive(d2a('\x6D\x00'), receive)
+        return
 
     # Make an APDU object
     apdu = APDU(send)
     # pass to the process method
-    applet = selected[current_channel]
     vm.frame.push(applet)
     vm.frame.push(apdu)
     # invoke the process method
