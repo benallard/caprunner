@@ -127,13 +127,14 @@ def select(vm, channel, aid):
         if not deselect(vm, channel):
             return False
     try:
-        vm.frame.push(applets[a2d(aid)])
+        potential = applets[a2d(aid)]
     except KeyError:
         return False
+    vm.frame.push(potential)
     try:
-        selectmtd = JavaCardVirtualMethod(applets[a2d(aid)]._ref.offset, 6, False, vm.cap_file, vm.resolver)
+        selectmtd = JavaCardVirtualMethod(potential._ref.offset, 6, False, vm.cap_file, vm.resolver)
     except NoSuchMethod:
-        selected[channel] = applets[a2d(aid)]
+        selected[channel] = potential
         selected[channel]._selectingApplet = True
         return True
     vm._invokevirtualjava(selectmtd)
@@ -143,7 +144,7 @@ def select(vm, channel, aid):
     except ExecutionDone:
         pass
     if vm.frame.getValue() == True:
-        selected[channel] = applets[a2d(aid)]
+        selected[channel] = potential
         selected[channel]._selectingApplet = True
         return True
     else:
