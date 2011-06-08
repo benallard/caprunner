@@ -133,7 +133,9 @@ def select(vm, channel, aid):
     try:
         selectmtd = JavaCardVirtualMethod(applets[a2d(aid)]._ref.offset, 6, False, vm.cap_file, vm.resolver)
     except NoSuchMethod:
-        return
+        selected[channel] = applets[a2d(aid)]
+        selected[channel]._selectingApplet = True
+        return True
     vm._invokevirtualjava(selectmtd)
     try:
         while True:
