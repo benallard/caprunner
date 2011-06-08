@@ -53,7 +53,7 @@ class Header(Component):
         def __init__(self, data):
             self.data = data
             self.name_length = u1(data[:1])
-            self.name = u1a(name_length, data[1:])
+            self.name = u1a(self.name_length, data[1:])
         def __str__(self):
             return ''.join([chr(c) for c in self.name])
 
@@ -467,7 +467,7 @@ class Class(Component):
             self.signature_pool_length = u2(self.data[3:5])
             shift += 2
             self.signature_pool = []
-            for i in xrange(signature_pool_length):
+            for i in xrange(self.signature_pool_length):
                 typ_descr = TypeDescriptor(self.data[shift:])
                 self.signature_pool.append(typ_descr)
                 shift += typ_descr.size
