@@ -181,8 +181,8 @@ def install(vm, data, offset):
         pass
     current_install_aid = None
 
-def main():
-    vm = JavaCardVM(resolver.linkResolver())
+def main(jcversion = (3,0,1)):
+    vm = JavaCardVM(resolver.linkResolver(jcversion))
 
     send = []
     receive = []
@@ -210,4 +210,10 @@ def main():
             print line
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) > 1:
+        version = tuple([int(i) for i in sys.argv[1].split('.')])
+        print "Running in version %s.%s.%s" % version
+        main(version)
+    else:
+        main()
