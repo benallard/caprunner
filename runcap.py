@@ -42,7 +42,15 @@ def mygetAssignedChannel():
     
 JCSystem.getAssignedChannel = mygetAssignedChannel
 
+def _checkreceive(expected, received):
+    print "<== %s" % a2s(received)
+    if expected != received:
+        print "<== %s was expected" % a2s(expected)
+        print vm.log
+        sys.exit()    
+
 def process(vm, send, receive):
+    print "==> %s" % a2s(send)
     vm.log = ""
     global current_channel
     current_channel = send[0] & 0x3
@@ -55,10 +63,8 @@ def process(vm, send, receive):
             print "select command : %s" % a2s(aid)
             # select command
             if not select(vm, current_channel, aid):
-                buf = d2a('\x69\x99') # Applet selection failed
-                if buf != receive:
-                    print "<== 69 99 (%s)" % a2s(receive)
-                    sys.exit()
+                # Applet selection failed
+                _checkreceive(d2a('\x69\x99'), receive)
                 return
         elif send[1:4] == [112, 0, 0]:
             # open channel
@@ -67,9 +73,7 @@ def process(vm, send, receive):
                     channels[idx] = True
                     buf = [idx]
                     buf.extend(d2a('\x90\x00'))
-                    if buf != receive:
-                        print "<== %02X 90 00 (%s)" % (idx, a2s(receive))
-                        sys.exit()
+                    _checkreceive(buf, receive)
                     return
             print "No more channels"
             sys.exit()
@@ -77,16 +81,12 @@ def process(vm, send, receive):
             # close channel
             if channels[current_channel]:
                 channels[current_channel] = False
-                buf = d2a('\x90\x00')
-                if buf != receive:
-                    print "<== 90 00 (%s)" % a2s(receive)
-                    sys.exit()
+                _checkreceive(d2a('\x90\x00'), receive)
                 return
             else:
                 print "Channel %d not opened" % send[3]
                 sys.exit()
 
-    print "==> %s" % a2s(send)
     # Make an APDU object
     apdu = APDU(send)
     # pass to the process method
@@ -108,13 +108,7 @@ def process(vm, send, receive):
     if not isoE:
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
         buf.extend(d2a('\x90\x00'))
-    print "<== %s" % a2s(buf)
-    if buf != receive:
-        print "<== %s was expected" % a2s(receive)
-        print vm.log
-        print buf
-        print receive
-        sys.exit()
+    _checkreceive(receive, buf)
 
 def deselect(vm, channel):
     applet = selected[channel]
