@@ -406,7 +406,7 @@ class Class(Component):
                 self.remote_method_count = u1(data[:1])
                 self.remote_methods = []
                 shift = 1
-                for i in xrange(self.remote_methode_count):
+                for i in xrange(self.remote_method_count):
                     self.remote_methods.append(self.RemoteMethodInfo(data[shift:]))
                     shift += self.RemoteMethodInfo.size
                 self.hash_modifier_length = u1(data[shift:])
@@ -467,7 +467,7 @@ class Class(Component):
             self.signature_pool_length = u2(self.data[3:5])
             shift += 2
             self.signature_pool = []
-            for i in xrange(self.signature_pool_length):
+            while shift < self.signature_pool_length + 2:
                 typ_descr = TypeDescriptor(self.data[shift:])
                 self.signature_pool.append(typ_descr)
                 shift += typ_descr.size
