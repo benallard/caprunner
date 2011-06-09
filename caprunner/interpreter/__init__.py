@@ -370,7 +370,7 @@ class JavaCardVM(object):
 
     def s2b(self):
         val = self.frame.pop()
-        self.frame.push(val & 0xff)
+        self.frame.push(utils.signed1(val & 0xff))
 
     def sreturn(self):
         val = self.frame.pop()
