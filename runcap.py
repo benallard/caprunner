@@ -46,7 +46,7 @@ def mygetAssignedChannel():
     
 JCSystem.getAssignedChannel = mygetAssignedChannel
 
-def _checkreceive(expected, received):
+def _checkreceive(vm, expected, received):
     print "<== %s" % a2s(received)
     if expected != received:
         print "<== %s was expected" % a2s(expected)
@@ -67,7 +67,7 @@ def process(vm, send, receive):
             # select command
             if not select(vm, current_channel, aid):
                 # Applet selection failed
-                _checkreceive(d2a('\x69\x99'), receive)
+                _checkreceive(vm, d2a('\x69\x99'), receive)
                 return
         elif send[1:4] == [112, 0, 0]:
             # open channel
@@ -76,7 +76,7 @@ def process(vm, send, receive):
                     channels[idx] = True
                     buf = [idx]
                     buf.extend(d2a('\x90\x00'))
-                    _checkreceive(buf, receive)
+                    _checkreceive(vm, buf, receive)
                     return
             print "No more channels"
             sys.exit()
@@ -94,7 +94,7 @@ def process(vm, send, receive):
     if applet is None:
         # No applet selected on current channel.
         # We don't understand the current INS
-        _checkreceive(d2a('\x6D\x00'), receive)
+        _checkreceive(vm, d2a('\x6D\x00'), receive)
         return
 
     # Make an APDU object
@@ -117,7 +117,7 @@ def process(vm, send, receive):
     if not isoE:
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
         buf.extend(d2a('\x90\x00'))
-    _checkreceive(receive, buf)
+    _checkreceive(vm, receive, buf)
 
 def deselect(vm, channel):
     applet = selected[channel]
