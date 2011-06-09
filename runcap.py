@@ -82,9 +82,10 @@ def process(vm, send, receive):
             sys.exit()
         elif send[1:3] == [112, -128]:
             # close channel
-            if channels[current_channel]:
-                channels[current_channel] = False
-                _checkreceive(d2a('\x90\x00'), receive)
+            idx = send[3]
+            if channels[idx]:
+                channels[idx] = False
+                _checkreceive(vm, d2a('\x90\x00'), receive)
                 return
             else:
                 print "Channel %d not opened" % send[3]
