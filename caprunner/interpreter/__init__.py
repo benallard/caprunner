@@ -637,8 +637,8 @@ class JavaCardVM(object):
         n = (mn & 0x0f)
         opsm = [self.frame.pop() for i in xrange(m)]
         opsn = [self.frame.pop() for i in xrange(n)]
-        self.frame.stack.extend(reversed(opsn))
         self.frame.stack.extend(reversed(opsm))
+        self.frame.stack.extend(reversed(opsn))
 
     def putfield_s(self, index):
         value = self.frame.pop()
