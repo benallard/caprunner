@@ -27,3 +27,16 @@ class TestOpcodes(unittest.TestCase):
         self._teststack('dup_x', [0x48], [0,1,2,3,4,5,6,7,8], [0,5,6,7,8,1,2,3,4,5,6,7,8])
         self._teststack('dup_x', [0x30], [0,1,2,3,4,5,6,7,8], [0,1,2,3,4,5,6,7,8,6,7,8])
 
+    def test_arraylength(self):
+        self._teststack('arraylength', [], [[1,2,3,4,5,6,7,8]], [8])
+        self._teststack('arraylength', [], [[i for i in xrange(765)]], [765])
+
+    def test_s2b(self):
+        bytes = xrange(-128, 127)
+        for i in bytes:
+            self._teststack('s2b', [], [i], [i])
+
+        outbytes = [(0xffff,-1), (0x100,0), (0xfff,-1)]
+        for i,j in outbytes:
+            self._teststack('s2b', [], [i], [j])
+

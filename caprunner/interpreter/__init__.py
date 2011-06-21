@@ -162,7 +162,7 @@ class JavaCardVM(object):
                 for handler in self.frame.handlers:
                     if self.frame.ip in handler:
                         if handler.match(e):
-                            self.echo("exception handled: ip = ", handler.handler_offs)
+                            self.echo("exception handled: ip = %d" % handler.handler_offs)
                             self.frame.ip = handler.handler_offs
                             self.frame.push(e)
                             return
