@@ -530,6 +530,13 @@ class JavaCardVM(object):
     def goto_w(self, branch):
         return utils.signed2(branch)
 
+    def jsr(self, branch):
+        self.frame.push(self.frame.ip+3)# jsr-branch1-branch2 = 3
+        return utils.signed2(branch)
+
+    def ret(self, index):
+        return self.frame.locals[index] - self.frame.ip
+
     def sstore_0(self):
         self.sstore(0)
     def sstore_1(self):
