@@ -1,5 +1,6 @@
 import unittest
 
+import python
 from caprunner.interpreter import JavaCardVM
 
 class TestOpcodes(unittest.TestCase):
@@ -40,3 +41,21 @@ class TestOpcodes(unittest.TestCase):
         for i,j in outbytes:
             self._teststack('s2b', [], [i], [j])
 
+    def test_baload(self):
+        array = [i for i in xrange(10)]
+        self._teststack('baload', [], [array, 6], [6])
+        try:
+            self._teststack('baload', [], [array, 12], [6])
+            self.fail()
+        except python.lang.ArrayIndexOutOfBoundsException:
+            pass
+        try:
+            self._teststack('baload', [], [array, -2], [6])
+            self.fail()
+        except python.lang.ArrayIndexOutOfBoundsException:
+            pass
+        try:
+            self._teststack('baload', [], [None,6], [6])
+            self.fail()
+        except python.lang.NullPointerException:
+            pass
