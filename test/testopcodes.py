@@ -10,7 +10,17 @@ class TestOpcodes(unittest.TestCase):
         vm.frame.stack = init
         f = getattr(vm, opcode)
         f(*params)
-        self.assertEquals(vm.frame.stack, expected)
+        self.assertEquals(expected, vm.frame.stack)
+
+    def _testBranch(self, opcode, params, stack, expectedIP):
+        vm = JavaCardVM(None)
+        vm.frame.stack = stack
+        f = getattr(vm, opcode)
+        offset = f(*params)
+        if offset is None:
+            offset = 0
+        self.assertEquals(expectedIP, offset)
+        
 
     def test_swap_x(self):
         self._teststack('swap_x', [0x11], [0,1,2,3,4,5,6,7,8], [0,1,2,3,4,5,6,8,7])
@@ -59,3 +69,8 @@ class TestOpcodes(unittest.TestCase):
             self.fail()
         except python.lang.NullPointerException:
             pass
+
+    def test_ifnonnull_w(self):
+        self._testBranch('ifnonnull_w', [0x5], [None], 0)
+        self._testBranch('ifnonnull_w', [0x5], [self], 5)
+        self._testBranch('ifnonnull_w', [0xffff], [self], -1)
