@@ -691,6 +691,12 @@ class JavaCardVM(object):
         field = self.resolver.resolveIndex(index, self.cap_file)
         self.frame.push(field.get() or None)
 
+    def getstatic_b(self, index):
+        ''' b is byte or boolean '''
+        field = self.resolver.resolveIndex(index, self.cap_file)
+        self.frame.push(field.get() or 0) # boolean of 0 is False ...
+        
+
     def returnn(self):
         self.frames.pop()
 
@@ -774,4 +780,10 @@ class JavaCardVM(object):
         else:
             if not isinstance(objectref, type):
                 raise python.lang.ClassCastException
+            
+    def athrow(self):
+        objectref = self.frame.pop()
+        if objectref is None:
+            raise python.lang.NullPointerException()
+        raise objectref
             

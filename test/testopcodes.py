@@ -1,6 +1,6 @@
 import unittest
 
-import python
+import python, pythoncard
 from caprunner.interpreter import JavaCardVM
 
 class TestOpcodes(unittest.TestCase):
@@ -20,6 +20,12 @@ class TestOpcodes(unittest.TestCase):
         if offset is None:
             offset = 0
         self.assertEquals(expectedIP, offset)
+
+    def _testRun(self, opcode, params, stack):
+        vm = JavaCardVM(None)
+        vm.frame.stack = stack
+        f = getattr(vm, opcode)
+        f(*params)
         
 
     def test_swap_x(self):
@@ -74,3 +80,19 @@ class TestOpcodes(unittest.TestCase):
         self._testBranch('ifnonnull_w', [0x5], [None], 0)
         self._testBranch('ifnonnull_w', [0x5], [self], 5)
         self._testBranch('ifnonnull_w', [0xffff], [self], -1)
+
+    def test_athrow(self):
+        try:
+            self._testRun('athrow', [], [None])
+            self.fail()
+        except python.lang.NullPointerException:
+            pass
+
+        class MyException(pythoncard.framework.CardRuntimeException): pass
+        
+        try:
+            self._testRun('athrow', [], [MyException(5)])
+            self.fail()
+        except MyException, e:
+            self.assertEqual(5, e.getReason())
+    
