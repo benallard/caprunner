@@ -443,6 +443,11 @@ class JavaCardVM(object):
         if val is None:
             return utils.signed2(branch)
 
+    def ifnonnull_w(self, branch):
+        val = self.frame.pop()
+        if val is not None:
+            return utils.signed2(branch)
+
     def _if_scmpxx(self, branch, op):
         val2 = self.frame.pop()
         val1 = self.frame.pop()
