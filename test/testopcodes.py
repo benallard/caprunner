@@ -1,7 +1,7 @@
 import unittest
 
 import python, pythoncard
-from caprunner.interpreter import JavaCardVM
+from caprunner.interpreter import JavaCardVM, JavaCardLocals
 
 class TestOpcodes(unittest.TestCase):
 
@@ -21,12 +21,21 @@ class TestOpcodes(unittest.TestCase):
             offset = 0
         self.assertEquals(expectedIP, offset)
 
+    def _testLocals(self, opcode, params, init, expected):
+        vm = JavaCardVM(None)
+        vm.frame.locals = JavaCardLocals()
+        for index in init:
+            vm.frame.locals[index] = init[index]
+        f = getattr(vm, opcode)
+        f(*params)
+        for index in expected:
+            self.assertEquals(expected[index], vm.frame.locals[index])
+
     def _testRun(self, opcode, params, stack):
         vm = JavaCardVM(None)
         vm.frame.stack = stack
         f = getattr(vm, opcode)
         f(*params)
-        
 
     def test_swap_x(self):
         self._teststack('swap_x', [0x11], [0,1,2,3,4,5,6,7,8], [0,1,2,3,4,5,6,8,7])
@@ -96,3 +105,7 @@ class TestOpcodes(unittest.TestCase):
         except MyException, e:
             self.assertEqual(5, e.getReason())
     
+    def test_sinc_w(self):
+        self._testLocals('sinc_w', [2, 0x5], {2 : 8}, {2 : 13})
+        self._testLocals('sinc_w', [2, 0xffff], {2 : 8}, {2 : 7})
+        

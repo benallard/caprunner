@@ -580,6 +580,8 @@ class JavaCardVM(object):
     def sinc(self, index, const):
         self.frame.locals[index] += utils.signed1(const)
         
+    def sinc_w(self, index, byte):
+        self.frame.locals[index] += utils.signed2(byte)
 
     def sspush(self, short):
         self.frame.push(utils.signed2(short))
@@ -654,10 +656,26 @@ class JavaCardVM(object):
     putfield_a = putfield_s
     putfield_b = putfield_s
 
+    putfield_a_w = putfield_a
+    putfield_s_w = putfield_s
+    putfield_b_w = putfield_b
+
+    def putfield_s_this(self, index):
+        value = self.frame.pop()
+        objref = self.frame.aget(0)
+        (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
+        objref.setFieldAt(clsref, token, value)
+
+    putfield_a_this = putfield_s_this
+    putfield_b_this = putfield_s_this
+
     def putstatic_a(self, index):
         value = self.frame.pop()
         field = self.resolver.resolveIndex(index, self.cap_file)
         field.set(value)
+
+    putstatic_b = putstatic_a
+    putstatic_s = putstatic_a
 
     def getfield_b_this(self, index):
         ''' b is for byte, not boolean'''
@@ -687,6 +705,11 @@ class JavaCardVM(object):
 
     getfield_b = getfield_s
 
+    # index is anyway an unsigned
+    getfield_a_w = getfield_a
+    getfield_b_w = getfield_b
+    getfield_s_w = getfield_s
+
     def getstatic_a(self, index):
         field = self.resolver.resolveIndex(index, self.cap_file)
         self.frame.push(field.get() or None)
@@ -696,6 +719,7 @@ class JavaCardVM(object):
         field = self.resolver.resolveIndex(index, self.cap_file)
         self.frame.push(field.get() or 0) # boolean of 0 is False ...
         
+    getstatic_s = getstatic_b
 
     def returnn(self):
         self.frames.pop()
@@ -780,6 +804,30 @@ class JavaCardVM(object):
         else:
             if not isinstance(objectref, type):
                 raise python.lang.ClassCastException
+
+    def instanceof(self, atype, index):
+        objectref = self.frame.pop()
+        # First determine type to check against
+        types = {10: bool, 11: int, 12: int, 13: int}
+        if atype in types:
+            type = types[atype]
+        else:
+            type = self.resolver.resolveIndex(index, self.cap_file).cls
+        # Then check it ...
+        if atype == 14:
+            if not isinstance(objectref, list):
+                self.frame.push(0)
+                return
+            for elem in objectref:
+                if not isinstance(elem, list):
+                    self.frame.push(0)
+                    return
+            self.frame.push(1)
+        else:
+            if not isinstance(objectref, type):
+                self.frame.push(0)
+            else:
+                self.frame.push(1)
             
     def athrow(self):
         objectref = self.frame.pop()
