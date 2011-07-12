@@ -108,4 +108,3 @@ class TestOpcodes(unittest.TestCase):
     def test_sinc_w(self):
         self._testLocals('sinc_w', [2, 0x5], {2 : 8}, {2 : 13})
         self._testLocals('sinc_w', [2, 0xffff], {2 : 8}, {2 : 7})
-        
