@@ -162,7 +162,7 @@ class JavaCardVM(object):
                 for handler in self.frame.handlers:
                     if self.frame.ip in handler:
                         if handler.match(e):
-                            self.echo("exception handled: ip = ", handler.handler_offs)
+                            self.echo("exception handled: ip = %d" % handler.handler_offs)
                             self.frame.ip = handler.handler_offs
                             self.frame.push(e)
                             return
@@ -365,12 +365,16 @@ class JavaCardVM(object):
         val1 = self.frame.pop()
         self.frame.push(utils.signed2((val1 - val2) & 0xffff))
 
+    def sneg(self):
+        val = self.frame.pop()
+        self.frame.push((-val) & 0xffff)
+
     def bspush(self, byte):
         self.frame.push(utils.signed1(byte))
 
     def s2b(self):
         val = self.frame.pop()
-        self.frame.push(val & 0xff)
+        self.frame.push(utils.signed1(val & 0xff))
 
     def sreturn(self):
         val = self.frame.pop()
@@ -383,6 +387,11 @@ class JavaCardVM(object):
         val2 = self.frame.pop()
         val1 = self.frame.pop()
         self.frame.push((val1 * val2) & 0xffff)
+
+    def sdiv(self):
+        val2 = self.frame.pop()
+        val1 = self.frame.pop()
+        self.frame.push((val1 // val2) & 0xffff)
 
     def _ifxx(self, branch, op):
         val = self.frame.pop()
@@ -472,6 +481,18 @@ class JavaCardVM(object):
     def if_scmpge(self, branch):
         return self._if_scmpxx(branch, 'ge')
 
+    def _if_acmpxx(self, branch, op):
+        val2 = self.frame.pop()
+        val1 = self.frame.pop()
+        if {'eq': val1 is val2,
+            'ne': val1 is not val2}[op]:
+            return utils.signed1(branch)
+
+    def if_acmpeq(self, branch):
+        return self.if_acmpxx(branch, 'eq')
+    def if_acmpne(self, branch):
+        return self.if_acmpxx(branch, 'ne')
+
     def _if_scmpxx_w(self, branch, op):
         val2 = self.frame.pop()
         val1 = self.frame.pop()
@@ -496,11 +517,30 @@ class JavaCardVM(object):
     def if_scmpge_w(self, branch):
         return self._if_scmpxx_w(branch, 'ge')
 
+    def _if_acmpxx_w(self, branch, op):
+        val2 = self.frame.pop()
+        val1 = self.frame.pop()
+        if {'eq': val1 is val2,
+            'ne': val1 is not val2}[op]:
+            return utils.signed2(branch)
+
+    def if_acmpeq_w(self, branch):
+        return self._if_acmpxx_w(branch, 'eq')
+    def if_acmpne_w(self, branch):
+        return self._if_acmpxx_w(branch, 'ne')
+
     def goto(self, branch):
         return utils.signed1(branch)
 
     def goto_w(self, branch):
         return utils.signed2(branch)
+
+    def jsr(self, branch):
+        self.frame.push(self.frame.ip+3)# jsr-branch1-branch2 = 3
+        return utils.signed2(branch)
+
+    def ret(self, index):
+        return self.frame.locals[index] - self.frame.ip
 
     def sstore_0(self):
         self.sstore(0)
@@ -583,6 +623,28 @@ class JavaCardVM(object):
         self.frame.push(word2)
         self.frame.push(word1)
 
+    def dup_x(self, mn):
+        m = (mn & 0xf0) >> 4
+        n = (mn & 0x0f)
+        if n == 0:
+            # special case of n == 0 means n == m
+            n = m
+        ops = [self.frame.pop() for i in xrange(m)]
+        n = n - m
+        ext_ops = [self.frame.pop() for i in xrange(n)]
+        # simply duplicate them on top
+        self.frame.stack.extend(reversed(ops))
+        self.frame.stack.extend(reversed(ext_ops))
+        self.frame.stack.extend(reversed(ops))
+
+    def swap_x(self, mn):
+        m = (mn & 0xf0) >> 4
+        n = (mn & 0x0f)
+        opsm = [self.frame.pop() for i in xrange(m)]
+        opsn = [self.frame.pop() for i in xrange(n)]
+        self.frame.stack.extend(reversed(opsm))
+        self.frame.stack.extend(reversed(opsn))
+
     def putfield_s(self, index):
         value = self.frame.pop()
         objref = self.frame.pop()
@@ -635,6 +697,10 @@ class JavaCardVM(object):
     def pop(self):
         self.frame.pop()
 
+    def pop2(self):
+        self.frame.pop()
+        self.frame.pop()
+
     def slookupswitch(self, default, npairs, *pairs):
         key = self.frame.pop()
         for pair in pairs:
@@ -664,6 +730,15 @@ class JavaCardVM(object):
         value1 = self.frame.pop()
         s = value2 & 0x1f
         self.frame.push((value1 << s) & 0xffff)
+
+    def sushr(self):
+        value2 = self.frame.pop()
+        value1 = self.frame.pop()
+        s = value2 & 0x1f
+        if value1 >= 0:
+            self.frame.push((value1 >> s) & 0xffff)
+        else:
+            self.frame.push(((value1 >> s) + (2 << ~s)) & 0xffff)
 
     def sand(self):
         value2 = self.frame.pop()

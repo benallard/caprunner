@@ -142,7 +142,7 @@ class PythonStaticMethod(object):
 
     def __str__(self):
         return "<PythonStaticMethod %d args, %s, %s>" % (
-           len(self.params), self.retType, self.method.__name__
+           len(self.params), self.retType, str(self.method)
            )
 
 class JavaCardVirtualMethod(JavaCardMethod):
