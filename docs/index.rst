@@ -13,6 +13,8 @@ Contents:
    :numbered:
 
    introduction
+   user
+   dev
 
 Indices and tables
 ==================
