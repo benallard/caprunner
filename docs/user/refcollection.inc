@@ -1,0 +1,7 @@
+.. -*-rst-*-
+
+.. _refcollection:
+
+RefCollection
+=============
+

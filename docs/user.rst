@@ -3,5 +3,12 @@
 User Manual
 ###########
 
-.. include:: user/introduction.rst
+.. include:: user/introduction.inc
 
+.. include:: user/installation.inc
+
+.. include:: user/runcap.inc
+
+.. include:: user/refcollection.inc
+
+.. include:: user/export.inc
