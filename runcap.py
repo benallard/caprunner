@@ -209,7 +209,7 @@ def main(jcversion = (3,0,1)):
     send = []
     receive = []
     for line in sys.stdin:
-        line = line.strip()
+        line = line.rstrip()
         if len(line) == 0 and len(send) != 0 and len(receive) != 0:
             process(vm, send, receive)
             send = []
