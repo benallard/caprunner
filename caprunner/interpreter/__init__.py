@@ -610,6 +610,8 @@ class JavaCardVM(object):
 
     def arraylength(self):
         arrayref = self.frame.pop()
+        if arrayref is None:
+            raise python.lang.NullPointerException()
         self.frame.push(len(arrayref))
 
     def dup(self):
