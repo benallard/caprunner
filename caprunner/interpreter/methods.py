@@ -56,7 +56,7 @@ class ExceptionHandler(object):
 
     def __contains__(self, ip):
         """ returns if the ip is in the range of this handler """
-        return self.start < ip < self.stop
+        return self.start <= ip < self.stop
     
     def match(self, exception):
         if self.isFinally:
