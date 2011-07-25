@@ -149,14 +149,28 @@ class JavaCardVirtualMethod(JavaCardMethod):
     def __init__(self, clsoffset, token, isPrivate, cap_file, resolver):
         self.token = token
         self.isPrivate = isPrivate
-        self._feedFromCAP(clsoffset, cap_file, resolver)
+        self.cap_file = cap_file
+        self.resolver = resolver
+        # we need nargs immediatly to get to the objref
+        self._feedFromCAP(clsoffset)
 
-    def _feedFromCAP(self, clsoffset, cap_file, resolver):
-        """ actually, we are only interested in the nember of parameters """
-        class_info = cap_file.Class.classes[clsoffset]
+    def bindToObject(self, objref):
+        self.objref = objref
+        # do it again, with the obj
+        jcclass = objref._ref
+        notFound = True
+        while notFound:
+            try:
+                self._feedFromCAP(jcclass.offset)
+                notFound = False
+            except NoSuchMethod:
+                jcclass = jcclass.super
+
+    def _feedFromCAP(self, clsoffset):
+        class_info = self.cap_file.Class.classes[clsoffset]
         cdi = None
         mdi = None
-        for cls in cap_file.Descriptor.classes:
+        for cls in self.cap_file.Descriptor.classes:
             if cls.this_class_ref.class_ref == clsoffset:
                 cdi = cls
                 for mtd in cdi.methods:
@@ -170,8 +184,8 @@ class JavaCardVirtualMethod(JavaCardMethod):
             raise NoSuchMethod(clsoffset, self.token)
         self.method_descriptor_info = mdi
         self.offset = mdi.method_offset
-        self.method_info = cap_file.Method.methods[self.offset]
-        self._fillHandlers(cap_file, resolver)
+        self.method_info = self.cap_file.Method.methods[self.offset]
+        self._fillHandlers(self.cap_file, self.resolver)
         self.nargs = self.method_info.method_info.nargs
         self.bytecodes = self.method_info.bytecodes
 

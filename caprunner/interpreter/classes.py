@@ -11,7 +11,7 @@ class JavaCardMethodType(object):
 def makefieldmine(f):
     """ 
     All fields are created on the class object.
-    The shall not be modified on this object, but on this instance !
+    They shall not be modified on this object, but on this instance !
     So we need to make them property of the instance itself.
     """
     def wrapper(self, cls, token, *params):

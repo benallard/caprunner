@@ -152,7 +152,7 @@ class JavaCardVM(object):
         frame = self.frame
         inc = None
         self.echo("%d: %s %s" % (frame.ip, bytecode.opname[code[0]], params))
-        #self.echo(frame.stack)
+        self.echo(frame.stack)
         #self.echo(frame.locals)
         try:
             inc = f(*params)
@@ -275,10 +275,11 @@ class JavaCardVM(object):
         self._pushretval(ret, method.retType)
 
     def _invokevirtualjava(self, method):
-        # we need to know how many parameters we need to pop before getting objref
         params = self._popparams(method.nargs)
-        #objref = params.aget(0)
-        #mtd = objref.methods[method.token]
+        objref = params[0]
+        if objref is None:
+            raise python.lang.NullPointerException()
+        method.bindToObject(objref)
         self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
 
     def invokevirtual(self, index):
