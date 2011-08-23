@@ -1,0 +1,42 @@
+<project name="Test" basedir="." default="cap">
+
+  <property name="jc.version" value="3_0_1" />
+
+  <property name="jc.home" value="/Users/ben/jc_kit/${jc.version}" />
+
+  <taskdef name="convert"
+           classname="com.sun.javacard.ant.tasks.ConverterTask"
+           classpath="${jc.home}/lib/jctasks.jar" />
+
+  <path id="classpath">
+    <pathelement path="${jc.home}/lib/api_classic.jar" />
+  </path>
+
+  <path id="export">
+    <pathelement path="${jc.home}/api_export_files" />
+  </path>
+
+  <target name="class">
+    <javac srcdir="."
+           debug="yes"
+           classpathref="classpath" />
+  </target>
+
+  <target name="cap" depends="class">
+    <convert classdir=".."
+	     JCA="true" EXP="true" CAP="true"
+	     Debug="true"
+	     packagename="javatest"
+	     packageaid="0xA0:0x00:0x00:0x00:0x18:0xFF:0x00:0x00:0x00:0x00:0x00:0x00:0x00:0x00:0x01:0x01"
+	     majorminorversion="1.0">
+    <AppletNameAID
+	appletname="javatest.Test"
+	aid="0xA0:0x00:0x00:0x00:0x18:0xFF:0x00:0x00:0x00:0x00:0x00:0x00:0x00:0x00:0x01:0x02"/>
+      <exportpath refid="export" />
+      <classpath>
+        <pathelement path="${jc.home}/lib/tools.jar" />
+      </classpath>
+    </convert>
+  </target>
+
+</project>
