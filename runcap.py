@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!python
 
 import sys
 
@@ -8,6 +8,8 @@ from caprunner.interpreter import JavaCardVM, ExecutionDone
 from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
 
 from pythoncard.framework import Applet, APDU, ISOException, JCSystem, AID
+
+from python.lang import RuntimeException
 
 current_install_aid = None
 # a2d(aid) => Applet
@@ -114,6 +116,10 @@ def process(vm, send, receive):
         sw = ie.getReason()
         buf = [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
         isoE = True
+    except RuntimeException, rte:
+        print "instanciating throwed an exception of type %s" % type(rte)
+        buf = d2a('\x6f\x00')
+        isoE = True
     if not isoE:
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
         buf.extend(d2a('\x90\x00'))
@@ -189,6 +195,10 @@ def install(vm, data, offset):
     except ISOException, ie:
         sw = ie.getReason()
         print "instanciating throwed : %02X %02X" % ((sw & 0xff00) >> 8, sw & 0x00ff)
+        print vm.log
+    except RuntimeException, rte:
+        print "instanciating throwed an exception of type %s" % type(rte)
+        print vm.log
     except ExecutionDone:
         pass
     current_install_aid = None
@@ -199,7 +209,7 @@ def main(jcversion = (3,0,1)):
     send = []
     receive = []
     for line in sys.stdin:
-        line = line.strip()
+        line = line.rstrip()
         if len(line) == 0 and len(send) != 0 and len(receive) != 0:
             process(vm, send, receive)
             send = []

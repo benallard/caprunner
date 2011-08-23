@@ -147,11 +147,11 @@ class JavaCardVM(object):
         # get the function
         f = getattr(self, bytecode.opname[code[0]])
         # get the params
-        size, params = bytecode.getParams(code)
+        self.frame.instrsize, params = bytecode.getParams(code)
         # execute the function
         frame = self.frame
         inc = None
-        self.echo("%s %s" % (bytecode.opname[code[0]], params))
+        self.echo("%d: %s %s" % (frame.ip, bytecode.opname[code[0]], params))
         self.echo(frame.stack)
         #self.echo(frame.locals)
         try:
@@ -159,8 +159,16 @@ class JavaCardVM(object):
         except Exception, e:
             self.echo("caught exception: %s" % type(e))
             while not isinstance(self.frame, DummyFrame):
+                # for all frames not being the current one, ip is already tainted
+                if self.frame is frame:
+                    ip = self.frame.ip
+                else:
+                    # This hopes that exceptions will not happend on 
+                    # branching instructions ...
+                    ip = self.frame.ip - self.frame.instrsize
+                    
                 for handler in self.frame.handlers:
-                    if self.frame.ip in handler:
+                    if ip in handler:
                         if handler.match(e):
                             self.echo("exception handled: ip = %d" % handler.handler_offs)
                             self.frame.ip = handler.handler_offs
@@ -180,7 +188,7 @@ class JavaCardVM(object):
         # increment IP
         if inc is None:
             # regular function without branching
-            inc = size
+            inc = frame.instrsize
         frame.ip += inc
 
     def getRetValue(self):
@@ -267,10 +275,11 @@ class JavaCardVM(object):
         self._pushretval(ret, method.retType)
 
     def _invokevirtualjava(self, method):
-        # we need to know how many parameters we need to pop before getting objref
         params = self._popparams(method.nargs)
-        #objref = params.aget(0)
-        #mtd = objref.methods[method.token]
+        objref = params[0]
+        if objref is None:
+            raise python.lang.NullPointerException()
+        method.bindToObject(objref)
         self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
 
     def invokevirtual(self, index):
@@ -610,6 +619,8 @@ class JavaCardVM(object):
 
     def arraylength(self):
         arrayref = self.frame.pop()
+        if arrayref is None:
+            raise python.lang.NullPointerException()
         self.frame.push(len(arrayref))
 
     def dup(self):
