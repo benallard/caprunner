@@ -854,6 +854,10 @@ class Debug(Component):
                     self.contents = self.constant_value
                 else:
                     self.contents = self.token
+            def __str__(self):
+                return "Field: %d name@%d, descr@%d: %d" % (
+                    self.token, self.name_index, self.descriptor_index,
+                    self.contents)
 
         class MethodDebugInfo(object):
             ACC_PUBLIC = 0x0001
@@ -871,6 +875,10 @@ class Debug(Component):
                     self.descriptor_index = u2(data[3:5])
                     self.start_pc = u2(data[5:7])
                     self.length = u2(data[7:9])
+                def __str__(self):
+                    return "variable %d: name@%d, descr@%d (%d:%d)" % (
+                        self.index, self.name_index, self.descriptor_index,
+                        self.start_pc, self.start_pc+self.length)
 
             class LineInfo(object):
                 size = 6
@@ -878,6 +886,9 @@ class Debug(Component):
                     self.start_pc = u2(data[:2])
                     self.end_pc = u2(data[2:4])
                     self.source_line = u2(data[4:6])
+                def __str__(self):
+                    return "line %d (%d:%d)" % (self.source_line, self.start_pc,
+                                           self.end_pc)
 
             def __init__(self, data):
                 self.name_index = u2(data[:2])
@@ -897,6 +908,13 @@ class Debug(Component):
                 for i in xrange(self.line_count):
                     self.line_table.append(self.LineInfo(data[shift:]))
                     shift += self.LineInfo.size
+                self.size = shift
+            def __str__(self):
+                return "Method: name@%d, descr@%d, variables: %s, lines: %s" % (
+                    self.name_index, self.descriptor_index,
+                    ', '.join([str(var) for var in self.variable_table]),
+                    ', '.join([str(ln) for ln in self.line_table]))
+                
 
         def __init__(self, data):
             self.name_index = u2(data[:2])
@@ -919,6 +937,12 @@ class Debug(Component):
                 mtd = self.MethodDebugInfo(data[shift:])
                 self.methods.append(mtd)
                 shift += mtd.size
+            self.size = shift
+        def __str__(self):
+            return "name@%d, src@%d, fields: %s, methods: %s" % (
+                self.name_index, self.source_file_index,
+                ', '.join([str(fld) for fld in self.fields]),
+                ', '.join([str(mtd) for mtd in self.methods]))
 
     def __init__(self, data, version):
         Component.__init__(self, data, version)
@@ -937,6 +961,12 @@ class Debug(Component):
             cls = self.ClassDebugInfo(data[shift:])
             self.classes.append(cls)
             shift += cls.size
+            
+    def __str__(self):
+        return "<Debug:\n\tStrings:\n\t\t%s\n\tClasses:\n\t\t - %s\n>" % (
+            '\n\t\t'.join(["%d: %s" % (i, str(self.strings_table[i])) for i in xrange(self.string_count)]),
+            '\n\t\t - '.join([str(cls) for cls in self.classes]),
+            )
 
 class CAPFile(object):
     def __init__(self, path):
