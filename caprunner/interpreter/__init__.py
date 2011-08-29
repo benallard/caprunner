@@ -54,8 +54,9 @@ class JavaCardFrame(object):
     A frame should also have its own context for security purposes.
     We will forget that for the moment
     """
-    def __init__(self, params, bytecodes, handlers = []):
+    def __init__(self, params, bytecodes, offset, handlers = []):
         self.bytecodes = bytecodes
+        self.start_pc = offset
         self.handlers = handlers
         self.stack = JavaCardStack()
         self.locals = JavaCardLocals(*params)
@@ -141,6 +142,27 @@ class JavaCardVM(object):
         return # This greatly improve the performances !
         msg = "  " * len(self.frames) + str(string)
         self.log += msg + '\n'
+
+    def getFileLineAndMethod(self, ip):
+        if self.cap_file.Debug is None:
+            return
+
+        if ip == -1:
+            return ('', '', 0)
+
+        dbg = self.cap_file.Debug
+        for cls in dbg.classes:
+            for mtd in cls.methods:
+                # the methods pc are relative to this one
+                localip = ip - mtd.location
+                if localip >= 0:
+                    for line in mtd.line_table:
+                        if line.start_pc <= localip <= line.end_pc:
+                            file = str(dbg.strings_table[cls.source_file_index])
+                            method = "%s.%s" % (str(dbg.strings_table[cls.name_index]),
+                                                str(dbg.strings_table[mtd.name_index]))
+                            return (file, method, line.source_line)
+        print "%d not found" % ip 
     
     def step(self):
         code = self.frame.bytecodes[self.frame.ip:]
@@ -151,6 +173,9 @@ class JavaCardVM(object):
         # execute the function
         frame = self.frame
         inc = None
+        
+        if self.cap_file.Debug is not None:
+            self.echo("@ %s:%s:%d" % self.getFileLineAndMethod(frame.start_pc + frame.ip))
         self.echo("%d: %s %s" % (frame.ip, bytecode.opname[code[0]], params))
         self.echo(frame.stack)
         #self.echo(frame.locals)
@@ -164,7 +189,7 @@ class JavaCardVM(object):
                     ip = self.frame.ip
                 else:
                     # This hopes that exceptions will not happend on 
-                    # branching instructions ...
+                    # branching bytecode ...
                     ip = self.frame.ip - self.frame.instrsize
                     
                 for handler in self.frame.handlers:
@@ -174,8 +199,12 @@ class JavaCardVM(object):
                             self.frame.ip = handler.handler_offs
                             self.frame.push(e)
                             return
+                        else:
+                            self.echo("handler doesn't match exception")
                         if handler.last:
                             break
+                    else:
+                        self.echo("ip (%d) is not in handler's control [%d:%d)" % (ip, handler.start, handler.stop))
                 self.echo("%d local handlers exhausted poping frame" % len(self.frame.handlers))
                 self.frames.pop()
             # not handled, re-raise
@@ -222,7 +251,8 @@ class JavaCardVM(object):
         """
         # ouch, what happend to the int parameters ?
         params = self._popparams(method.nargs)
-        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
+        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, 
+                                       method.offset, method.excpt_handlers))
 
     def _invokestaticnative(self, method):
         """ method is of type PythonMethod """
@@ -280,7 +310,8 @@ class JavaCardVM(object):
         if objref is None:
             raise python.lang.NullPointerException()
         method.bindToObject(objref)
-        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, method.excpt_handlers))
+        self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, 
+                                       method.offset, method.excpt_handlers))
 
     def invokevirtual(self, index):
         method = self.resolver.resolveIndex(index, self.cap_file)

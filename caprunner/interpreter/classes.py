@@ -64,7 +64,8 @@ class JavaCardClass(object):
         self.super = resolver.resolveClass(sup_ref, cap_file)
 
         # create our class type
-        self.cls = type("class%d"%self.offset, (self.super.cls,JavaCardClassType,), {})
+        self.cls = type("class%d"%self.offset, 
+                        (self.super.cls,JavaCardClassType,), {})
         # We put a ref to ourself in the created class ...
         self.cls._ref = self
         if not isinstance(self.super, JavaCardClass):

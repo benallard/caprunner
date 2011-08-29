@@ -117,7 +117,7 @@ def process(vm, send, receive):
         buf = [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
         isoE = True
     except RuntimeException, rte:
-        print "instanciating throwed an exception of type %s" % type(rte)
+        print "processing throwed an exception of type %s" % type(rte)
         buf = d2a('\x6f\x00')
         isoE = True
     if not isoE:
