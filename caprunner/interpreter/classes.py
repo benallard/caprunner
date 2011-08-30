@@ -35,6 +35,21 @@ class JavaCardClassType(object):
     def getFieldAt(self, cls, token):
         return self.fields[token + self.fieldoffsets[cls]].getValue()
 
+
+def findCPIndexFromClassRef(class_ref, cap_file):
+    for index in xrange(cap_file.ConstantPool.count):
+        cst = cap_file.ConstantPool.constant_pool[index]
+        if cst.tag == 1: # ClassRef
+            if class_ref.isExternal == cst.isExternal: # match
+                if cst.isExternal:
+                    if ((cst.class_ref.package_token == class_ref.class_ref.package_token) and 
+                        (cst.class_ref.class_token == class_ref.class_ref.class_token)):
+                        return index
+                else:
+                    if cst.class_ref == class_ref.class_ref:
+                        return index
+    return -1
+
 class JavaCardClass(object):
     """
     This represent a JavaCard class as internal to the CAP file.
@@ -61,7 +76,7 @@ class JavaCardClass(object):
             raise NoSuchClass(self.offset)
         # And now, we want to extract the stuff
         sup_ref = class_info.super_class_ref
-        idx = self.findIndexFromClassRef(sup_ref, cap_file)
+        idx = findCPIndexFromClassRef(sup_ref, cap_file)
         if idx == -1:
             self.super = resolver.resolveClass(sup_ref, cap_file)
         else:
@@ -84,20 +99,6 @@ class JavaCardClass(object):
                 self.cls.clsfields.append(JavaCardField(fld))
                 # this check that we are adding them sequentially
                 assert len(self.cls.clsfields) == fld.token + fieldoffset + 1
-
-    def findIndexFromClassRef(self, class_ref, cap_file):
-        for index in xrange(cap_file.ConstantPool.count):
-            cst = cap_file.ConstantPool.constant_pool[index]
-            if cst.tag == 1: # ClassRef
-                if class_ref.isExternal == cst.isExternal: # match
-                    if cst.isExternal:
-                        if ((cst.class_ref.package_token == class_ref.class_ref.package_token) and 
-                            (cst.class_ref.class_token == class_ref.class_ref.class_token)):
-                            return index
-                    else:
-                        if cst.class_ref == class_ref.class_ref:
-                            return index
-        return -1
 
 class PythonClass(object):
     """
