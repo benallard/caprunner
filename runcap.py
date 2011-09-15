@@ -26,8 +26,9 @@ def myregister(applet, *args):
         applets[a2d(current_install_aid)] = applet
         print "Registered %s as %s" % (applet, a2s(current_install_aid))
     else:
-        raise NotImplementedError
-        print "Registering:", args
+        (array, offset, length) = args
+        applets[a2d(array[offset:offset+length])] = applet
+        print "Registered %s as %s" %(applet, a2s(array[offset:offset+length]))
 
 Applet.register = myregister
 
