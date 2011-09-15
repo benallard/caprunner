@@ -1,3 +1,5 @@
+.. -*- rst -*-
+
 .. _export:
 
 Export
