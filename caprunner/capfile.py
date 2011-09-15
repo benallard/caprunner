@@ -1018,22 +1018,3 @@ class CAPFile(object):
         for name in self.zipfile.namelist():
             if component in name:
                 return name
-
-if __name__ == "__main__":
-    import sys
-    cap = CAPFile(sys.argv[1])
-    print cap.Header
-    print cap.Directory
-    if cap.Applet is not None:
-        print cap.Applet
-    print cap.Import
-    print cap.ConstantPool
-    print cap.Class
-    print cap.Method
-    print cap.StaticField
-    print cap.RefLocation
-    if cap.Export is not None:
-        print cap.Export
-    print cap.Descriptor
-    if cap.Debug is not None:
-        print cap.Debug
