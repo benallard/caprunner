@@ -51,7 +51,7 @@ following command has to be used::
 
     install: data : offset
 
-The ``data`` is the one tramsmitted to :js:func:`Applet.install`
+The ``data`` is the one tramsmitted to :js:func:`Applet.install` [#ins]_
 prepended with ``AIDlen || AID`` of the applet to install. The
 ``offset`` parameter indicate the offset of the ``AIDlen`` byte inside
 the data.
@@ -93,3 +93,13 @@ JavaCard Development Kit.
   returning some data.
 * Line 8-9, a random command is processed by the Applet and some data
   is returned.
+
+.. rubric:: Footnotes
+
+.. [#ins] This is the concatenation of the following three fields,
+   each one prepended with its own length (which is ``0`` if the field
+   is empty)
+
+   * instance AID (if not specified the applet AID will be taken)
+   * control info
+   * applet data
