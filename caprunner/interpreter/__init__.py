@@ -329,6 +329,8 @@ class JavaCardVM(object):
                                                           methodtoken)
         self._invokevirtualnative(method)
 
+# ---------- From where on, those are 'simple' bytecodes
+
     def aload_0(self):
         self.aload(0)
     def aload_1(self):
