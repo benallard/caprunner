@@ -220,9 +220,3 @@ class ExportFile(object):
     @property
     def AID(self):
         return self.constant_pool[self.this_package].aid
-
-if __name__ == "__main__":
-    import sys
-    f = open(sys.argv[1])
-    exp = ExportFile(f.read())
-    exp.pprint()
