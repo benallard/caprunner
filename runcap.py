@@ -1,4 +1,4 @@
-#!python
+#!/usr/bin/env python
 
 import sys
 
@@ -15,6 +15,9 @@ class Runner(Token):
             print "<== %s was expected" % a2s(expected)
             print self.vm.log
             sys.exit()
+
+    def echo(self, *args, **kwargs):
+        print(args, kwargs)
 
     def run(self):
         send = []
@@ -37,6 +40,7 @@ class Runner(Token):
                 data = s2a(line[sep1:sep2])
                 offset = s2a(line[sep2 + 1:])[0]
                 self.install(data, offset)
+                self.echo("installed")
             elif line.startswith('load:'):
                 self.vm.load(capfile.CAPFile(line[5:].strip()))
             elif line.startswith('log;'):

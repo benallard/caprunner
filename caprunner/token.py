@@ -6,7 +6,7 @@ This is a Python token, it reprsents a Token + the CardManager
 from pythoncard.framework import Applet, ISO7816, ISOException, APDU, JCSystem, AID
 
 from caprunner import resolver, capfile
-from caprunner.utils import d2a, a2d
+from caprunner.utils import d2a, a2d, a2s
 from caprunner.interpreter import JavaCardVM, ExecutionDone
 from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
 
@@ -30,7 +30,11 @@ class Token(object):
         # Create the VM
         self.vm = JavaCardVM(resolver.linkResolver(jcversion))
 
-        self.installJCFunctions()    
+        self.installJCFunctions()
+
+    def echo(self, *args, **kwargs):
+        # to be redefined in the subclassing class
+        pass
 
     def installJCFunctions(self):
         """ This tweak the JC Framework to make it fit our environment 
@@ -47,6 +51,7 @@ class Token(object):
                 else:
                     aid = self.current_applet_aid
                 self.applets[a2d(aid)] = applet
+                self.echo("registered %s as %s" % (a2s(aid), applet))
             return myregister
         Applet.register = defineMyregister(self)
 
@@ -67,7 +72,7 @@ class Token(object):
 
         def defineMyisAppletActive(self):
             def myisAppletActive(aid):
-                return applets[a2d(aid.aid)] in self.selected
+                return self.applets[a2d(aid.aid)] in self.selected
             return myisAppletActive
         JCSystem.isAppletActive = defineMyisAppletActive(self)
 
@@ -131,8 +136,10 @@ class Token(object):
             pass
         except ISOException, isoe:
             return d2a(isoe.getReason())
-        except Exception, e:
-            return d2a(ISO7816.SW_UNKNOWN)
+#        except:
+            self.echo("Caught bad exception")
+            return d2a('\x6f\x00')
+            raise
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
         buf.extend(d2a('\x90\x00'))
         return buf
@@ -142,17 +149,22 @@ class Token(object):
         applet = self.selected[channel]
         self.vm.frame.push(applet)
         try:
-            deselectmtd = JavaCardVirtualMethod(applet._ref.offset, 4, False, vm.cap_file, vm.resolver)
+            deselectmtd = JavaCardVirtualMethod(
+                applet._ref.offset,
+                4,
+                False,
+                self.vm.cap_file,
+                self.vm.resolver)
         except NoSuchMethod:
             self.selected[channel] = None
             return True
         self.vm._invokevirtualjava(deselectmtd)
         try:
             while True:
-                vm.step()
+                self.vm.step()
         except ExecutionDone:
             pass
-        if vm.frame.getValue():
+        if self.vm.frame.getValue():
             self.selected[channel] = None
             return True
         return False
@@ -163,12 +175,14 @@ class Token(object):
         applet = self.selected[channel]
         if applet is not None:
             if not self._cmdeselect():
+                self.echo("Deselect failed")
                 return False
 
         # We should spend some time looking for an applet there ...
         try:
             potential = self.applets[a2d(aid)]
         except KeyError:
+            self.echo("Applet not found", self.applets)
             return False
 
         self.vm.frame.push(potential)
@@ -214,11 +228,14 @@ class Token(object):
         self.vm.frame.push(offset)
         self.vm.frame.push(length)
         applet = None
+        self.echo(len(self.vm.cap_file.Applet.applets))
         for apl in self.vm.cap_file.Applet.applets:
+            self.echo("Found %s" % a2s(apl.aid))
             if a2d(aid) == a2d(apl.aid):
                 applet = apl
-            break
+                break
         if applet is None:
+            self.echo("Applet %s not found in the CAP file" % a2s(aid))
             return
         self.current_applet_aid = aid
         self.vm._invokestaticjava(JavaCardStaticMethod(
