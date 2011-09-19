@@ -195,8 +195,8 @@ class Token(object):
                 self.vm.cap_file,
                 self.vm.resolver)
         except NoSuchMethod:
-            selected[channel] = potential
-            selected[channel]._selectingApplet = True
+            self.selected[channel] = potential
+            self.selected[channel]._selectingApplet = True
             return True
         self.vm._invokevirtualjava(selectmtd)
         try:
