@@ -6,7 +6,7 @@ This is a Python token, it reprsents a Token + the CardManager
 from pythoncard.framework import Applet, ISO7816, ISOException, APDU, JCSystem, AID
 
 from caprunner import resolver, capfile
-from caprunner.utils import d2a, a2d, a2s
+from caprunner.utils import d2a, a2d, a2s, signed1
 from caprunner.interpreter import JavaCardVM, ExecutionDone
 from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
 
@@ -135,7 +135,8 @@ class Token(object):
         except ExecutionDone:
             pass
         except ISOException, isoe:
-            return d2a(isoe.getReason())
+            sw = isoe.getReason()
+            return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
 #        except:
             self.echo("Caught bad exception")
             return d2a('\x6f\x00')
@@ -246,7 +247,8 @@ class Token(object):
             while True:
                 self.vm.step()
         except ISOException, ie:
-            return d2a(ie.getReason())
+            sw = isoe.getReason()
+            return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
         except ExecutionDone:
             pass
         self.current_install_aid = None
