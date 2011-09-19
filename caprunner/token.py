@@ -231,7 +231,6 @@ class Token(object):
         applet = None
         self.echo(len(self.vm.cap_file.Applet.applets))
         for apl in self.vm.cap_file.Applet.applets:
-            self.echo("Found %s" % a2s(apl.aid))
             if a2d(aid) == a2d(apl.aid):
                 applet = apl
                 break
