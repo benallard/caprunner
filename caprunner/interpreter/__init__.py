@@ -10,8 +10,8 @@ class JavaCardStack(list):
     it contains words (short)
     """
     def push_int(self, integer):
+        self.push((integer >> 16) & 0xffff)
         self.push(integer & 0xffff)
-        self.push((integer & 0xffff0000) >> 16)
 
     def pop_int(self):
         return self.pop() | (self.pop() << 16)
@@ -265,7 +265,6 @@ class JavaCardVM(object):
         to fill it with informations from the rest of te CAPFile, then push
         a new frame on top of the frame stack and we're done
         """
-        # ouch, what happend to the int parameters ?
         params = self._popparams(method.nargs)
         self.frames.push(JavaCardFrame(params.asArray(), method.bytecodes, 
                                        method.offset, method.excpt_handlers))
