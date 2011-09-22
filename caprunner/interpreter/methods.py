@@ -36,6 +36,7 @@ def extractTypes(string):
         else:
             assert False, string[0]+' not recognized'
         res.append(strtype)
+        strtype = ''
         string = string[size:]
     return res
 
@@ -119,7 +120,35 @@ class JavaCardStaticMethod(JavaCardMethod):
            ', '.join(disassemble(self.methodinfo.bytecodes)),
            )
 
-class PythonStaticMethod(object):
+class PythonMethod(object):
+    """ A generic abstract class for PythonMethods
+
+    Mainly there to avoid code duplication ...
+    """
+
+    def _analyseType(self, string):
+        assert string[0] == '('
+        # First analyse the params
+        self.params = extractTypes(string[1:string.find(')')])
+        self.retType = extractTypes(string[string.find(')') + 1:])[0]
+
+    @property
+    def paramsize(self):
+        """ return the number of cells we should pop to get the params """
+        # ints are tricky
+        size = 0
+        for p in self.params:
+            if p == 'integer':
+                size += 2
+            else:
+                size += 1
+        return size
+
+    def __call__(self, *params):
+        assert self.method
+        return self.method(*params)
+
+class PythonStaticMethod(PythonMethod):
     """
     This is the Python version of the JavaCardMethod
     We need to know the parameters, their number and types
@@ -130,15 +159,6 @@ class PythonStaticMethod(object):
         self.type = typ
         self.method = method
         self._analyseType(typ)
-
-    def _analyseType(self, string):
-        assert string[0] == '('
-        # First analyse the params
-        self.params = extractTypes(string[1:string.find(')')])
-        self.retType = extractTypes(string[string.find(')') + 1:])[0]
-
-    def __call__(self, *params):
-        return self.method(*params)
 
     def __str__(self):
         return "<PythonStaticMethod %d args, %s, %s>" % (
@@ -189,7 +209,7 @@ class JavaCardVirtualMethod(JavaCardMethod):
         self.nargs = self.method_info.method_info.nargs
         self.bytecodes = self.method_info.bytecodes
 
-class PythonVirtualMethod(object):
+class PythonVirtualMethod(PythonMethod):
     """
     This object has to be initialised twice, once with the infos, and a second
     time with the actual object refereference
@@ -199,16 +219,7 @@ class PythonVirtualMethod(object):
         self._analyseType(typ)
         self.method = None
 
-    def _analyseType(self, string):
-        assert string[0] == '('
-        # First analyse the params
-        self.params = extractTypes(string[1:string.find(')')])
-        self.retType = extractTypes(string[string.find(')') + 1:])[0]
-
     def bindToObject(self, obj):
         self.method = getattr(obj, self.name)
 
-    def __call__(self, *params):
-        assert self.method
-        return self.method(*params)
 

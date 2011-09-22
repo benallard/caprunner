@@ -26,7 +26,11 @@ class Runner(Token):
             line = line.rstrip()
             if len(line) == 0 and len(send) != 0 and len(receive) != 0:
                 print "==> %s" % a2s(send)
-                got = self.transmit(send)
+                try:
+                    got = self.transmit(send)
+                except:
+                    print self.vm.log
+                    raise
                 self.checkreceive(receive, got)
                 send = []
                 receive = []

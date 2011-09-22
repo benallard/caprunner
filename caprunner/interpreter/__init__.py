@@ -38,6 +38,13 @@ class JavaCardLocals(dict):
         """ Get a short """
         return self.get(index, 0)
 
+    def iget(self, index):
+        return (self.get(index, 0) << 16) | self.get(index + 1, 0)
+
+    def iset(self, index, iVal):
+        self[index] = (iVal >> 16) & 0xffff
+        self[index + 1] = iVal & 0xffff
+
     def asArray(self):
         """ Return the locals as an array. Good for calling functions """
         res = []
@@ -66,14 +73,23 @@ class JavaCardFrame(object):
     def push(self, val):
         self.stack.push(val)
 
+    def push_int(self, iVal):
+        self.stack.push_int(iVal)
+
     def pop(self):
         return self.stack.pop()
+
+    def pop_int(self):
+        return self.stack.pop_int()
 
     def aget(self, index):
         return self.locals.aget(index)
 
     def sget(self, index):
         return self.locals.sget(index)
+
+    def iget(self, index):
+        return self.locals.iget(index)
 
     def __str__(self):
         return "<JavaCardFrame: ip: %d, locals: %s, bytecodes: %s>" % (
@@ -178,7 +194,7 @@ class JavaCardVM(object):
             self.echo("@ %s:%s:%d" % self.getFileLineAndMethod(frame.start_pc + frame.ip))
         self.echo("%d: %s %s" % (frame.ip, bytecode.opname[code[0]], params))
         self.echo(frame.stack)
-        #self.echo(frame.locals)
+        self.echo(frame.locals)
         try:
             inc = f(*params)
         except Exception, e:
@@ -257,7 +273,7 @@ class JavaCardVM(object):
     def _invokestaticnative(self, method):
         """ method is of type PythonMethod """
         # pop the params
-        params = self._popparams(len(method.params))
+        params = self._popparams(method.paramsize)
         # call the method
         ret = method(*params.asArray())
         # push the returnvalue
@@ -275,8 +291,8 @@ class JavaCardVM(object):
             self._invokestaticjava(method)
 
     def _invokespecialnative(self, method):
-        """ looks like we have to add one paraneter to the list here ... """        
-        params = self._popparams(len(method.params) + 1)
+        """ looks like we have to add one paraneter to the list here ... """
+        params = self._popparams(method.paramsize + 1)
         # call the method
         ret = method(*params.asArray())
         # push the returnvalue
@@ -296,7 +312,7 @@ class JavaCardVM(object):
             raise NotImplementedError
 
     def _invokevirtualnative(self, method):
-        params = self._popparams(len(method.params))
+        params = self._popparams(method.paramsize)
         objref = self.frame.pop()
         if objref is None:
             raise python.lang.NullPointerException()
@@ -352,6 +368,17 @@ class JavaCardVM(object):
         self.sload(3)
     def sload(self, index):
         self.frame.push(self.frame.sget(index))
+
+    def iload_0(self):
+        self.iload(0)
+    def iload_1(self):
+        self.iload(1)
+    def iload_2(self):
+        self.iload(2)
+    def iload_3(self):
+        self.iload(3)
+    def iload(self, index):
+        self.frame.push_int(self.frame.iget(index))
 
     def baload(self):
         index = self.frame.pop()
@@ -618,6 +645,18 @@ class JavaCardVM(object):
     bastore = _xastore
     aastore = _xastore
     sastore = _xastore
+
+    def istore_0(self):
+        self.istore(0)
+    def istore_1(self):
+        self.istore(1)
+    def istore_2(self):
+        self.istore(2)
+    def istore_3(self):
+        self.istore(3)
+    def istore(self, index):
+        iVal = self.frame.pop_int()
+        self.frame.locals.iset(index, iVal)
 
     def sinc(self, index, const):
         self.frame.locals[index] += utils.signed1(const)
