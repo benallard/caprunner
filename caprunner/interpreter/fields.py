@@ -22,7 +22,6 @@ class JavaCardField(object):
 class JavaCardStaticField(object):
     def __init__(self, offset, cap_file, resolver):
         self.offset = offset
-        print "I am field", offset
         sf = cap_file.StaticField
         if offset < sf.array_init_count * 2:
             offset = offset // 2
