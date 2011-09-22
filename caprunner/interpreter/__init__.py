@@ -870,6 +870,9 @@ class JavaCardVM(object):
     def checkcast(self, atype, index):
         objectref = self.frame.pop()
         self.frame.push(objectref)
+        if objectref is None:
+            # null can be casted to any reference
+            return
         # First determine type to check against
         types = {10: bool, 11: int, 12: int, 13: int}
         if atype in types:
@@ -889,6 +892,10 @@ class JavaCardVM(object):
 
     def instanceof(self, atype, index):
         objectref = self.frame.pop()
+        if objectref is None:
+            # null can be casted to any reference
+            self.frame.push(1)
+            return
         # First determine type to check against
         types = {10: bool, 11: int, 12: int, 13: int}
         if atype in types:
