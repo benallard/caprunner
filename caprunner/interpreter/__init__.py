@@ -597,6 +597,16 @@ class JavaCardVM(object):
     def if_acmpne_w(self, branch):
         return self._if_acmpxx_w(branch, 'ne')
 
+    def icmp(self):
+        value2 = self.frame.pop_int()
+        value1 = self.frame.pop_int()
+        if value1 > value2:
+            self.frame.push(1)
+        elif value1 < value2:
+            self.frame.push(-1)
+        else:
+            self.frame.push(0)
+
     def goto(self, branch):
         return utils.signed1(branch)
 
