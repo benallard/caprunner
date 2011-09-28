@@ -5,6 +5,8 @@ This is a Python token, it reprsents a Token + the CardManager
 
 from pythoncard.framework import Applet, ISO7816, ISOException, APDU, JCSystem, AID
 
+from python.lang import RuntimeException
+
 from caprunner import resolver, capfile
 from caprunner.utils import d2a, a2d, a2s, signed1
 from caprunner.interpreter import JavaCardVM, ExecutionDone
@@ -138,9 +140,11 @@ class Token(object):
         except ISOException, isoe:
             sw = isoe.getReason()
             return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
-#        except:
-            self.echo("Caught bad exception")
+        except RuntimeException:
+            self.echo("Caught RuntimeException")
             return d2a('\x6f\x00')
+        except:
+            self.echo("Real bad exception")
             raise
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
         buf.extend(d2a('\x90\x00'))
