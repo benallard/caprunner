@@ -79,6 +79,7 @@ class Token(object):
         def defineMygetAssignedChannel(self):
             def mygetAssignedChannel():
                 return self.current_channel
+            return mygetAssignedChannel
         JCSystem.getAssignedChannel = defineMygetAssignedChannel(self)
 
     def transmit(self, bytes):
