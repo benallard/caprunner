@@ -97,9 +97,6 @@ class JavaCardFrame(object):
             self.locals.asArray(),
             self.bytecodes)
 
-class ExecutionDone(Exception):
-    pass
-
 class DummyFrame(object):
     """ 
     The bottom of the frame stack. 
@@ -229,12 +226,14 @@ class JavaCardVM(object):
                     
         # if we are done
         if isinstance(self.frame, DummyFrame):
-            raise ExecutionDone
+            # that was the last one
+            return False
         # increment IP
         if inc is None:
             # regular function without branching
             inc = frame.instrsize
         frame.ip += inc
+        return True
 
     def getRetValue(self):
         """ return the result of the finished execution """

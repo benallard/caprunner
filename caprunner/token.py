@@ -9,7 +9,7 @@ from python.lang import RuntimeException
 
 from caprunner import resolver, capfile
 from caprunner.utils import d2a, a2d, a2s, signed1
-from caprunner.interpreter import JavaCardVM, ExecutionDone
+from caprunner.interpreter import JavaCardVM
 from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
 
 class Token(object):
@@ -133,10 +133,8 @@ class Token(object):
                 self.vm.cap_file,
                 self.vm.resolver))
         try:
-            while True:
-                self.vm.step()
-        except ExecutionDone:
-            pass
+            while self.vm.step():
+                pass
         except ISOException, isoe:
             sw = isoe.getReason()
             return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
@@ -165,10 +163,7 @@ class Token(object):
             self.selected[channel] = None
             return True
         self.vm._invokevirtualjava(deselectmtd)
-        try:
-            while True:
-                self.vm.step()
-        except ExecutionDone:
+        while self.vm.step():
             pass
         if self.vm.frame.getValue():
             self.selected[channel] = None
@@ -204,10 +199,7 @@ class Token(object):
             self.selected[channel]._selectingApplet = True
             return True
         self.vm._invokevirtualjava(selectmtd)
-        try:
-            while True:
-                self.vm.step()
-        except ExecutionDone:
+        while self.vm.step():
             pass
         if self.vm.frame.getValue() == True:
             self.selected[channel] = potential
@@ -248,12 +240,10 @@ class Token(object):
                 self.vm.cap_file,
                 self.vm.resolver))
         try:
-            while True:
-                self.vm.step()
+            while self.vm.step():
+                pass
         except ISOException, ie:
             sw = isoe.getReason()
             return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
-        except ExecutionDone:
-            pass
         self.current_install_aid = None
         return d2a('\x90\x00')
