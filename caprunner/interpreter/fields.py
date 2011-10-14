@@ -3,7 +3,8 @@ from caprunner import utils
 class JavaCardField(object):
     """
     This is a field of a class
-    It is important that this field be cached in order to keep its value
+    It is important that this field be cached by the resolver in order to keep 
+    its value
     """
     def __init__(self, field_descriptor_info):
         self.fdi = field_descriptor_info
