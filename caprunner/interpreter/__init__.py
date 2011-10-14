@@ -782,7 +782,8 @@ class JavaCardVM(object):
     def getfield_a_this(self, index):
         objref = self.frame.aget(0)
         (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(clsref, token) or None)
+        addr = objref.getFieldAt(clsref, token)
+        self.frame.push(addr or None)
 
     def getfield_a(self, index):
         objref = self.frame.pop()
