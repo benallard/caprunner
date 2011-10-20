@@ -191,6 +191,9 @@ class linkResolver(object):
             return JavaCardVirtualMethod(class_ref, cst.token, cst.isPrivate,
                                          cap_file, self)
 
+# --- Below this line are the public methods. Don't use the other ones, 
+# as the result will not be cached.
+
     @cacheresult
     def resolveIndex(self, index, cap_file):
         """
