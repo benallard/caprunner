@@ -85,7 +85,7 @@ class Token(object):
         JCSystem.getAssignedChannel = defineMygetAssignedChannel(self)
 
     def transmit(self, bytes):
-        self.vm.log = ""
+        self.vm.resetlog()
         self.current_channel = bytes[0] & 0x3
         if self.selected[self.current_channel]:
             self.selected[self.current_channel]._selectingApplet = False

@@ -136,7 +136,7 @@ class JavaCardVM(object):
         # Stack of frames
         self.frames = JavaCardFrames()
         self.cap_file = None
-        self.log = ""
+        self._log = []
 
     def load(self, cap_file):
         """
@@ -152,9 +152,15 @@ class JavaCardVM(object):
         return self.frames.current
 
     def echo(self, string):
-        return # This greatly improve the performances !
         msg = "  " * len(self.frames) + str(string)
-        self.log += msg + '\n'
+        self._log.append( msg )
+
+    def resetlog(self):
+        self._log = []
+
+    @property
+    def log(self):
+        return '\n'.join(self._log)
 
     def getFileLineAndMethod(self, ip):
         if self.cap_file.Debug is None:
