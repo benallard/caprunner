@@ -1,5 +1,5 @@
 // converted by version  [v3.0.1]
-// on Tue Aug 23 22:36:09 CEST 2011
+// on Fri Feb 10 00:04:36 CET 2012
 
 .package javatest {
 	.aid 0xA0:0x0:0x0:0x0:0x18:0xFF:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x1:0x1;
@@ -11,51 +11,340 @@
 	}
 
 	.applet {
-		0xA0:0x0:0x0:0x0:0x18:0xFF:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x1:0x2 Test;
+		0xA0:0x0:0x0:0x0:0x18:0xFF:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x1:0x2 CAPEmu;
 	}
 
 	.constantPool {
 		// 0
-		instanceFieldRef short Test/blah;
+		instanceFieldRef byte[] CAPEmu/pin;
 		// 1
-		staticMethodRef 0.3.0()V;		// javacard/framework/Applet.<init>()V
+		instanceFieldRef short Test/blah;
 		// 2
-		.classRef Test;
+		staticMethodRef 0.3.0()V;		// javacard/framework/Applet.<init>()V
 		// 3
-		staticMethodRef Test/<init>()V;
+		.classRef CAPEmu;
 		// 4
-		virtualMethodRef 0.3.1()V;		// register()V
+		staticMethodRef CAPEmu/<init>()V;
 		// 5
-		staticMethodRef 0.7.1(S)V;		// javacard/framework/ISOException.throwIt(S)V
+		virtualMethodRef 0.3.1()V;		// register()V
 		// 6
-		virtualMethodRef Test/testCallAnotherFunction()V;
+		virtualMethodRef 0.10.1()[B;		// getBuffer()[B
 		// 7
-		virtualMethodRef Test/testExcpts(S)S;
+		virtualMethodRef 0.3.3()Z;		// selectingApplet()Z
 		// 8
-		virtualMethodRef Test/accessField(S)S;
+		staticFieldRef byte[] CAPEmu/responseToSelect;
 		// 9
-		staticMethodRef Test/gcdRecursif(SS)S;
+		staticMethodRef 0.16.2([BS[BSS)S;		// javacard/framework/Util.arrayCopyNonAtomic([BS[BSS)S
 		// 10
-		.classRef 0.12;		// javacard/framework/APDUException
+		virtualMethodRef 0.10.8(SS)V;		// setOutgoingAndSend(SS)V
 		// 11
-		.classRef 0.11;		// javacard/framework/PINException
+		virtualMethodRef 0.10.6()S;		// setIncomingAndReceive()S
 		// 12
-		.classRef 1.10;		// java/lang/SecurityException
+		staticFieldRef byte[] CAPEmu/responseType;
 		// 13
-		.classRef 0.13;		// javacard/framework/SystemException
+		virtualMethodRef 0.10.7()S;		// setOutgoing()S
 		// 14
-		.classRef 0.14;		// javacard/framework/TransactionException
+		virtualMethodRef 0.10.9(S)V;		// setOutgoingLength(S)V
 		// 15
-		staticMethodRef 0.12.1(S)V;		// javacard/framework/APDUException.throwIt(S)V
+		staticFieldRef byte[] CAPEmu/Record1;
 		// 16
-		staticMethodRef 0.11.1(S)V;		// javacard/framework/PINException.throwIt(S)V
+		virtualMethodRef 0.10.5([BSS)V;		// sendBytesLong([BSS)V
 		// 17
-		staticMethodRef 0.13.1(S)V;		// javacard/framework/SystemException.throwIt(S)V
+		staticFieldRef byte[] CAPEmu/Record2;
 		// 18
+		staticMethodRef 0.7.1(S)V;		// javacard/framework/ISOException.throwIt(S)V
+		// 19
+		staticFieldRef byte[] CAPEmu/RetryLeft;
+		// 20
+		staticFieldRef byte[] CAPEmu/Crypto1;
+		// 21
+		staticFieldRef byte[] CAPEmu/Crypto2;
+		// 22
+		staticMethodRef 0.8.13(SB)[B;		// javacard/framework/JCSystem.makeTransientByteArray(SB)[B
+		// 23
+		.classRef Test;
+		// 24
+		staticMethodRef Test/<init>()V;
+		// 25
+		virtualMethodRef 0.3.1()V;		// register()V
+		// 26
+		virtualMethodRef Test/testCallAnotherFunction()V;
+		// 27
+		virtualMethodRef Test/testExcpts(S)S;
+		// 28
+		virtualMethodRef Test/accessField(S)S;
+		// 29
+		staticMethodRef Test/gcdRecursif(SS)S;
+		// 30
+		.classRef 0.12;		// javacard/framework/APDUException
+		// 31
+		.classRef 0.11;		// javacard/framework/PINException
+		// 32
+		.classRef 1.10;		// java/lang/SecurityException
+		// 33
+		.classRef 0.13;		// javacard/framework/SystemException
+		// 34
+		.classRef 0.14;		// javacard/framework/TransactionException
+		// 35
+		staticMethodRef 0.12.1(S)V;		// javacard/framework/APDUException.throwIt(S)V
+		// 36
+		staticMethodRef 0.11.1(S)V;		// javacard/framework/PINException.throwIt(S)V
+		// 37
+		staticMethodRef 0.13.1(S)V;		// javacard/framework/SystemException.throwIt(S)V
+		// 38
 		staticMethodRef 0.14.1(S)V;		// javacard/framework/TransactionException.throwIt(S)V
 	}
 
-	.class public Test 0 extends 0.3 {		// extends javacard/framework/Applet
+	.class public CAPEmu 0 extends 0.3 {		// extends javacard/framework/Applet
+
+		.fields {
+			private byte[] pin 0;		// [B
+			private static final byte[] responseToSelect = {111,46,-124,7,-96,0,0,0,4,-128,2,-91,35,-97,56,3,-97,53,1,95,45,2,102,114,-65,12,21,-97,85,1,0,95,44,2,0,86,-33,7,9,66,75,83,48,53,54,54,53,49};		// [B
+			private static final byte[] responseType = {119,14,-126,2,16,0,-108,8,8,1,1,0,8,4,4,0};		// [B
+			private static final byte[] Record1 = {112,62,90,9,103,3,18,52,86,120,-112,18,63,95,52,1,1,95,37,3,9,2,1,95,36,3,19,5,49,87,19,103,3,18,52,86,120,-112,18,61,19,5,34,16,0,0,2,0,0,-97,95,40,2,0,86,-97,66,2,9,120,-97,68,1,2};		// [B
+			private static final byte[] Record2 = {112,88,-97,86,11,0,0,-1,0,0,0,0,0,3,-1,-1,-114,10,0,0,0,0,0,0,0,0,1,0,-116,27,-97,2,6,-97,3,6,-97,26,2,-107,5,95,42,2,-102,3,-100,1,-97,55,4,-97,76,2,-97,52,3,-115,31,-118,2,-97,2,6,-97,3,6,-97,26,2,-107,5,95,42,2,-102,3,-100,1,-97,55,4,-97,76,2,-97,52,3,-111,10};		// [B
+			private static final byte[] Crypto1 = {119,38,-97,39,1,-128,-97,54,2,0,0,-97,38,8,0,0,0,0,0,0,0,0,-97,16,15,6,1,86,3,-92,0,0,7,0,3,0,0,1,0,2};		// [B
+			private static final byte[] Crypto2 = {119,38,-97,39,1,0,-97,54,2,0,0,-97,38,8,0,0,0,0,0,0,0,0,-97,16,15,6,1,86,3,37,-80,64,7,1,3,0,0,1,0,2};		// [B
+			private static final byte[] RetryLeft = {-97,23,1,3};		// [B
+		}
+
+		.publicMethodTable 7 {
+			equals(Ljava/lang/Object;)Z;
+			register()V;
+			register([BSB)V;
+			selectingApplet()Z;
+			deselect()V;
+			getShareableInterfaceObject(Ljavacard/framework/AID;B)Ljavacard/framework/Shareable;;
+			select()Z;
+			process(Ljavacard/framework/APDU;)V;
+		}
+
+		.packageMethodTable 0 {
+		}
+
+		.method public <init>()V 0 {
+			.stack 3;
+			.locals 0;
+
+				L0:	aload_0;
+					invokespecial 2;		// javacard/framework/Applet.<init>()V
+					aload_0;
+					sconst_2;
+					sconst_2;
+					invokestatic 22;		// javacard/framework/JCSystem.makeTransientByteArray(SB)[B
+					putfield_a 0;		// reference javatest/CAPEmu.pin
+					return;
+		}
+
+		.method public static install([BSB)V 1 {
+			.stack 2;
+			.locals 0;
+
+				L0:	new 3;		// javatest/CAPEmu
+					dup;
+					invokespecial 4;		// javatest/CAPEmu.<init>()V
+					invokevirtual 5;		// register()V
+					return;
+		}
+
+		.method public process(Ljavacard/framework/APDU;)V 7 {
+			.stack 5;
+			.locals 4;
+
+			.descriptor	Ljavacard/framework/APDU;	0.10;
+
+				L0:	aload_1;
+					invokevirtual 6;		// getBuffer()[B
+					astore 5;
+				L1:	aload_0;
+					invokevirtual 7;		// selectingApplet()Z
+					ifeq L3;
+				L2:	getstatic_a 8;		// reference javatest/CAPEmu.responseToSelect
+					sconst_0;
+					aload 5;
+					sconst_5;
+					getstatic_a 8;		// reference javatest/CAPEmu.responseToSelect
+					arraylength;
+					invokestatic 9;		// javacard/framework/Util.arrayCopyNonAtomic([BS[BSS)S
+					pop;
+					aload_1;
+					sconst_5;
+					getstatic_a 8;		// reference javatest/CAPEmu.responseToSelect
+					arraylength;
+					invokevirtual 10;		// setOutgoingAndSend(SS)V
+					return;
+				L3:	aload 5;
+					sconst_1;
+					baload;
+					slookupswitch L23 5 -88 L4 -82 L19 -78 L6 -54 L15 32 L18;
+				L4:	aload_1;
+					invokevirtual 11;		// setIncomingAndReceive()S
+					sstore_3;
+				L5:	getstatic_a 12;		// reference javatest/CAPEmu.responseType
+					sconst_0;
+					aload 5;
+					sconst_5;
+					getstatic_a 12;		// reference javatest/CAPEmu.responseType
+					arraylength;
+					invokestatic 9;		// javacard/framework/Util.arrayCopyNonAtomic([BS[BSS)S
+					pop;
+					aload_1;
+					sconst_5;
+					getstatic_a 12;		// reference javatest/CAPEmu.responseType
+					arraylength;
+					invokevirtual 10;		// setOutgoingAndSend(SS)V
+					goto_w L24;
+				L6:	aload 5;
+					sconst_2;
+					baload;
+					slookupswitch L14 2 1 L7 4 L11;
+				L7:	aload_1;
+					invokevirtual 13;		// setOutgoing()S
+					sstore 4;
+				L8:	sload 4;
+					ifne L10;
+				L9:	aload_1;
+					sconst_0;
+					invokevirtual 14;		// setOutgoingLength(S)V
+					aload_1;
+					getstatic_a 15;		// reference javatest/CAPEmu.Record1
+					sconst_0;
+					sconst_0;
+					invokevirtual 16;		// sendBytesLong([BSS)V
+					goto_w L24;
+				L10:	aload_1;
+					getstatic_a 15;		// reference javatest/CAPEmu.Record1
+					arraylength;
+					invokevirtual 14;		// setOutgoingLength(S)V
+					aload_1;
+					getstatic_a 15;		// reference javatest/CAPEmu.Record1
+					sconst_0;
+					getstatic_a 15;		// reference javatest/CAPEmu.Record1
+					arraylength;
+					invokevirtual 16;		// sendBytesLong([BSS)V
+					goto_w L24;
+				L11:	aload_1;
+					invokevirtual 13;		// setOutgoing()S
+					sstore 4;
+					sload 4;
+					ifne L13;
+				L12:	aload_1;
+					sconst_0;
+					invokevirtual 14;		// setOutgoingLength(S)V
+					aload_1;
+					getstatic_a 17;		// reference javatest/CAPEmu.Record2
+					sconst_0;
+					sconst_0;
+					invokevirtual 16;		// sendBytesLong([BSS)V
+					goto_w L24;
+				L13:	aload_1;
+					getstatic_a 17;		// reference javatest/CAPEmu.Record2
+					arraylength;
+					invokevirtual 14;		// setOutgoingLength(S)V
+					aload_1;
+					getstatic_a 17;		// reference javatest/CAPEmu.Record2
+					sconst_0;
+					getstatic_a 17;		// reference javatest/CAPEmu.Record2
+					arraylength;
+					invokevirtual 16;		// sendBytesLong([BSS)V
+					goto_w L24;
+				L14:	sspush 27270;
+					invokestatic 18;		// javacard/framework/ISOException.throwIt(S)V
+					goto_w L24;
+				L15:	aload_1;
+					invokevirtual 13;		// setOutgoing()S
+					sstore 4;
+					sload 4;
+					ifne L17;
+				L16:	aload_1;
+					sconst_0;
+					invokevirtual 14;		// setOutgoingLength(S)V
+					aload_1;
+					getstatic_a 19;		// reference javatest/CAPEmu.RetryLeft
+					sconst_0;
+					sconst_0;
+					invokevirtual 16;		// sendBytesLong([BSS)V
+					goto_w L24;
+				L17:	aload_1;
+					getstatic_a 19;		// reference javatest/CAPEmu.RetryLeft
+					arraylength;
+					invokevirtual 14;		// setOutgoingLength(S)V
+					aload_1;
+					getstatic_a 19;		// reference javatest/CAPEmu.RetryLeft
+					sconst_0;
+					getstatic_a 19;		// reference javatest/CAPEmu.RetryLeft
+					arraylength;
+					invokevirtual 16;		// sendBytesLong([BSS)V
+					goto_w L24;
+				L18:	aload_1;
+					invokevirtual 11;		// setIncomingAndReceive()S
+					sstore_3;
+					aload 5;
+					bspush 6;
+					getfield_a_this 0;		// reference javatest/CAPEmu.pin
+					sconst_0;
+					getfield_a_this 0;		// reference javatest/CAPEmu.pin
+					arraylength;
+					invokestatic 9;		// javacard/framework/Util.arrayCopyNonAtomic([BS[BSS)S
+					pop;
+					goto L24;
+				L19:	aload 5;
+					sconst_2;
+					baload;
+					slookupswitch L22 2 -128 L20 0 L21;
+				L20:	aload_1;
+					invokevirtual 11;		// setIncomingAndReceive()S
+					sstore_3;
+					getstatic_a 20;		// reference javatest/CAPEmu.Crypto1
+					sconst_0;
+					aload 5;
+					sconst_5;
+					getstatic_a 20;		// reference javatest/CAPEmu.Crypto1
+					arraylength;
+					invokestatic 9;		// javacard/framework/Util.arrayCopyNonAtomic([BS[BSS)S
+					pop;
+					getfield_a_this 0;		// reference javatest/CAPEmu.pin
+					sconst_0;
+					aload 5;
+					bspush 25;
+					getfield_a_this 0;		// reference javatest/CAPEmu.pin
+					arraylength;
+					invokestatic 9;		// javacard/framework/Util.arrayCopyNonAtomic([BS[BSS)S
+					pop;
+					aload_1;
+					sconst_5;
+					getstatic_a 20;		// reference javatest/CAPEmu.Crypto1
+					arraylength;
+					invokevirtual 10;		// setOutgoingAndSend(SS)V
+					goto L24;
+				L21:	aload_1;
+					invokevirtual 11;		// setIncomingAndReceive()S
+					sstore_3;
+					getstatic_a 21;		// reference javatest/CAPEmu.Crypto2
+					sconst_0;
+					aload 5;
+					sconst_5;
+					getstatic_a 21;		// reference javatest/CAPEmu.Crypto2
+					arraylength;
+					invokestatic 9;		// javacard/framework/Util.arrayCopyNonAtomic([BS[BSS)S
+					pop;
+					aload_1;
+					sconst_5;
+					getstatic_a 21;		// reference javatest/CAPEmu.Crypto2
+					arraylength;
+					invokevirtual 10;		// setOutgoingAndSend(SS)V
+					goto L24;
+				L22:	sspush 27270;
+					invokestatic 18;		// javacard/framework/ISOException.throwIt(S)V
+					goto L24;
+				L23:	sspush 27904;
+					invokestatic 18;		// javacard/framework/ISOException.throwIt(S)V
+				L24:	return;
+		}
+
+	}
+
+	.class public Test 1 extends 0.3 {		// extends javacard/framework/Applet
 
 		.fields {
 			 short blah 0;		// S
@@ -87,10 +376,10 @@
 			.locals 0;
 
 				L0:	aload_0;
-					invokespecial 1;		// javacard/framework/Applet.<init>()V
+					invokespecial 2;		// javacard/framework/Applet.<init>()V
 					aload_0;
 					sconst_0;
-					putfield_s 0;		// short javatest/Test.blah
+					putfield_s 1;		// short javatest/Test.blah
 					return;
 		}
 
@@ -98,10 +387,10 @@
 			.stack 2;
 			.locals 0;
 
-				L0:	new 2;		// javatest/Test
+				L0:	new 23;		// javatest/Test
 					dup;
-					invokespecial 3;		// javatest/Test.<init>()V
-					invokevirtual 4;		// register()V
+					invokespecial 24;		// javatest/Test.<init>()V
+					invokevirtual 25;		// register()V
 					return;
 		}
 
@@ -112,12 +401,12 @@
 			.descriptor	Ljavacard/framework/APDU;	0.10;
 
 				L0:	sspush 27265;
-					invokestatic 5;		// javacard/framework/ISOException.throwIt(S)V
+					invokestatic 18;		// javacard/framework/ISOException.throwIt(S)V
 					aload_0;
-					invokevirtual 6;		// testCallAnotherFunction()V
+					invokevirtual 26;		// testCallAnotherFunction()V
 					aload_0;
 					bspush 6;
-					invokevirtual 7;		// testExcpts(S)S
+					invokevirtual 27;		// testExcpts(S)S
 					pop;
 					return;
 		}
@@ -191,10 +480,10 @@
 
 				L0:	aload_0;
 					sload_1;
-					getfield_s_this 0;		// short javatest/Test.blah
+					getfield_s_this 1;		// short javatest/Test.blah
 					sadd;
-					putfield_s 0;		// short javatest/Test.blah
-					getfield_s_this 0;		// short javatest/Test.blah
+					putfield_s 1;		// short javatest/Test.blah
+					getfield_s_this 1;		// short javatest/Test.blah
 					sconst_2;
 					smul;
 					sreturn;
@@ -217,8 +506,8 @@
 			.locals 0;
 
 				L0:	aload_0;
-					getfield_s_this 0;		// short javatest/Test.blah
-					invokevirtual 8;		// accessField(S)S
+					getfield_s_this 1;		// short javatest/Test.blah
+					invokevirtual 28;		// accessField(S)S
 					pop;
 					return;
 		}
@@ -254,7 +543,7 @@
 					sload_0;
 					sload_1;
 					srem;
-					invokestatic 9;		// javatest/Test.gcdRecursif(SS)S
+					invokestatic 29;		// javatest/Test.gcdRecursif(SS)S
 					sreturn;
 		}
 
@@ -275,7 +564,7 @@
 					sconst_1;
 					if_scmpne L2;
 				L1:	sconst_0;
-					invokestatic 15;		// javacard/framework/APDUException.throwIt(S)V
+					invokestatic 35;		// javacard/framework/APDUException.throwIt(S)V
 				L2:	goto L5;
 				L3:	astore_2;
 				L4:	sconst_1;
@@ -284,11 +573,11 @@
 					sconst_2;
 					if_scmpne L7;
 				L6:	sconst_0;
-					invokestatic 16;		// javacard/framework/PINException.throwIt(S)V
+					invokestatic 36;		// javacard/framework/PINException.throwIt(S)V
 				L7:	goto L10;
 				L8:	astore_2;
 				L9:	sconst_0;
-					invokestatic 17;		// javacard/framework/SystemException.throwIt(S)V
+					invokestatic 37;		// javacard/framework/SystemException.throwIt(S)V
 				L10:	sload_1;
 					sconst_2;
 					if_scmpne L21;
@@ -321,7 +610,7 @@
 					sconst_3;
 					if_scmpne L25;
 				L24:	sconst_0;
-					invokestatic 18;		// javacard/framework/TransactionException.throwIt(S)V
+					invokestatic 38;		// javacard/framework/TransactionException.throwIt(S)V
 				L25:	goto L29;
 				L26:	astore_2;
 				L27:	sspush 255;
@@ -334,14 +623,14 @@
 					sreturn;
 			.exceptionTable {
 				// start_block end_block handler_block catch_type_index
-				L0 L2 L3 10;
-				L5 L7 L8 11;
-				L5 L10 L12 12;
+				L0 L2 L3 30;
+				L5 L7 L8 31;
+				L5 L10 L12 32;
 				L5 L10 L17 0;
 				L12 L14 L17 0;
 				L17 L18 L17 0;
-				L23 L25 L26 13;
-				L23 L28 L30 14;
+				L23 L25 L26 33;
+				L23 L28 L30 34;
 			}
 		}
 
