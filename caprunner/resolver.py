@@ -240,7 +240,7 @@ class linkResolver(object):
         for cst, ref in altCP:
             if class_ref.isExternal == cst.isExternal:
                 if cst.isExternal:
-                    if ((this_ref.class_ref.package_token == CR.package_token) and 
+                    if ((cst.class_ref.package_token == CR.package_token) and 
                         (cst.class_ref.class_token == CR.class_token)):
                         return ref
                 else:
