@@ -1,7 +1,7 @@
 from caprunner import utils
 
 opnamepar = {
-    # code: (mnemonic, parameter_length, parameter_sizes)
+    # code: (mnemonic, parameter_length, (parameter_sizes, ...))
     36: ("aaload", 0, ()),
     55: ("aastore", 0, ()),
     1: ("aconst_null", 0, ()),
@@ -190,9 +190,13 @@ opnamepar = {
     87: ("sxor", 0, ()),
 }
 
+#: mnemonic => opcode
 opcode = {}
+#: opcode => mnemonic
 opname = {}
+#: opcode => size of the parameters
 oppar = {}
+#: opcode => parameters
 opparams = {}
 for code, field in opnamepar.iteritems():
     opcode[field[0]] = code
@@ -210,6 +214,10 @@ def u4(data):
     return (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3]
 
 def getParams(data):
+    """ return the parameters as tuple for the opcode at position 0
+
+    special treatment is done for the opcode with variable parameters
+    """
     code = data[0]
     params = []
     ofs = 1
@@ -242,6 +250,7 @@ def getParams(data):
     return ofs, params
 
 def getPar(data):
+    """ return the size of the parameters for the opcode at index 0 """
     code = data[0]
     if code == opcode["ilookupswitch"]:
         npairs = u2(data[3:5])
@@ -261,6 +270,8 @@ def getPar(data):
         return oppar[code]
 
 def disassemble(data):
+    """ generator which yield the mnemonics and their parameters for a method 
+    """
     code = 0
     while data:
         code = data[0]

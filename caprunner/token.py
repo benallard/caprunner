@@ -5,9 +5,11 @@ This is a Python token, it reprsents a Token + the CardManager
 
 from pythoncard.framework import Applet, ISO7816, ISOException, APDU, JCSystem, AID
 
+from python.lang import RuntimeException
+
 from caprunner import resolver, capfile
 from caprunner.utils import d2a, a2d, a2s, signed1
-from caprunner.interpreter import JavaCardVM, ExecutionDone
+from caprunner.interpreter import JavaCardVM
 from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
 
 class Token(object):
@@ -79,10 +81,11 @@ class Token(object):
         def defineMygetAssignedChannel(self):
             def mygetAssignedChannel():
                 return self.current_channel
+            return mygetAssignedChannel
         JCSystem.getAssignedChannel = defineMygetAssignedChannel(self)
 
     def transmit(self, bytes):
-        self.vm.log = ""
+        self.vm.resetlog()
         self.current_channel = bytes[0] & 0x3
         if self.selected[self.current_channel]:
             self.selected[self.current_channel]._selectingApplet = False
@@ -130,16 +133,16 @@ class Token(object):
                 self.vm.cap_file,
                 self.vm.resolver))
         try:
-            while True:
-                self.vm.step()
-        except ExecutionDone:
-            pass
+            while self.vm.step():
+                pass
         except ISOException, isoe:
             sw = isoe.getReason()
             return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
-#        except:
-            self.echo("Caught bad exception")
+        except RuntimeException:
+            self.echo("Caught RuntimeException")
             return d2a('\x6f\x00')
+        except:
+            self.echo("Real bad exception")
             raise
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
         buf.extend(d2a('\x90\x00'))
@@ -160,10 +163,7 @@ class Token(object):
             self.selected[channel] = None
             return True
         self.vm._invokevirtualjava(deselectmtd)
-        try:
-            while True:
-                self.vm.step()
-        except ExecutionDone:
+        while self.vm.step():
             pass
         if self.vm.frame.getValue():
             self.selected[channel] = None
@@ -199,10 +199,7 @@ class Token(object):
             self.selected[channel]._selectingApplet = True
             return True
         self.vm._invokevirtualjava(selectmtd)
-        try:
-            while True:
-                self.vm.step()
-        except ExecutionDone:
+        while self.vm.step():
             pass
         if self.vm.frame.getValue() == True:
             self.selected[channel] = potential
@@ -243,12 +240,10 @@ class Token(object):
                 self.vm.cap_file,
                 self.vm.resolver))
         try:
-            while True:
-                self.vm.step()
+            while self.vm.step():
+                pass
         except ISOException, ie:
             sw = isoe.getReason()
             return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
-        except ExecutionDone:
-            pass
         self.current_install_aid = None
         return d2a('\x90\x00')

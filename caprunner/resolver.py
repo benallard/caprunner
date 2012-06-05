@@ -13,6 +13,7 @@ def cacheresult(f):
     Anyway, this is at least necessary for the classes ... That twice the same
     request returns the same field.
     """
+    #: a2d(pkgAID) => {index => ref}
     __cache = {}
     def wrapper(self, index, cap_file):
         try:
@@ -42,6 +43,9 @@ class linkResolver(object):
         self.refs = {}
         for pkg in struct:
             self.refs[a2d(pkg['AID'])] = refCollection.impoort(pkg)
+        # Alternative ConstantPool
+        #: a2d(pkgAID) => (class_ref, ref,)
+        self.__altCP = {}
 
     def _getModule(self, name):
         if name.startswith('java'):
@@ -179,12 +183,16 @@ class linkResolver(object):
             # unlikely to happen ...
             raise NotImplementedError("super call from python")
         else:
-            cls = self.resolveClass(cst, cap_file)
+            cls = self.resolveClassRef(cst, cap_file)
             if not isinstance(cls.super, JavaCardClass):
                 # also unlikely to happen ...
                 raise NotImplementedError("super call going into python")
             class_ref = cls.super.class_descriptor_info.this_class_ref.class_ref
-            return JavaCardVirtualMethod(class_ref, cst.token, cst.isPrivate, cap_file, self)
+            return JavaCardVirtualMethod(class_ref, cst.token, cst.isPrivate,
+                                         cap_file, self)
+
+# --- Below this line are the public methods. Don't use the other ones, 
+# as the result will not be cached.
 
     @cacheresult
     def resolveIndex(self, index, cap_file):
@@ -207,3 +215,39 @@ class linkResolver(object):
         else:
             assert False, cst.tag + "Is of wrong type"
 
+
+    def resolveClassRef(self, class_ref, cap_file):
+        """ Sometimes, ClassRef need to be resolved independently from the 
+        ConstantPool. There are two known cases:
+        - super of a ClassRef
+        - superMethod
+        """
+        CR = class_ref.class_ref
+        # First, look in the CAPFile
+        for index in xrange(cap_file.ConstantPool.count):
+            cst = cap_file.ConstantPool.constant_pool[index]
+            if cst.tag == 1: # ClassRef
+                if class_ref.isExternal == cst.isExternal: # match
+                    if cst.isExternal:
+                        if ((cst.class_ref.package_token == CR.package_token) and 
+                            (cst.class_ref.class_token == CR.class_token)):
+                            return self.resolveIndex(index, cap_file)
+                    else:
+                        if cst.class_ref == CR:
+                            return self.resolveIndex(index, cap_file)
+        # Then look in our local storage
+        altCP = self.__altCP.get(a2d(cap_file.Header.package.aid), [])
+        for cst, ref in altCP:
+            if class_ref.isExternal == cst.isExternal:
+                if cst.isExternal:
+                    if ((cst.class_ref.package_token == CR.package_token) and 
+                        (cst.class_ref.class_token == CR.class_token)):
+                        return ref
+                else:
+                    if cst.class_ref == CR:
+                        return ref
+        # Then finally create it ...
+        ref = self.resolveClass(class_ref, cap_file)
+        altCP.append((class_ref, ref,))
+        self.__altCP[a2d(cap_file.Header.package.aid)] = altCP
+        return ref

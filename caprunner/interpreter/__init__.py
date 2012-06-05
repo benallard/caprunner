@@ -97,9 +97,6 @@ class JavaCardFrame(object):
             self.locals.asArray(),
             self.bytecodes)
 
-class ExecutionDone(Exception):
-    pass
-
 class DummyFrame(object):
     """ 
     The bottom of the frame stack. 
@@ -139,7 +136,7 @@ class JavaCardVM(object):
         # Stack of frames
         self.frames = JavaCardFrames()
         self.cap_file = None
-        self.log = ""
+        self._log = []
 
     def load(self, cap_file):
         """
@@ -155,9 +152,15 @@ class JavaCardVM(object):
         return self.frames.current
 
     def echo(self, string):
-        return # This greatly improve the performances !
         msg = "  " * len(self.frames) + str(string)
-        self.log += msg + '\n'
+        self._log.append( msg )
+
+    def resetlog(self):
+        self._log = []
+
+    @property
+    def log(self):
+        return '\n'.join(self._log)
 
     def getFileLineAndMethod(self, ip):
         if self.cap_file.Debug is None:
@@ -229,12 +232,14 @@ class JavaCardVM(object):
                     
         # if we are done
         if isinstance(self.frame, DummyFrame):
-            raise ExecutionDone
+            # that was the last one
+            return False
         # increment IP
         if inc is None:
             # regular function without branching
             inc = frame.instrsize
         frame.ip += inc
+        return True
 
     def getRetValue(self):
         """ return the result of the finished execution """
@@ -783,7 +788,8 @@ class JavaCardVM(object):
     def getfield_a_this(self, index):
         objref = self.frame.aget(0)
         (clsref, token) = self.resolver.resolveIndex(index, self.cap_file)
-        self.frame.push(objref.getFieldAt(clsref, token) or None)
+        addr = objref.getFieldAt(clsref, token)
+        self.frame.push(addr or None)
 
     def getfield_a(self, index):
         objref = self.frame.pop()

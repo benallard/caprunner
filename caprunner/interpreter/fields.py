@@ -3,7 +3,8 @@ from caprunner import utils
 class JavaCardField(object):
     """
     This is a field of a class
-    It is important that this field be cached in order to keep its value
+    It is important that this field be cached by the resolver in order to keep 
+    its value
     """
     def __init__(self, field_descriptor_info):
         self.fdi = field_descriptor_info
@@ -28,8 +29,12 @@ class JavaCardStaticField(object):
             aii = sf.array_init[offset]
             convertfunc = {2: lambda x: bool(x[0]), 
                            3: lambda x: utils.signed1(x[0]), 
-                           4: lambda x: utils.signed2(x[0] << 8 + x[1]), 
-                           5: lambda x: utils.signed4(x[0] << 24 + x[1] << 16 + x[2] << 8 + x[3])
+                           4: lambda x: utils.signed2((x[0] << 8) + 
+                                                      x[1]), 
+                           5: lambda x: utils.signed4((x[0] << 24) + 
+                                                      (x[1] << 16) + 
+                                                      (x[2] << 8) + 
+                                                      x[3])
                            }[aii.type]
             elemsize = {2: 1, 3: 1, 4: 2, 5: 4}[aii.type]
             index = 0
