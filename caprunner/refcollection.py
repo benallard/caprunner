@@ -35,6 +35,7 @@ class refCollection(object):
 
         def addVirtualMethod(self, token, name, type):
             if "<init>" in name:
+                # Arguably, constructors are statics ...
                 self.addStaticMethod(token, name, type)
             else:
                 assert not token in self.virtualmethods, self.virtualmethods[token]
