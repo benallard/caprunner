@@ -1,5 +1,5 @@
 // converted by version  [v3.0.1]
-// on Fri Feb 10 00:04:36 CET 2012
+// on Tue Jun 05 21:09:27 CEST 2012
 
 .package javatest {
 	.aid 0xA0:0x0:0x0:0x0:0x18:0xFF:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x1:0x1;
@@ -11,7 +11,7 @@
 	}
 
 	.applet {
-		0xA0:0x0:0x0:0x0:0x18:0xFF:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x1:0x2 CAPEmu;
+		0xA0:0x0:0x0:0x0:0x18:0xFF:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x0:0x1:0x2 Test;
 	}
 
 	.constantPool {
@@ -60,38 +60,48 @@
 		// 21
 		staticFieldRef byte[] CAPEmu/Crypto2;
 		// 22
-		staticMethodRef 0.8.13(SB)[B;		// javacard/framework/JCSystem.makeTransientByteArray(SB)[B
+		staticMethodRef 0.9.0(BB)V;		// javacard/framework/OwnerPIN.<init>(BB)V
 		// 23
-		.classRef Test;
+		superMethodRef MyPIN/update([BSB)V;
 		// 24
-		staticMethodRef Test/<init>()V;
+		staticMethodRef 0.8.13(SB)[B;		// javacard/framework/JCSystem.makeTransientByteArray(SB)[B
 		// 25
-		virtualMethodRef 0.3.1()V;		// register()V
+		.classRef Test;
 		// 26
-		virtualMethodRef Test/testCallAnotherFunction()V;
+		staticMethodRef Test/<init>()V;
 		// 27
-		virtualMethodRef Test/testExcpts(S)S;
+		virtualMethodRef 0.3.1()V;		// register()V
 		// 28
-		virtualMethodRef Test/accessField(S)S;
+		.classRef MyPIN;
 		// 29
-		staticMethodRef Test/gcdRecursif(SS)S;
+		staticMethodRef MyPIN/<init>()V;
 		// 30
-		.classRef 0.12;		// javacard/framework/APDUException
+		virtualMethodRef MyPIN/blah()V;
 		// 31
-		.classRef 0.11;		// javacard/framework/PINException
+		virtualMethodRef Test/testCallAnotherFunction()V;
 		// 32
-		.classRef 1.10;		// java/lang/SecurityException
+		virtualMethodRef Test/testExcpts(S)S;
 		// 33
-		.classRef 0.13;		// javacard/framework/SystemException
+		virtualMethodRef Test/accessField(S)S;
 		// 34
-		.classRef 0.14;		// javacard/framework/TransactionException
+		staticMethodRef Test/gcdRecursif(SS)S;
 		// 35
-		staticMethodRef 0.12.1(S)V;		// javacard/framework/APDUException.throwIt(S)V
+		.classRef 0.12;		// javacard/framework/APDUException
 		// 36
-		staticMethodRef 0.11.1(S)V;		// javacard/framework/PINException.throwIt(S)V
+		.classRef 0.11;		// javacard/framework/PINException
 		// 37
-		staticMethodRef 0.13.1(S)V;		// javacard/framework/SystemException.throwIt(S)V
+		.classRef 1.10;		// java/lang/SecurityException
 		// 38
+		.classRef 0.13;		// javacard/framework/SystemException
+		// 39
+		.classRef 0.14;		// javacard/framework/TransactionException
+		// 40
+		staticMethodRef 0.12.1(S)V;		// javacard/framework/APDUException.throwIt(S)V
+		// 41
+		staticMethodRef 0.11.1(S)V;		// javacard/framework/PINException.throwIt(S)V
+		// 42
+		staticMethodRef 0.13.1(S)V;		// javacard/framework/SystemException.throwIt(S)V
+		// 43
 		staticMethodRef 0.14.1(S)V;		// javacard/framework/TransactionException.throwIt(S)V
 	}
 
@@ -131,7 +141,7 @@
 					aload_0;
 					sconst_2;
 					sconst_2;
-					invokestatic 22;		// javacard/framework/JCSystem.makeTransientByteArray(SB)[B
+					invokestatic 24;		// javacard/framework/JCSystem.makeTransientByteArray(SB)[B
 					putfield_a 0;		// reference javatest/CAPEmu.pin
 					return;
 		}
@@ -344,6 +354,84 @@
 
 	}
 
+	.class  MyPIN extends 0.9 {		// extends javacard/framework/OwnerPIN
+
+		.publicMethodTable 9 {
+			equals(Ljava/lang/Object;)Z;
+			check([BSB)Z;
+			getTriesRemaining()B;
+			getValidatedFlag()Z;
+			isValidated()Z;
+			reset()V;
+			resetAndUnblock()V;
+			setValidatedFlag(Z)V;
+			update([BSB)V;
+			blah()V;
+		}
+
+		.packageMethodTable 0 {
+		}
+
+		.method public <init>()V 0 {
+			.stack 3;
+			.locals 0;
+
+				L0:	aload_0;
+					sconst_3;
+					bspush 8;
+					invokespecial 22;		// javacard/framework/OwnerPIN.<init>(BB)V
+					return;
+		}
+
+		.method public blah()V 9 {
+			.stack 4;
+			.locals 1;
+
+				L0:	bspush 8;
+					newarray 11;
+					dup;
+					sconst_0;
+					sconst_1;
+					bastore;
+					dup;
+					sconst_1;
+					sconst_2;
+					bastore;
+					dup;
+					sconst_2;
+					sconst_3;
+					bastore;
+					dup;
+					sconst_3;
+					sconst_4;
+					bastore;
+					dup;
+					sconst_4;
+					sconst_5;
+					bastore;
+					dup;
+					sconst_5;
+					bspush 6;
+					bastore;
+					dup;
+					bspush 6;
+					bspush 7;
+					bastore;
+					dup;
+					bspush 7;
+					bspush 8;
+					bastore;
+					astore_1;
+				L1:	aload_0;
+					aload_1;
+					sconst_0;
+					sconst_2;
+					invokespecial 23;		// super(javatest/MyPIN).update([BSB)V
+					return;
+		}
+
+	}
+
 	.class public Test 1 extends 0.3 {		// extends javacard/framework/Applet
 
 		.fields {
@@ -387,26 +475,32 @@
 			.stack 2;
 			.locals 0;
 
-				L0:	new 23;		// javatest/Test
+				L0:	new 25;		// javatest/Test
 					dup;
-					invokespecial 24;		// javatest/Test.<init>()V
-					invokevirtual 25;		// register()V
+					invokespecial 26;		// javatest/Test.<init>()V
+					invokevirtual 27;		// register()V
 					return;
 		}
 
 		.method public process(Ljavacard/framework/APDU;)V 7 {
 			.stack 2;
-			.locals 0;
+			.locals 1;
 
 			.descriptor	Ljavacard/framework/APDU;	0.10;
 
-				L0:	sspush 27265;
+				L0:	new 28;		// javatest/MyPIN
+					dup;
+					invokespecial 29;		// javatest/MyPIN.<init>()V
+					astore_2;
+				L1:	aload_2;
+					invokevirtual 30;		// blah()V
+					sspush 27265;
 					invokestatic 18;		// javacard/framework/ISOException.throwIt(S)V
 					aload_0;
-					invokevirtual 26;		// testCallAnotherFunction()V
+					invokevirtual 31;		// testCallAnotherFunction()V
 					aload_0;
 					bspush 6;
-					invokevirtual 27;		// testExcpts(S)S
+					invokevirtual 32;		// testExcpts(S)S
 					pop;
 					return;
 		}
@@ -507,7 +601,7 @@
 
 				L0:	aload_0;
 					getfield_s_this 1;		// short javatest/Test.blah
-					invokevirtual 28;		// accessField(S)S
+					invokevirtual 33;		// accessField(S)S
 					pop;
 					return;
 		}
@@ -543,7 +637,7 @@
 					sload_0;
 					sload_1;
 					srem;
-					invokestatic 29;		// javatest/Test.gcdRecursif(SS)S
+					invokestatic 34;		// javatest/Test.gcdRecursif(SS)S
 					sreturn;
 		}
 
@@ -564,7 +658,7 @@
 					sconst_1;
 					if_scmpne L2;
 				L1:	sconst_0;
-					invokestatic 35;		// javacard/framework/APDUException.throwIt(S)V
+					invokestatic 40;		// javacard/framework/APDUException.throwIt(S)V
 				L2:	goto L5;
 				L3:	astore_2;
 				L4:	sconst_1;
@@ -573,11 +667,11 @@
 					sconst_2;
 					if_scmpne L7;
 				L6:	sconst_0;
-					invokestatic 36;		// javacard/framework/PINException.throwIt(S)V
+					invokestatic 41;		// javacard/framework/PINException.throwIt(S)V
 				L7:	goto L10;
 				L8:	astore_2;
 				L9:	sconst_0;
-					invokestatic 37;		// javacard/framework/SystemException.throwIt(S)V
+					invokestatic 42;		// javacard/framework/SystemException.throwIt(S)V
 				L10:	sload_1;
 					sconst_2;
 					if_scmpne L21;
@@ -610,7 +704,7 @@
 					sconst_3;
 					if_scmpne L25;
 				L24:	sconst_0;
-					invokestatic 38;		// javacard/framework/TransactionException.throwIt(S)V
+					invokestatic 43;		// javacard/framework/TransactionException.throwIt(S)V
 				L25:	goto L29;
 				L26:	astore_2;
 				L27:	sspush 255;
@@ -623,14 +717,14 @@
 					sreturn;
 			.exceptionTable {
 				// start_block end_block handler_block catch_type_index
-				L0 L2 L3 30;
-				L5 L7 L8 31;
-				L5 L10 L12 32;
+				L0 L2 L3 35;
+				L5 L7 L8 36;
+				L5 L10 L12 37;
 				L5 L10 L17 0;
 				L12 L14 L17 0;
 				L17 L18 L17 0;
-				L23 L25 L26 33;
-				L23 L28 L30 34;
+				L23 L25 L26 38;
+				L23 L28 L30 39;
 			}
 		}
 

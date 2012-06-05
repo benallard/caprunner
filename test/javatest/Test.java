@@ -1,6 +1,17 @@
 package javatest;
 import javacard.framework.*;
 
+
+class MyPIN extends OwnerPIN {
+	public MyPIN(){
+		super((byte)3, (byte)8);
+	}
+	public void blah(){
+		byte buf [] = {1, 2, 3, 4, 5, 6, 7, 8};
+		super.update(buf, (short)0, (byte)2);
+	}
+}
+
 public class Test extends Applet{
 
     short blah = 0;
@@ -11,6 +22,8 @@ public class Test extends Applet{
 
     public void process(APDU apdu) throws ISOException{
 	if (false) testCallAnotherFunction();
+	MyPIN pin = new MyPIN();
+	pin.blah();
 	ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
 	testCallAnotherFunction();
 	testExcpts((short)6);
