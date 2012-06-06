@@ -104,14 +104,14 @@ class Token(object):
                         buf = [idx]
                         buf.extend(d2a('\x90\x00'))
                         return buf
-                return d2a(ISO7816.SW_WRONG_P1P2)
+                return d2a('\x6A\x86')
             elif bytes[1:3] == [112, -128]:
                 # close channel: 70 80
                 idx = bytes[3]
                 if self.channels[idx]:
                     self.channels[idx] = False
                     return d2a('\x90\x00')
-                return d2a(ISO7816.SW_WRONG_P1P2)
+                return d2a('\x6A\x86')
             elif bytes[1:4] == [-26, 12, 0]:
                 # install : E6 0C 00
                 self.install(bytes, 5)
@@ -119,7 +119,7 @@ class Token(object):
         applet = self.selected[self.current_channel]
         if applet is None:
             # no applet selected on current channel
-            return d2a(ISO7816.SW_FILE_NOT_FOUND)
+            return d2a('\x6A\x82')
         # Make an APDU object
         apdu = APDU(bytes)
         # pass to the process method
