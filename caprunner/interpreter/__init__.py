@@ -310,10 +310,12 @@ class JavaCardVM(object):
             self._invokespecialnative(method)
         elif isinstance(method, JavaCardStaticMethod):
             self._invokespecialjava(method)
+        elif isinstance(method, PythonVirtualMethod):
+            self._invokevirtualnative(method)
         elif isinstance(method, JavaCardVirtualMethod):
             self._invokevirtualjava(method)
         else:
-            raise NotImplementedError
+            raise ValueError("Something weird's going on", method)
 
     def _invokevirtualnative(self, method):
         params = self._popparams(method.paramsize)

@@ -236,6 +236,8 @@ class CPInfoVirtualMethodref(CPInfoClassTokenref):
         CPInfoClassTokenref.__init__(self, data)
         self.isPrivate = bool(self.token & 0x80)
         self.token &= 0x7f
+    def __str__(self):
+        return "<%s, token %d, %s>" % (self.__class__.__name__, self.token, CPInfoClassTokenref.__str__(self))
 class CPInfoSuperMethodref(CPInfoVirtualMethodref): pass
 
 class StaticBaseref(object):

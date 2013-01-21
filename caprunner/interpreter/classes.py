@@ -86,8 +86,12 @@ class PythonClass(object):
     This is a class that is not in the CAP file. Thus likely to be implemented
     in Python.
     """
-    def __init__(self, cls):
+    def __init__(self, cls, aid, ref):
+        """ We store more than needed, we needs it during super method
+        invocation later"""
         self.cls = cls
+        self.pkg_aid = aid
+        self.ref = ref
 
     def __str__(self):
         return "<PythonClass: %s>" % str(self.cls)

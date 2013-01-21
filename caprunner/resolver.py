@@ -52,8 +52,13 @@ class linkResolver(object):
             try:
                 # pythoncard begins with python ...
                 mod = __import__('python'+name[4:])
-            except ImportError:
-                mod = __import__(name)
+            except ImportError, ie:
+                try:
+                    # Try original package
+                    mod = __import__(name)
+                except ImportError:
+                    # replace exception with original one
+                    raise ie
         else:
             mod = __import__(name)
         for comp in name.split('.')[1:]:
@@ -86,7 +91,8 @@ class linkResolver(object):
         # get the module
         mod = self._getModule(pkg.name.replace('/', '.'))
         # get the class
-        return PythonClass(getattr(mod, clsname))
+        cls = getattr(mod, clsname)
+        return PythonClass(cls, aid, token)
 
     def resolveStaticMethod(self, cst, cap_file):
         if cst.isExternal:
@@ -184,12 +190,19 @@ class linkResolver(object):
             raise NotImplementedError("super call from python")
         else:
             cls = self.resolveClassRef(cst, cap_file)
-            if not isinstance(cls.super, JavaCardClass):
-                # also unlikely to happen ...
-                raise NotImplementedError("super call going into python")
-            class_ref = cls.super.class_descriptor_info.this_class_ref.class_ref
-            return JavaCardVirtualMethod(class_ref, cst.token, cst.isPrivate,
-                                         cap_file, self)
+            if isinstance(cls.super, JavaCardClass):
+                class_ref = cls.super.class_descriptor_info.this_class_ref.class_ref
+                return JavaCardVirtualMethod(class_ref, cst.token, cst.isPrivate,
+                                             cap_file, self)
+            # The trick is to use ref and AID we stored during creation of the
+            # class
+            pkg = self.refs[cls.super.pkg_aid]
+            (clsname, mtd) = pkg.getVirtualMethod(cls.super.ref, cst.token)
+            mtdname = mtd['name']
+            if mtdname[0] == '$':
+                # Call every variations of the function the same way
+                mtdname = mtdname[1:mtdname[1:].find('$') + 1]
+            return PythonVirtualMethod(mtdname, mtd['type'])
 
 # --- Below this line are the public methods. Don't use the other ones, 
 # as the result will not be cached.
@@ -240,7 +253,7 @@ class linkResolver(object):
         for cst, ref in altCP:
             if class_ref.isExternal == cst.isExternal:
                 if cst.isExternal:
-                    if ((this_ref.class_ref.package_token == CR.package_token) and 
+                    if ((cst.class_ref.package_token == CR.package_token) and 
                         (cst.class_ref.class_token == CR.class_token)):
                         return ref
                 else:
