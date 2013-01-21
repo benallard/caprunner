@@ -14,7 +14,7 @@ class Runner(Token):
         if expected != received:
             print "<== %s was expected" % a2s(expected)
             print self.vm.log
-            sys.exit()
+            sys.exit(1)
 
     def echo(self, *args, **kwargs):
         print(args, kwargs)
