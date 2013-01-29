@@ -2,13 +2,38 @@
 CAPRunner
 #########
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+JavaCard ByteCode Emulator
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 Overview
 ========
 
-CAPRunner is a set of python library to parse and execute CAP
+CAPRunner is a javacard bytecode emulator that is able to execute CAP
 files. It also comes with an handy ``runcap.py`` that bind them
 together and allow you to send some APDUs to a CAP file (without the
 need for a smartcard).
+
+Example
+=======
+
+The following script can be ran by ``runcap.py``. It loads a CAP file,
+install and instanciate an applet from the file, send two APDu and
+check their Status Word::
+
+  load: /path/to/helloworld.cap
+
+  install: 0a a0 00 00 00 62 03 01 0c 01 01 00 00 00 : 00
+
+  Select HelloWorld //aid/A000000062/03010C0101
+
+  ==> 00 a4 04 00 0a a0 00 00 00 62 03 01 0c 01 01 7F
+  <== 00 A4 04 00 0A A0 00 00 00 62 03 01 0C 01 01 90 00
+
+  ==> 80 B8 00 00 0C 0A
+  <== 80 B8 00 00 0C 90 00
+
+The example is taken from the JavaCard kit wich can be found under ``samples/classic_applets/HelloWorld``.
 
 Dependencies
 ============
@@ -24,7 +49,7 @@ This project also relies on the following other ones:
   functionnalities from the `globalplatform`_ World.
 
 .. note:: You will only need ``pythonplatform`` if your applet relies
-	  on some globalplatform functionnalities.
+	  on some globalplatform functionnalities like secure messaging.
 
 Installation
 ============
