@@ -2,6 +2,7 @@
 This is a Python token, it reprsents a Token + the CardManager
 
 """
+import traceback
 
 from pythoncard.framework import Applet, ISO7816, ISOException, APDU, JCSystem, AID
 
@@ -140,6 +141,8 @@ class Token(object):
             return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
         except RuntimeException:
             self.echo("Caught RuntimeException")
+            for line in traceback.format_exc().splitlines():
+                self.echo(line)
             return d2a('\x6f\x00')
         except:
             self.echo("Real bad exception")
