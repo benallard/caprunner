@@ -152,7 +152,7 @@ class JavaCardVM(object):
         return self.frames.current
 
     def echo(self, string):
-        msg = "  " * len(self.frames) + str(string)
+        msg = str(len(self.frames)) + "  " * len(self.frames) + str(string)
         self._log.append( msg )
 
     def resetlog(self):
@@ -204,20 +204,22 @@ class JavaCardVM(object):
             self.echo("caught exception: %s" % type(e))
             while not isinstance(self.frame, DummyFrame):
                 # for all frames not being the current one, ip is already tainted
+                # as-in it's already pointing to the next instruction
                 if self.frame is frame:
                     ip = self.frame.ip
                 else:
-                    # This hopes that exceptions will not happend on 
+                    # This hopes that exceptions will not happend on
                     # branching bytecode ...
+                    # Else, we cannot easily find the ip of the originating instruction
                     ip = self.frame.ip - self.frame.instrsize
-                    
+
                 for handler in self.frame.handlers:
                     if ip in handler:
                         if handler.match(e):
                             self.echo("exception handled: ip = %d" % handler.handler_offs)
                             self.frame.ip = handler.handler_offs
                             self.frame.push(e)
-                            return
+                            return True
                         else:
                             self.echo("handler doesn't match exception")
                         if handler.last:
