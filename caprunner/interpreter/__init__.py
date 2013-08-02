@@ -894,20 +894,27 @@ class JavaCardVM(object):
             # null can be casted to any reference
             return
         # First determine type to check against
-        types = {10: bool, 11: int, 12: int, 13: int}
+        types = {10: bool, # boolean
+                 11: int,  # byte
+                 12: int,  # short
+                 13: int}  # int
         if atype in types:
-            type = types[atype]
+            _type = types[atype]
         else:
-            type = self.resolver.resolveIndex(index, self.cap_file).cls
+            _type = self.resolver.resolveIndex(index, self.cap_file).cls
         # Then check it ...
-        if atype == 14:
+        if atype == 14: # reference
             if not isinstance(objectref, list):
                 raise python.lang.ClassCastException
             for elem in objectref:
-                if not isinstance(elem, list):
+                if not isinstance(elem, _type):
                     raise python.lang.ClassCastException
         else:
-            if not isinstance(objectref, type):
+            if isinstance(objectref, list):
+                for elem in objectref:
+                    if not isinstance(elem, _type):
+                        raise python.lang.ClassCastException
+            elif not isinstance(objectref, _type):
                 raise python.lang.ClassCastException
 
     def instanceof(self, atype, index):

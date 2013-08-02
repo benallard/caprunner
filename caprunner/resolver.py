@@ -37,6 +37,7 @@ class linkResolver(object):
     def __init__(self, version=(3,0,1)):
         # load preprocessed pickle from all the exp files
         f = open({(2,1,2): '2.1.2.json',
+                  (2,2,1): '2.2.1.json',
                   (2,2,2): '2.2.2.json',
                   (3,0,1): '3.0.1.json'}[version])
         struct = json.loads(f.read())
