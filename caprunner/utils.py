@@ -139,6 +139,10 @@ def signed1(value):
     return signed(value, 1)
 
 def signed2(value):
+    """
+    >>> signed2(0xffff)
+    -1
+    """
     return signed(value, 2)
 
 def signed4(value):
