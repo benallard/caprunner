@@ -152,7 +152,7 @@ class JavaCardVM(object):
         return self.frames.current
 
     def echo(self, string):
-        msg = "  " * len(self.frames) + str(string)
+        msg = str(len(self.frames)) + "  " * len(self.frames) + str(string)
         self._log.append( msg )
 
     def resetlog(self):
@@ -204,20 +204,22 @@ class JavaCardVM(object):
             self.echo("caught exception: %s" % type(e))
             while not isinstance(self.frame, DummyFrame):
                 # for all frames not being the current one, ip is already tainted
+                # as-in it's already pointing to the next instruction
                 if self.frame is frame:
                     ip = self.frame.ip
                 else:
-                    # This hopes that exceptions will not happend on 
+                    # This hopes that exceptions will not happend on
                     # branching bytecode ...
+                    # Else, we cannot easily find the ip of the originating instruction
                     ip = self.frame.ip - self.frame.instrsize
-                    
+
                 for handler in self.frame.handlers:
                     if ip in handler:
                         if handler.match(e):
                             self.echo("exception handled: ip = %d" % handler.handler_offs)
                             self.frame.ip = handler.handler_offs
                             self.frame.push(e)
-                            return
+                            return True
                         else:
                             self.echo("handler doesn't match exception")
                         if handler.last:
@@ -845,7 +847,7 @@ class JavaCardVM(object):
     def stableswitch(self, default, low, high, *offsets):
         index = self.frame.pop()
         try:
-            return utils.signed2(offsets[index - low])
+            return utils.signed2(offsets[index - utils.signed2(low)])
         except IndexError:
             return utils.signed2(default)
 
@@ -892,20 +894,27 @@ class JavaCardVM(object):
             # null can be casted to any reference
             return
         # First determine type to check against
-        types = {10: bool, 11: int, 12: int, 13: int}
+        types = {10: bool, # boolean
+                 11: int,  # byte
+                 12: int,  # short
+                 13: int}  # int
         if atype in types:
-            type = types[atype]
+            _type = types[atype]
         else:
-            type = self.resolver.resolveIndex(index, self.cap_file).cls
+            _type = self.resolver.resolveIndex(index, self.cap_file).cls
         # Then check it ...
-        if atype == 14:
+        if atype == 14: # reference
             if not isinstance(objectref, list):
                 raise python.lang.ClassCastException
             for elem in objectref:
-                if not isinstance(elem, list):
+                if not isinstance(elem, _type):
                     raise python.lang.ClassCastException
         else:
-            if not isinstance(objectref, type):
+            if isinstance(objectref, list):
+                for elem in objectref:
+                    if not isinstance(elem, _type):
+                        raise python.lang.ClassCastException
+            elif not isinstance(objectref, _type):
                 raise python.lang.ClassCastException
 
     def instanceof(self, atype, index):

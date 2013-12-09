@@ -53,12 +53,12 @@ If a directory all the export file found in the directory will be processed.
                     if filename.endswith('.exp'):
                         if options.verbose: print "Processing %s" % os.path.join(dirname, filename)
                         # Good to go !
-                        f = open(os.path.join(dirname, filename))
+                        f = open(os.path.join(dirname, filename), 'rb')
                         exp = ExportFile(f.read())
                         refs = process(exp, options)
                         res.append(refs)
         else:
-            f = open(path)
+            f = open(path, 'rb')
             exp = ExportFile(f.read())
             refs = process(exp, options)
             res.append(refs)
