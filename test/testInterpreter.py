@@ -3,7 +3,7 @@ import unittest
 from testconfig import *
 
 from caprunner.resolver import linkResolver
-from caprunner.interpreter import ExecutionDone, JavaCardVM, JavaCardFrame, JavaCardLocals, JavaCardStack, DummyFrame
+from caprunner.interpreter import JavaCardVM, JavaCardFrame, JavaCardLocals, JavaCardStack, DummyFrame
 
 from pythoncard.framework import ISOException, Applet
 
@@ -16,10 +16,7 @@ class TestDummyFrame(JavaCardFrame, DummyFrame):
 class TestInterpreter(unittest.TestCase):
 
     def _run(self, intr):
-        try:
-            while True:
-                intr.step()
-        except ExecutionDone:
+        while intr.step():
             pass
 
     def testEasy(self):
