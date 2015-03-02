@@ -469,7 +469,7 @@ class Class(Component):
             self.signature_pool_length = u2(self.data[3:5])
             shift += 2
             self.signature_pool = []
-            while shift < self.signature_pool_length + 2:
+            while shift < self.signature_pool_length + 5:
                 typ_descr = TypeDescriptor(self.data[shift:])
                 self.signature_pool.append(typ_descr)
                 shift += typ_descr.size
