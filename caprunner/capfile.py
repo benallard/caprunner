@@ -1018,5 +1018,5 @@ class CAPFile(object):
 
     def _getFileName(self, component):
         for name in self.zipfile.namelist():
-            if component in name:
+            if (component + ".cap") == name.split('/')[-1]:
                 return name
