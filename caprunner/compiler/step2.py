@@ -1,7 +1,4 @@
-from utils import a2s
-
-
-            
+from ..utils import a2s
 
 class ProcessedCAPFile(object):
     def __init__(self, cap_file, resolver):

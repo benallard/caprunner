@@ -100,7 +100,7 @@ class Directory(Component):
             self.component_tag = u1(data[:1])
             self.size = u2(data[1:2])
             self.aid_length = u1(data[3:4])
-            self.aid = u1a(aid_length, data[4:])
+            self.aid = u1a(self.aid_length, data[4:])
 
     def __init__(self, data, version):
         Component.__init__(self, data, version)
@@ -113,7 +113,7 @@ class Directory(Component):
         self.custom_count = u1(self.data[self.num_components*2+11:])
         self.custom_components = []
         shift = self.num_components*2+12
-        for i in xrange(self.custom_count):
+        for i in range(self.custom_count):
             data = self.data[shift:]
             cstm = self.CustomComponentInfo(data)
             self.custom_components.append(cstm)
@@ -145,7 +145,7 @@ class Applet(Component):
         self.count = u1(self.data[3:4])
         self.applets = []
         shift = 4
-        for i in xrange(self.count):
+        for i in range(self.count):
             data = self.data[shift:]
             app = self.AppletInfo(data)
             self.applets.append(app)
@@ -160,7 +160,7 @@ class Import(Component):
         self.count = u1(self.data[3:4])
         self.packages = []
         shift = 4
-        for i in xrange(self.count):
+        for i in range(self.count):
             pkg_info = PackageInfo(self.data[shift:])
             self.packages.append(pkg_info)
             shift += pkg_info.size
@@ -295,20 +295,20 @@ class ConstantPool(Component):
         self.count = u2(self.data[3:5])
         self.constant_pool = []
         shift = 5
-        for i in xrange(self.count):
+        for i in range(self.count):
             cp_info = CPInfo.get(self.data[shift:])
             self.constant_pool.append(cp_info)
             shift += CPInfo.size
 
     def __str__(self):
         return "< ConstantPool: \n\t%s\n>" % '\n\t'.join(
-            ["%d: %s" % (i, str(self.constant_pool[i])) for i in xrange(self.count)])
+            ["%d: %s" % (i, str(self.constant_pool[i])) for i in range(self.count)])
 
 class TypeDescriptor(object):
     def __init__(self, data):
         self.nibble_count = u1(data[:1])
-        self.type = u1a((self.nibble_count+1)/2, data[1:])
-        self.size = 1 + (self.nibble_count+1)/2
+        self.type = u1a((self.nibble_count+1)//2, data[1:])
+        self.size = 1 + (self.nibble_count+1)//2
 
     def getTypeNib(self, i):
         if i % 2 == 0:
@@ -365,7 +365,7 @@ class Class(Component):
             Class.BaseInfo.__init__(self, data)
             self.superinterfaces = []
             shift = 1
-            for i in xrange(self.interface_count):
+            for i in range(self.interface_count):
                 self.superinterfaces.append(Classref(self.data[shift:]))
                 shift += Classref.size
             if self.isRemote:
@@ -408,7 +408,7 @@ class Class(Component):
                 self.remote_method_count = u1(data[:1])
                 self.remote_methods = []
                 shift = 1
-                for i in xrange(self.remote_method_count):
+                for i in range(self.remote_method_count):
                     self.remote_methods.append(self.RemoteMethodInfo(data[shift:]))
                     shift += self.RemoteMethodInfo.size
                 self.hash_modifier_length = u1(data[shift:])
@@ -420,7 +420,7 @@ class Class(Component):
                 self.remote_interfaces_count = u1(data[shift:])
                 self.remote_interfaces = []
                 shift += 1
-                for i in xrange(self.remote_interfaces_count):
+                for i in range(self.remote_interfaces_count):
                     self.remote_interfaces.append(Classref(data[shift:]))
                     shift += Classref.size
                 self.size = shift
@@ -447,7 +447,7 @@ class Class(Component):
             self.package_virtual_method_table = u2a(self.package_method_table_count, data[shift:])
             shift += self.package_method_table_count*2
             self.interfaces = []
-            for i in xrange(self.interface_count):
+            for i in range(self.interface_count):
                 cls = self.ImplementedInterfaceInfo(data[shift:])
                 self.interfaces.append(cls)
                 shift += cls.size
@@ -578,7 +578,7 @@ class Method(Component):
         self.handler_count = u1(self.data[3:4])
         shift = 4
         self.exception_handlers = []
-        for i in xrange(self.handler_count):
+        for i in range(self.handler_count):
             self.exception_handlers.append(self.ExceptionHandlerInfo(self.data[shift:]))
             shift += self.ExceptionHandlerInfo.size
         self.methods = {}
@@ -615,7 +615,7 @@ class StaticField(Component):
         self.array_init_count = u2(self.data[7:9])
         shift = 9
         self.array_init = []
-        for i in xrange(self.array_init_count):
+        for i in range(self.array_init_count):
             aii = self.ArrayInitInfo(self.data[shift:])
             self.array_init.append(aii)
             shift += aii.size
@@ -678,7 +678,7 @@ class Export(Component):
         self.class_count = u1(self.data[3:4])
         shift = 4
         self.class_exports = []
-        for i in xrange(self.class_count):
+        for i in range(self.class_count):
             clsexp = self.ClassExportInfo(self.data[shift:])
             self.class_exports.append(clsexp)
             shift += clsexp.size
@@ -764,16 +764,16 @@ class Descriptor(Component):
             self.method_count = u2(data[shift+3:])
             shift += 5
             self.interfaces = []
-            for i in xrange(self.interface_count):
+            for i in range(self.interface_count):
                 self.interfaces.append(Classref(data[shift:]))
                 shift += Classref.size
             self.fields = []
-            for i in xrange(self.field_count):
+            for i in range(self.field_count):
                 fld = self.FieldDescriptorInfo(data[shift:])
                 self.fields.append(fld)
                 shift += fld.size
             self.methods = []
-            for i in xrange(self.method_count):
+            for i in range(self.method_count):
                 mtd = self.MethodDescriptorInfo(data[shift:])
                 self.methods.append(mtd)
                 shift += mtd.size
@@ -808,7 +808,7 @@ class Descriptor(Component):
         self.class_count = u1(self.data[3:4])
         shift = 4
         self.classes = []
-        for i in xrange(self.class_count):
+        for i in range(self.class_count):
             cls = self.ClassDescriptorInfo(data[shift:])
             self.classes.append(cls)
             shift += cls.size
@@ -903,11 +903,11 @@ class Debug(Component):
                 self.line_count = u2(data[13:15])
                 shift = 15
                 self.variable_table = []
-                for i in xrange(self.variable_count):
+                for i in range(self.variable_count):
                     self.variable_table.append(self.VariableInfo(data[shift:]))
                     shift += self.VariableInfo.size
                 self.line_table = []
-                for i in xrange(self.line_count):
+                for i in range(self.line_count):
                     self.line_table.append(self.LineInfo(data[shift:]))
                     shift += self.LineInfo.size
                 self.size = shift
@@ -930,12 +930,12 @@ class Debug(Component):
             self.interface_name_indexes = u2a(self.interface_count, data[15:])
             shift = 15 + self.interface_count * 2
             self.fields = []
-            for i in xrange(self.field_count):
+            for i in range(self.field_count):
                 fld = self.FieldDebugInfo(data[shift:])
                 self.fields.append(fld)
                 shift += fld.size
             self.methods = []
-            for i in xrange(self.method_count):
+            for i in range(self.method_count):
                 mtd = self.MethodDebugInfo(data[shift:])
                 self.methods.append(mtd)
                 shift += mtd.size
@@ -951,7 +951,7 @@ class Debug(Component):
         self.string_count = u2(self.data[3:5])
         shift = 5
         self.strings_table = []
-        for i in xrange(self.string_count):
+        for i in range(self.string_count):
             string = self.Utf8Info(self.data[shift:])
             self.strings_table.append(string)
             shift += string.size
@@ -959,14 +959,14 @@ class Debug(Component):
         self.class_count = u2(data[shift + 2:])
         shift += 4
         self.classes = []
-        for i in xrange(self.class_count):
+        for i in range(self.class_count):
             cls = self.ClassDebugInfo(data[shift:])
             self.classes.append(cls)
             shift += cls.size
             
     def __str__(self):
         return "<Debug:\n\tStrings:\n\t\t%s\n\tClasses:\n\t\t - %s\n>" % (
-            '\n\t\t'.join(["%d: %s" % (i, str(self.strings_table[i])) for i in xrange(self.string_count)]),
+            '\n\t\t'.join(["%d: %s" % (i, str(self.strings_table[i])) for i in range(self.string_count)]),
             '\n\t\t - '.join([str(cls) for cls in self.classes]),
             )
 
