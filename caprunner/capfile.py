@@ -310,11 +310,11 @@ class TypeDescriptor(object):
         self.type = u1a((self.nibble_count+1)//2, data[1:])
         self.size = 1 + (self.nibble_count+1)//2
 
-    def getTypeNib(self, i):
+    def getTypeNib(self, i: int) -> int:
         if i % 2 == 0:
-            return (self.type[i / 2] & 0xF0) >> 4
+            return (self.type[i // 2] & 0xF0) >> 4
         else:
-            return self.type[i / 2] & 0x0F
+            return self.type[i // 2] & 0x0F
 
     def __str__(self):
         "That one can be pretty funny"
@@ -489,8 +489,8 @@ class Class(Component):
 
     def __str__(self):
         return "< Class:\n\tInterfaces:\n\t\t%s\n\tClasses:\n\t\t%s\n>" % (
-            '\n\t\t'.join(["%d: %s" % (idx, int) for (idx, int) in self.interfaces.iteritems()]),
-            '\n\t\t'.join(["%d: %s" % (idx, cls) for (idx, cls) in self.classes.iteritems()])
+            '\n\t\t'.join(["%d: %s" % (idx, int) for (idx, int) in self.interfaces.items()]),
+            '\n\t\t'.join(["%d: %s" % (idx, cls) for (idx, cls) in self.classes.items()])
             )
 
 class Method(Component):
@@ -588,7 +588,7 @@ class Method(Component):
     def __str__(self):
         return "< Method:\n\tExceptionHandlers:\n\t\t%s\n\tMethods:\n\t\t%s\n>" %(
             '\n\t\t'.join([str(excp) for excp in self.exception_handlers]),
-            '\n\t\t'.join(["%d: %s" % (idx, mtd) for (idx, mtd) in self.methods.iteritems()])
+            '\n\t\t'.join(["%d: %s" % (idx, mtd) for (idx, mtd) in self.methods.items()])
             )
 
 class StaticField(Component):
@@ -800,7 +800,7 @@ class Descriptor(Component):
         def __str__(self):
             return "TypeDescr: CstPool: (%s), types: (%s)" % (
                 ', '.join([str(cst) for cst in self.constant_pool_types]),
-                ', '.join(["%d: %s" % (idx, typ) for (idx, typ) in self.type_desc.iteritems()])
+                ', '.join(["%d: %s" % (idx, typ) for (idx, typ) in self.type_desc.items()])
                 )
 
     def __init__(self, data, version):

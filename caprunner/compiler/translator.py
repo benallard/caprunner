@@ -122,7 +122,7 @@ if __name__ == "__main__":
     talk.sconst_2()
     talk.srem()
     f = mtd.get()
-    print f(5)
+    print(f(5))
 """
     talk.ifne(6)
     talk.sload_1()

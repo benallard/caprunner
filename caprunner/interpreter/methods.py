@@ -1,6 +1,6 @@
-from caprunner.bytecode import disassemble # for verbosity
+from ..bytecode import disassemble # for verbosity
 
-from caprunner.interpreter.classes import NoSuchClass
+from .classes import NoSuchClass
 
 class NoSuchMethod(Exception):
     pass
@@ -70,7 +70,7 @@ class JavaCardMethod(object):
         bytecode_orig = self.offset + self.method_info.method_info.size
         mdi = self.method_descriptor_info
         self.excpt_handlers = []
-        for hdlr in xrange(mdi.exception_handler_index, 
+        for hdlr in range(mdi.exception_handler_index, 
                            mdi.exception_handler_index + 
                            mdi.exception_handler_count):
             self.excpt_handlers.append(ExceptionHandler(

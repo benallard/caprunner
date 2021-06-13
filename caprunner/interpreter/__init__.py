@@ -1,8 +1,8 @@
 import python.lang
 
-from caprunner import bytecode, utils
+from .. import bytecode, utils
 
-from caprunner.interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
+from .methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
 
 class JavaCardStack(list):
     """
@@ -27,7 +27,7 @@ class JavaCardLocals(dict):
     The mapping is: index -> value
     """
     def __init__(self, *params):
-        for i in xrange(len(params)):
+        for i in range(len(params)):
             self[i] = params[i]
 
     def aget(self, index):
@@ -258,7 +258,7 @@ class JavaCardVM(object):
         number of cells required for storage is two if one or more of the local 
         variables is of type int.
         """
-        return JavaCardLocals(*reversed([self.frame.pop() for i in xrange(paramslen)]))
+        return JavaCardLocals(*reversed([self.frame.pop() for i in range(paramslen)]))
 
     def _pushretval(self, value, rettype):
         if rettype == 'integer':
@@ -696,7 +696,7 @@ class JavaCardVM(object):
         count = utils.signed2(self.frame.pop())
         if count < 0:
             raise python.lang.NegativeArraySizeException()
-        array = [{10:False, 11:0, 12:0, 13:0}[elemtype] for i in xrange(count)]
+        array = [{10:False, 11:0, 12:0, 13:0}[elemtype] for i in range(count)]
         self.frame.push(array)
 
     def anewarray(self, index):
@@ -704,7 +704,7 @@ class JavaCardVM(object):
         if count < 0:
             raise python.lang.NegativeArraySizeException()
         # We don't really care of the type of the elements
-        array = [None for i in xrange(count)]
+        array = [None for i in range(count)]
         self.frame.push(array)
 
     def arraylength(self):
@@ -732,9 +732,9 @@ class JavaCardVM(object):
         if n == 0:
             # special case of n == 0 means n == m
             n = m
-        ops = [self.frame.pop() for i in xrange(m)]
+        ops = [self.frame.pop() for i in range(m)]
         n = n - m
-        ext_ops = [self.frame.pop() for i in xrange(n)]
+        ext_ops = [self.frame.pop() for i in range(n)]
         # simply duplicate them on top
         self.frame.stack.extend(reversed(ops))
         self.frame.stack.extend(reversed(ext_ops))
@@ -743,8 +743,8 @@ class JavaCardVM(object):
     def swap_x(self, mn):
         m = (mn & 0xf0) >> 4
         n = (mn & 0x0f)
-        opsm = [self.frame.pop() for i in xrange(m)]
-        opsn = [self.frame.pop() for i in xrange(n)]
+        opsm = [self.frame.pop() for i in range(m)]
+        opsn = [self.frame.pop() for i in range(n)]
         self.frame.stack.extend(reversed(opsm))
         self.frame.stack.extend(reversed(opsn))
 

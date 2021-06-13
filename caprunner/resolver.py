@@ -1,11 +1,11 @@
 import json
 
-from caprunner.utils import a2d
+from .utils import a2d
 
-from caprunner.refcollection import refCollection
-from caprunner.interpreter.fields import JavaCardStaticField
-from caprunner.interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
-from caprunner.interpreter.classes import PythonClass, JavaCardClass
+from .refcollection import refCollection
+from .interpreter.fields import JavaCardStaticField
+from .interpreter.methods import PythonStaticMethod, JavaCardStaticMethod, PythonVirtualMethod, JavaCardVirtualMethod
+from .interpreter.classes import PythonClass, JavaCardClass
 
 def cacheresult(f):
     """
@@ -238,7 +238,7 @@ class linkResolver(object):
         """
         CR = class_ref.class_ref
         # First, look in the CAPFile
-        for index in xrange(cap_file.ConstantPool.count):
+        for index in range(cap_file.ConstantPool.count):
             cst = cap_file.ConstantPool.constant_pool[index]
             if cst.tag == 1: # ClassRef
                 if class_ref.isExternal == cst.isExternal: # match

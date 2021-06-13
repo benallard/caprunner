@@ -99,7 +99,7 @@ class Token(object):
                     return d2a('\x69\x99')
             elif bytes[1:4] == [112, 0, 0]:
                 # open channel : 70 00 00
-                for idx in xrange(4):
+                for idx in range(4):
                     if not self.channels[idx]:
                         self.channels[idx] = True
                         buf = [idx]

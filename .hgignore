@@ -1,8 +1,0 @@
-glob:*~
-glob:*.pyc
-glob:python/*
-glob:pythoncard/*
-glob:pythoncardx/*
-glob:docs/_build/*
-glob:Crypto/*
-glob:org/*

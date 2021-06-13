@@ -1,0 +1,9 @@
+*~
+*.pyc
+*.json
+python/
+pythoncard/
+pythoncardx/
+docs/_build/*
+Crypto/*
+org/*
