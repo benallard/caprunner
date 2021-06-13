@@ -8,10 +8,10 @@ from pythoncard.framework import Applet, ISO7816, ISOException, APDU, JCSystem, 
 
 from python.lang import RuntimeException
 
-from caprunner import resolver, capfile
-from caprunner.utils import d2a, a2d, a2s, signed1
-from caprunner.interpreter import JavaCardVM
-from caprunner.interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
+from . import resolver, capfile
+from .utils import d2a, a2d, a2s, signed1
+from .interpreter import JavaCardVM
+from .interpreter.methods import JavaCardStaticMethod, JavaCardVirtualMethod, NoSuchMethod
 
 class Token(object):
     """

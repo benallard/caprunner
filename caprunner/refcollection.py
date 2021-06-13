@@ -64,7 +64,7 @@ class refCollection(object):
 
         def _unroll(self, struct, name):
             dct = getattr(self, name)
-            for token, name in struct[name].iteritems():
+            for token, name in struct[name].items():
                 dct[int(token)] = name
 
         @classmethod

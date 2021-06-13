@@ -1,5 +1,5 @@
 import copy
-from fields import JavaCardField
+from .fields import JavaCardField
 
 class NoSuchClass(Exception):
     pass

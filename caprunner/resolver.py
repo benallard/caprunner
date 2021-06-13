@@ -53,7 +53,7 @@ class linkResolver(object):
             try:
                 # pythoncard begins with python ...
                 mod = __import__('python'+name[4:])
-            except ImportError, ie:
+            except ImportError as ie:
                 try:
                     # Try original package
                     mod = __import__(name)
@@ -123,7 +123,7 @@ class linkResolver(object):
         try:
             method = getattr(cls, mtdname)
         except AttributeError:
-            print "Cannot find %s in %s in %s" % (mtdname, clsname, pkg.name)
+            print(f"Cannot find {mtdname} in {clsname} in {pkg.name}")
             raise
         return PythonStaticMethod(mtdname, mtd['type'], method)
 

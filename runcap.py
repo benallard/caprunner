@@ -22,10 +22,10 @@ def hexify(hexStr):
 class Runner(Token):
 
     def checkreceive(self, expected, received):
-        print "<== %s" % a2s(received)
+        print(f"<== {a2s(received)}")
         if expected != received:
-            print "<== %s was expected" % a2s(expected)
-            print self.vm.log
+            print(f"<== {a2s(expected)} was expected")
+            print(self.vm.log)
             sys.exit(1)
 
     def echo(self, *args, **kwargs):
@@ -39,11 +39,11 @@ class Runner(Token):
             if '--' in line:
                 line = line[:line.find('--')]
             if len(line) == 0 and len(send) != 0 and len(receive) != 0:
-                print "==> %s" % a2s(send)
+                print("==> {a2s(send)}")
                 try:
                     got = self.transmit(send)
                 except:
-                    print self.vm.log
+                    print(self.vm.log)
                     raise
                 self.checkreceive(receive, got)
                 send = []
@@ -61,13 +61,13 @@ class Runner(Token):
             elif line.startswith('load:'):
                 self.vm.load(capfile.CAPFile(line[5:].strip()))
             elif line.startswith('log;'):
-                print self.vm.log
+                print(self.vm.log)
             else:
-                print line
+                print(line)
 
 if len(sys.argv) > 1:
     version = tuple([int(i) for i in sys.argv[1].split('.')])
-    print "Running in version %s.%s.%s" % version
+    print("Running in version %s.%s.%s" % version)
     runner = Runner(version)
 else:
     runner = Runner()

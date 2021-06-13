@@ -181,7 +181,7 @@ class JavaCardVM(object):
                             method = "%s.%s" % (str(dbg.strings_table[cls.name_index]),
                                                 str(dbg.strings_table[mtd.name_index]))
                             return (file, method, line.source_line)
-        print "%d not found" % ip 
+        print(f"{ip} not found")
     
     def step(self):
         code = self.frame.bytecodes[self.frame.ip:]
@@ -200,7 +200,7 @@ class JavaCardVM(object):
         self.echo(frame.locals)
         try:
             inc = f(*params)
-        except Exception, e:
+        except Exception as e:
             self.echo("caught exception: %s" % type(e))
             while not isinstance(self.frame, DummyFrame):
                 # for all frames not being the current one, ip is already tainted

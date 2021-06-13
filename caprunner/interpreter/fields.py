@@ -50,7 +50,7 @@ class JavaCardStaticField(object):
             if offset <= sf.default_value_count:
                 self.val = None
             else:
-                print "I am a non-default primitive type"
+                print("I am a non-default primitive type")
                 raise NotImplementedError("non default primitive static field")
 
     def set(self, value):

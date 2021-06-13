@@ -21,7 +21,7 @@ If a directory all the export file found in the directory will be processed.
 """)
 
     parser.add_option("-d", "--dump",
-                      help    = "Dump the processed result to a pickle file.")
+                      help    = "Dump the processed result to a json file.")
 
     parser.add_option("-P", "--pretty-print", default=False,
                       action="store_true", help= "Pretty print the results")
@@ -63,7 +63,7 @@ If a directory all the export file found in the directory will be processed.
             refs = process(exp, options)
             res.append(refs)
     if options.dump is not None:
-        f = open(options.dump, 'wb')
+        f = open(options.dump, 'wt')
         f.write(json.dumps(res))
 
 main()

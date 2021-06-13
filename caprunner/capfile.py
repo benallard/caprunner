@@ -1,7 +1,7 @@
 import zipfile
 
-from utils import *
-from bytecode import disassemble
+from .utils import *
+from .bytecode import disassemble
 
 class PackageInfo(object):
     def __init__(self, data):

@@ -198,7 +198,7 @@ opname = {}
 oppar = {}
 #: opcode => parameters
 opparams = {}
-for code, field in opnamepar.iteritems():
+for code, field in opnamepar.items():
     opcode[field[0]] = code
     opname[code] = field[0]
     oppar[code] = field[1]
