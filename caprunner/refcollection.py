@@ -1,4 +1,4 @@
-from utils import a2d, d2a
+from .utils import a2d, d2a
 
 class refCollection(object):
     """
@@ -123,9 +123,9 @@ class refCollection(object):
             # First pass to look for name colision (type related)
             mtdname = str(CP[mtd.name_index])
             if mtdname in tmp:
-                print "colision with %s" % mtdname
+                print(f"colision with {mtdname}")
                 mtdname = '$' + mtdname + '$' + str(CP[mtd.descriptor_index])
-                print "renamed it %s" % mtdname
+                print(f"renamed it {mtdname}")
                 names[mtd] = mtdname
             else:
                 names[mtd] = mtdname
@@ -173,7 +173,7 @@ class refCollection(object):
         struct['AID'] = d2a(self.AID)
         struct['name'] = self.name
         struct['classes'] = {}
-        for key, value in self.classes.iteritems():
+        for key, value in self.classes.items():
             struct['classes'][key] = value.export()
         return struct
 
@@ -181,7 +181,7 @@ class refCollection(object):
     def impoort(cls, struct):
         """ return a cls type with the content of the JSON string """
         slf = cls(a2d(struct['AID']), struct['name'])
-        for token, claass in struct['classes'].iteritems():
+        for token, claass in struct['classes'].items():
             slf.classes[int(token)] = cls.classRefCollection.impoort(claass)
         return slf
         

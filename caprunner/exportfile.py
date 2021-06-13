@@ -1,4 +1,4 @@
-from utils import *
+from .utils import *
 
 class ExportFile(object):
 
@@ -93,7 +93,7 @@ class ExportFile(object):
                 self.attributes_count = u2(self.data[7:9])
                 shift = 9
                 self.attributes = []
-                for i in xrange(self.attributes_count):
+                for i in range(self.attributes_count):
                     data = self.data[shift:]
                     attr = self.ConstantValueAttribute(data)
                     self.attributes.append(attr)
@@ -135,7 +135,7 @@ class ExportFile(object):
             self.export_fields_count = u2(self.data[shift:shift+2])
             self.fields = []
             shift += 2
-            for i in xrange(self.export_fields_count):
+            for i in range(self.export_fields_count):
                 data = self.data[shift:]
                 field = self.FieldInfo(data)
                 self.fields.append(field)
@@ -143,7 +143,7 @@ class ExportFile(object):
             self.export_methods_count = u2(self.data[shift:shift+2])
             self.methods = []
             shift += 2
-            for i in xrange(self.export_methods_count):
+            for i in range(self.export_methods_count):
                 data = self.data[shift:]
                 method = self.MethodInfo(data)
                 self.methods.append(method)
@@ -166,7 +166,7 @@ class ExportFile(object):
         self.constant_pool_count = u2(self.data[6:8])
         self.constant_pool = []
         shift = 8
-        for i in xrange(self.constant_pool_count):
+        for i in range(self.constant_pool_count):
             data = self.data[shift:]
             cp_info = self.CPInfo.get(data)
             self.constant_pool.append(cp_info)
@@ -175,7 +175,7 @@ class ExportFile(object):
         self.export_class_count = u1(self.data[shift+2:shift+3])
         shift += 3
         self.classes = []
-        for i in xrange(self.export_class_count):
+        for i in range(self.export_class_count):
             data = self.data[shift:]
             cls = self.ClassInfo(data)
             self.classes.append(cls)
@@ -196,26 +196,26 @@ class ExportFile(object):
 
     def pprint(self):
         CP = self.constant_pool
-        print "I am: ", CP[CP[self.this_package].name_index], " with version ", CP[self.this_package].version, " and AID ", a2s(CP[self.this_package].aid)
-        print "I export ", len(self.classes), " classes (including interfaces). Those are:"
+        print(f"I am: {CP[CP[self.this_package].name_index]} with version {CP[self.this_package].version} and AID {a2s(CP[self.this_package].aid)}")
+        print(f"I export {len(self.classes)} classes (including interfaces). Those are:")
         for cls in self.classes:
-            print " - ", CP[CP[cls.name_index].name_index], "TK:", cls.token
-            print "\tinherits from ",cls.export_supers_count, "classes, those are:"
+            print(f" - {CP[CP[cls.name_index].name_index]} TK:{cls.token}")
+            print(f"\tinherits from {cls.export_supers_count} classes, those are:")
             for sp in cls.supers:
-                print "\t - ", CP[CP[sp].name_index]
+                print(f"\t - {CP[CP[sp].name_index]}")
             if cls.export_interfaces_count:
-                print "\timplements the following ", cls.export_interfaces_count, "interfaces:"
+                print(f"\timplements the following {cls.export_interfaces_count} interfaces:")
                 for int in cls.interfaces:
-                    print "\t - ", CP[CP[int].name_index]
+                    print(f"\t - {CP[CP[int].name_index]}")
             if cls.export_fields_count:
-                print "\thas the following ", cls.export_fields_count, "fields:"
+                print(f"\thas the following {cls.export_fields_count} fields:")
                 for fld in cls.fields:
                     assert len(fld.attributes) == 1
-                    print "\t - ", CP[fld.name_index], "of type", CP[fld.descriptor_index], "TK:", fld.token, "(",CP[fld.attributes[0].constant_value_index], ")"
+                    print(f"\t - {CP[fld.name_index]} of type {CP[fld.descriptor_index]} TK: {fld.token} ( {CP[fld.attributes[0].constant_value_index]})")
             if cls.export_methods_count:
-                print "\thas the following", cls.export_methods_count, "methods:"
+                print(f"\thas the following {cls.export_methods_count} methods:")
                 for mtd in cls.methods:
-                    print "\t - ", CP[mtd.name_index], mtd.access_flags, mtd.isStatic and "STATIC" or "", "TK:", mtd.token, "(", CP[mtd.descriptor_index], ")"
+                    print(f"\t - {CP[mtd.name_index]} {mtd.access_flags} {'STATIC' if mtd.isStatic else ''}  TK: {mtd.token} ( {CP[mtd.descriptor_index]})")
 
     @property
     def AID(self):

@@ -51,7 +51,7 @@ def u1a(size, data):
     >>> u1a(5, '\x45'*7)
     [69, 69, 69, 69, 69]
     """
-    return [u1(data[i:i+1]) for i in xrange(size)]
+    return [u1(data[i:i+1]) for i in range(size)]
 
 def u2a(size, data):
     """
@@ -59,7 +59,7 @@ def u2a(size, data):
     >>> u2a(3, '\x78\x23\x89' * 2)
     [30755, 35192, 9097]
     """
-    return [u2(data[i*2:i*2+2]) for i in xrange(size)]
+    return [u2(data[i*2:i*2+2]) for i in range(size)]
 
 def a2s(a):
     """

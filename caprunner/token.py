@@ -136,7 +136,7 @@ class Token(object):
         try:
             while self.vm.step():
                 pass
-        except ISOException, isoe:
+        except ISOException as isoe:
             sw = isoe.getReason()
             return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
         except RuntimeException:
@@ -245,7 +245,7 @@ class Token(object):
         try:
             while self.vm.step():
                 pass
-        except ISOException, ie:
+        except ISOException as isoe:
             sw = isoe.getReason()
             return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
         self.current_install_aid = None

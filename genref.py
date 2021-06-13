@@ -37,7 +37,7 @@ If a directory all the export file found in the directory will be processed.
         s = json.loads(f.read())
         for pkg in s:
             refCollection.impoort(pkg)
-        print "Import sucessfull !"
+        print("Import sucessfull !")
         return
 
     if len(args) == 0:
@@ -51,7 +51,7 @@ If a directory all the export file found in the directory will be processed.
             for dirname, dirnames, filenames in os.walk(path):
                 for filename in filenames:
                     if filename.endswith('.exp'):
-                        if options.verbose: print "Processing %s" % os.path.join(dirname, filename)
+                        if options.verbose: print("Processing %s" % os.path.join(dirname, filename))
                         # Good to go !
                         f = open(os.path.join(dirname, filename), 'rb')
                         exp = ExportFile(f.read())
