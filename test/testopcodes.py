@@ -10,7 +10,7 @@ class TestOpcodes(unittest.TestCase):
         vm.frame.stack = init
         f = getattr(vm, opcode)
         f(*params)
-        self.assertEquals(expected, vm.frame.stack)
+        self.assertEqual(expected, vm.frame.stack)
 
     def _testBranch(self, opcode, params, stack, expectedIP):
         vm = JavaCardVM(None)
@@ -19,7 +19,7 @@ class TestOpcodes(unittest.TestCase):
         offset = f(*params)
         if offset is None:
             offset = 0
-        self.assertEquals(expectedIP, offset)
+        self.assertEqual(expectedIP, offset)
 
     def _testLocals(self, opcode, params, init, expected):
         vm = JavaCardVM(None)
@@ -29,7 +29,7 @@ class TestOpcodes(unittest.TestCase):
         f = getattr(vm, opcode)
         f(*params)
         for index in expected:
-            self.assertEquals(expected[index], vm.frame.locals[index])
+            self.assertEqual(expected[index], vm.frame.locals[index])
 
     def _testRun(self, opcode, params, stack):
         vm = JavaCardVM(None)
@@ -55,10 +55,10 @@ class TestOpcodes(unittest.TestCase):
 
     def test_arraylength(self):
         self._teststack('arraylength', [], [[1,2,3,4,5,6,7,8]], [8])
-        self._teststack('arraylength', [], [[i for i in xrange(765)]], [765])
+        self._teststack('arraylength', [], [[i for i in range(765)]], [765])
 
     def test_s2b(self):
-        bytes = xrange(-128, 127)
+        bytes = range(-128, 127)
         for i in bytes:
             self._teststack('s2b', [], [i], [i])
 
@@ -67,7 +67,7 @@ class TestOpcodes(unittest.TestCase):
             self._teststack('s2b', [], [i], [j])
 
     def test_baload(self):
-        array = [i for i in xrange(10)]
+        array = [i for i in range(10)]
         self._teststack('baload', [], [array, 6], [6])
         try:
             self._teststack('baload', [], [array, 12], [6])
@@ -102,7 +102,7 @@ class TestOpcodes(unittest.TestCase):
         try:
             self._testRun('athrow', [], [MyException(5)])
             self.fail()
-        except MyException, e:
+        except MyException as e:
             self.assertEqual(5, e.getReason())
     
     def test_sinc_w(self):

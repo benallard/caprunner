@@ -27,7 +27,7 @@ class TestInterpreter(unittest.TestCase):
         intr.sadd()
         intr.s2b()
         intr.sreturn()
-        self.assertEquals(62, intr.getRetValue())
+        self.assertEqual(62, intr.getRetValue())
 
     def testSomeIf(self):
         intr = JavaCardVM(None)
@@ -39,14 +39,14 @@ class TestInterpreter(unittest.TestCase):
         intr.load(javatest_cap)
         intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 29, 28, 29, 73, 141, 0, 9, 120], 0))
         self._run(intr)
-        self.assertEquals(14, intr.getRetValue())
+        self.assertEqual(14, intr.getRetValue())
         
 
     def test_gcdIteratif(self):
         intr = JavaCardVM(None)
         intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 28, 29, 73, 49, 29, 47, 30, 48, 112, 243], 0))
         self._run(intr)
-        self.assertEquals(14, intr.getRetValue())
+        self.assertEqual(14, intr.getRetValue())
 
     def test_callExtStaticMethod(self):
         intr = JavaCardVM(linkResolver())
@@ -55,8 +55,8 @@ class TestInterpreter(unittest.TestCase):
         try:
             self._run(intr)
             self.fail()
-        except ISOException, ioe:
-            self.assertEquals(0x6A81, ioe.getReason())
+        except ISOException as ioe:
+            self.assertEqual(0x6A81, ioe.getReason())
 
     def test_objectCreation(self):
         intr = JavaCardVM(linkResolver())
@@ -101,7 +101,7 @@ class TestLocals(unittest.TestCase):
     def test_getparams(self):
         loc = JavaCardLocals(self,2)
         self.assertTrue(loc.aget(0) is self)
-        self.assertEquals(2, loc.sget(1))
+        self.assertEqual(2, loc.sget(1))
 
     def test_getlocals(self):
         loc = JavaCardLocals(self)
@@ -117,5 +117,5 @@ class TestStack(unittest.TestCase):
     def test(self):
         s = JavaCardStack()
         s.push(2)
-        self.assertEquals(2, s.pop())
+        self.assertEqual(2, s.pop())
         
