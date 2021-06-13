@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 version = '1.0'
 
@@ -12,7 +12,7 @@ setup(
     author_email='benoit.allard@gmx.de',
     description='A JavaCard bytecode emulator',
     long_description=open('README.rst').read(),
-    url='https://bitbucket.org/benallard/caprunner',
+    url='https://github.com/benallard/caprunner',
     packages=['caprunner', 'caprunner.interpreter'],
     scripts=['runcap.py', 'genref.py', 'readcap.py', 'readexp.py'],
     install_requires=['JavaCard'],
