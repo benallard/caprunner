@@ -34,13 +34,14 @@ class linkResolver(object):
     it can understand.
     Note: We don't care (yet ?) of version of packages ...
     """
-    def __init__(self, version=(3,0,1)):
-        # load preprocessed pickle from all the exp files
-        f = open({(2,1,2): '2.1.2.json',
+    def __init__(self, version=(3,0,4)):
+        # load preprocessed json from all the exp files
+        with open({(2,1,2): '2.1.2.json',
                   (2,2,1): '2.2.1.json',
                   (2,2,2): '2.2.2.json',
-                  (3,0,1): '3.0.1.json'}[version])
-        struct = json.loads(f.read())
+                  (3,0,1): '3.0.1.json',
+                  (3,0,4): '3.0.4.json'}[version]) as f:
+            struct = json.loads(f.read())
         self.refs = {}
         for pkg in struct:
             self.refs[a2d(pkg['AID'])] = refCollection.impoort(pkg)

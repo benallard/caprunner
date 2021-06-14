@@ -18,7 +18,7 @@ class Token(object):
     This token is a Java Token. 
     The Applet is actually a capfile. The code below is taken from runcap.py
     """
-    def __init__(self, jcversion = (3,0,1)):
+    def __init__(self, jcversion = (3,0,4)):
 
         self.current_applet_aid = None
         # a2d(aid) => Applet
@@ -220,6 +220,7 @@ class Token(object):
         offset += 1
         aid = data[offset: offset + aidlen]
         offset += aidlen
+        print(data, offset)
         length = data[offset]
         offset += 1
         # data[offset:offset+length] is what is given to the install JavaCard 
@@ -249,4 +250,4 @@ class Token(object):
             sw = isoe.getReason()
             return [signed1((sw & 0xff00) >> 8), signed1(sw & 0x00ff)]
         self.current_install_aid = None
-        return d2a('\x90\x00')
+        return d2a(b'\x90\x00')

@@ -48,7 +48,7 @@ class JavaCardLocals(dict):
     def asArray(self):
         """ Return the locals as an array. Good for calling functions """
         res = []
-        keys = self.keys()
+        keys = list(self.keys())
         keys.sort()
         for key in keys:
             res.append(self[key])

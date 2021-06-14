@@ -31,6 +31,7 @@ class TestInterpreter(unittest.TestCase):
 
     def testSomeIf(self):
         intr = JavaCardVM(None)
+        intr.load(javatest_cap)
         intr.frames.push(JavaCardFrame([None, 6], [29, 5, 73, 97, 6, 29, 6, 69, 120, 3, 49, 30, 29, 109, 13, 30, 8, 65, 48, 30, 4, 65, 91, 49, 112, 243, 29, 120], 0))
         self._run(intr)
 
@@ -44,6 +45,7 @@ class TestInterpreter(unittest.TestCase):
 
     def test_gcdIteratif(self):
         intr = JavaCardVM(None)
+        intr.load(javatest_cap)
         intr.frames.push(JavaCardFrame([42,56], [29, 97, 4, 28, 120, 28, 29, 73, 49, 29, 47, 30, 48, 112, 243], 0))
         self._run(intr)
         self.assertEqual(14, intr.getRetValue())

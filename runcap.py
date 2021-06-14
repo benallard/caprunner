@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 
-import sys
-
 from caprunner import capfile
 from caprunner.utils import a2s, signed1
 
-from caprunner.token import Token
+from caprunner.jtoken import Token
 
 def hexify(hexStr):
     """
     Turns a string of hexadecimal nibbles into an array of numbers
     >>> hexify("00200003083132333400000000")
-    [0, 36, 0, 3, 8, 49, 50, 51, 52, 0, 0, 0, 0]
+    [0, 32, 0, 3, 8, 49, 50, 51, 52, 0, 0, 0, 0]
     """
     bytes = []
     hexStr = ''.join( hexStr.split() )
@@ -36,10 +34,10 @@ class Runner(Token):
         receive = []
         for line in sys.stdin:
             line = line.rstrip()
-            if '--' in line:
+            if '--' in line: # remove the comment
                 line = line[:line.find('--')]
             if len(line) == 0 and len(send) != 0 and len(receive) != 0:
-                print("==> {a2s(send)}")
+                print(f"==> {a2s(send)}")
                 try:
                     got = self.transmit(send)
                 except:
@@ -65,11 +63,16 @@ class Runner(Token):
             else:
                 print(line)
 
-if len(sys.argv) > 1:
-    version = tuple([int(i) for i in sys.argv[1].split('.')])
-    print("Running in version %s.%s.%s" % version)
-    runner = Runner(version)
-else:
-    runner = Runner()
+def main(args):
+    if len(args) > 1:
+        version = tuple([int(i) for i in args[1].split('.')])
+        print("Running in version %s.%s.%s" % version)
+        runner = Runner(version)
+    else:
+        runner = Runner()
 
-runner.run()
+    runner.run()
+
+if __name__ == "__main__":
+    import sys
+    main(sys.argv)

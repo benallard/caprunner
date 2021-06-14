@@ -20,7 +20,7 @@ def u2(data:bytes) -> int:
     >>> u2(b'\x67')
     Traceback (most recent call last):
     ...
-    error: unpack requires a string argument of length 2
+    struct.error: unpack requires a buffer of 2 bytes
     >>> u2(b'\x01\x02')
     258
     >>> u2(b'\x01\x55\x66\x66')
@@ -34,11 +34,11 @@ def u4(data: bytes) -> int:
     >>> u4(b'\x67')
     Traceback (most recent call last):
     ...
-    error: unpack requires a string argument of length 4
+    struct.error: unpack requires a buffer of 4 bytes
     >>> u4(b'\x01\x02')
     Traceback (most recent call last):
     ...
-    error: unpack requires a string argument of length 4
+    struct.error: unpack requires a buffer of 4 bytes
     >>> u4(b'\x01\x55\x66\x66')
     22373990
     """
@@ -56,7 +56,7 @@ def u1a(size: int, data: bytes) -> list[int]:
 def u2a(size: int, data: bytes) -> list[int]:
     """
     u2 array
-    >>> u2a(3, b'\x78\x23\x89' * 2)
+    >>> u2a(3, bytes.fromhex('782389' * 2))
     [30755, 35192, 9097]
     """
     return [u2(data[i*2:i*2+2]) for i in range(size)]
@@ -87,7 +87,7 @@ def a2d(array: list[int]) -> bytes:
     >>> a2d([-96])
     b'\xa0'
     """
-    return ''.join([chr(i & 0xff) for i in array])
+    return bytes([(i & 0xff) for i in array])
 
 def d2a(data: bytes) -> list[int]:
     r"""
@@ -95,7 +95,7 @@ def d2a(data: bytes) -> list[int]:
     >>> d2a(b'\xa0\x00\x00\x00b\x00\x03')
     [-96, 0, 0, 0, 98, 0, 3]
     """
-    return [signed1(ord(c)) for c in data]
+    return [signed1(c) for c in data]
 
 def d2s(data: bytes) -> str:
     r"""
