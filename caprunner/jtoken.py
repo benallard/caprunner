@@ -96,23 +96,23 @@ class Token(object):
                 aid = bytes[5:5 + bytes[4]]
                 # select command A4 04 00
                 if not self._cmselect(aid):
-                    return d2a('\x69\x99')
+                    return d2a(b'\x69\x99')
             elif bytes[1:4] == [112, 0, 0]:
                 # open channel : 70 00 00
                 for idx in range(4):
                     if not self.channels[idx]:
                         self.channels[idx] = True
                         buf = [idx]
-                        buf.extend(d2a('\x90\x00'))
+                        buf.extend(d2a(b'\x90\x00'))
                         return buf
-                return d2a('\x6A\x86')
+                return d2a(b'\x6A\x86')
             elif bytes[1:3] == [112, -128]:
                 # close channel: 70 80
                 idx = bytes[3]
                 if self.channels[idx]:
                     self.channels[idx] = False
-                    return d2a('\x90\x00')
-                return d2a('\x6A\x86')
+                    return d2a(b'\x90\x00')
+                return d2a(b'\x6A\x86')
             elif bytes[1:4] == [-26, 12, 0]:
                 # install : E6 0C 00
                 self.install(bytes, 5)
@@ -120,7 +120,7 @@ class Token(object):
         applet = self.selected[self.current_channel]
         if applet is None:
             # no applet selected on current channel
-            return d2a('\x6A\x82')
+            return d2a(b'\x6A\x82')
         # Make an APDU object
         apdu = APDU(bytes)
         # pass to the process method
@@ -143,12 +143,12 @@ class Token(object):
             self.echo("Caught RuntimeException")
             for line in traceback.format_exc().splitlines():
                 self.echo(line)
-            return d2a('\x6f\x00')
+            return d2a(b'\x6f\x00')
         except:
             self.echo("Real bad exception")
             raise
         buf = apdu._APDU__buffer[:apdu._outgoinglength]
-        buf.extend(d2a('\x90\x00'))
+        buf.extend(d2a(b'\x90\x00'))
         return buf
 
     def _cmdeselect(self):
@@ -220,7 +220,6 @@ class Token(object):
         offset += 1
         aid = data[offset: offset + aidlen]
         offset += aidlen
-        print(data, offset)
         length = data[offset]
         offset += 1
         # data[offset:offset+length] is what is given to the install JavaCard 

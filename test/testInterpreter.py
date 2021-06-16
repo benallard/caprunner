@@ -80,7 +80,7 @@ class TestInterpreter(unittest.TestCase):
         intr.invokespecial(3)
         self._run(intr)
         self.assertTrue(isinstance(intr.frame.stack[-1], Applet))
-        for i in xrange(1,4):
+        for i in range(1,4):
             intr.dup()
             intr.sspush(i)
             intr.invokevirtual(7)

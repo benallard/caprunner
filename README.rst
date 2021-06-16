@@ -106,6 +106,11 @@ Starting from here, ``runcap`` will wait for your orders. Please refer
 to the `documentation`_ for the format of the order to send to
 ``runcap``.
 
+Run the tests
+=============
+
+    python -m unittest discover test
+
 Contribution
 ============
 

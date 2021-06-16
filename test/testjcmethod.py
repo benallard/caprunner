@@ -9,6 +9,6 @@ class TestJavaCardMethod(unittest.TestCase):
     
     def testInit(self):
         rslvr = linkResolver()
-        jcmtd = JavaCardStaticMethod(175, javatest_cap, rslvr)
-        jcmtd = JavaCardVirtualMethod(0, 8, javatest_cap, rslvr)
+        jcmtd = JavaCardStaticMethod(109, javatest_cap, rslvr)
+        jcmtd = JavaCardVirtualMethod(0, 8, False, javatest_cap, rslvr)
         self.assertEqual(2, len(jcmtd.excpt_handlers))
