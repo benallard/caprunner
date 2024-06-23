@@ -316,9 +316,7 @@ class TypeDescriptor(object):
         else:
             return self.type[i // 2] & 0x0F
 
-    def __str__(self):
-        "That one can be pretty funny"
-        typeDescr = {1: "void", 2:"boolean", 3: "byte", 4: "short", 5: "int", 6: "ref", 10: "array of bool", 11: "array of byte", 12: "array of short", 13: "array of int", 14: "array of ref"}
+    def __getstr(self, typeDescr):
         res = []
         i = 0
         while i < self.nibble_count:
@@ -330,7 +328,18 @@ class TypeDescriptor(object):
                 c = self.getTypeNib(i+2) << 4 + self.getTypeNib(i+3)
                 res.append("%d.%d" % (p, c))
                 i += 4
+        return res
+
+    def __str__(self):
+        "That one can be pretty funny"
+        typeDescr = {1: "void", 2:"boolean", 3: "byte", 4: "short", 5: "int", 6: "ref", 10: "array of bool", 11: "array of byte", 12: "array of short", 13: "array of int", 14: "array of ref"}
+        res = self.__getstr(typeDescr)
         return ' '.join(res)
+
+    def jasimstr(self):
+        typeDescr = {1: "V", 2:"Z", 3: "B", 4: "S", 5: "I", 6: "ref", 10: "[Z", 11: "[B", 12: "[S", 13: "[I", 14: "[ref"}
+        res = self.__getstr(typeDescr)
+        return res
 
 class Class(Component):
 
